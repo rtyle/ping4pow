@@ -70,12 +70,12 @@ Similar steps may be taken for other Linux, MacOS or Windows platforms.
 
 Get the source from this repository by the appropriate method:
 
-    git clone https://github.com/rtyle/pingandpow.git
-    git clone git@github.com:rtyle/pingandpow.git
+    git clone https://github.com/rtyle/ping4pow.git
+    git clone git@github.com:rtyle/ping4pow.git
 
 All commands documented here are executed from this directory.
 
-    cd pingandpow
+    cd ping4pow
 
 Update all submodules of this repository.
 
