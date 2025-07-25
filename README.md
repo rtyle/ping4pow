@@ -96,3 +96,7 @@ Activate the virtual environment every time you want to use ESPHome within this 
 With your virtual environment activated, install ESPHome using pip:
 
     pip install esphome
+
+Download and extract M5Burner
+
+    https://m5burner-cdn.m5stack.com/app/M5Burner-v3-beta-linux-x64.zip
