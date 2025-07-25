@@ -97,6 +97,11 @@ With your virtual environment activated, install ESPHome using pip:
 
     pip install esphome
 
-Download and extract M5Burner
+To copy or reinstall M5Stack demo firmware, download and extract M5Burner
 
     https://m5burner-cdn.m5stack.com/app/M5Burner-v3-beta-linux-x64.zip
+
+Build, install and run firmware
+
+    esphome run config/ping4pow.yaml
+
