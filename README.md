@@ -2,17 +2,33 @@
 
 ## Motivation
 
-Upon network recovery (from a power failure or an update to network infrastruture)
-devices may need to be forced to reboot after things have settled.
-For many devices, power to the device can be cycled to achieve this.
-Do this automatically.
+Upon network recovery (from a power failure or an update to network infrastruture),
+sensitive equipment may need to be rebooted after things have settled.
+For many such, power to the device can be cycled to achieve this.
+Without automation, this must be down manually.
+It would be better with automation that could recognize such conditions and cycle power.
 
 There are commercially available/configurable devices that address this issue.
 
 * [WattBox](https://www.snapav.com/shop/en/snapav/wattbox)
 * [Ping Watchdog](https://www.netio-products.com/en/glossary/watchdog-ping-ip-watchdog)
 
-This is another solution.
+This is better solution.
+
+## Requirements
+
+* Small, attractive package
+* Display with touchscreen user interface
+* Home Assistant integrable but not required
+* Reliable wired (ethernet) network access for network monitoring
+* Powered by (Power-over-Ethernet)[https://en.wikipedia.org/wiki/Power_over_Ethernet]
+* Inserted in the low voltage power cord of sensitive equipment
+* Galvanic isolated switching of equipment power
+* Network health is determined by (ping)[https://en.wikipedia.org/wiki/Ping_(networking_utility)]ing multiple IP addresses
+* Network failure is when all addresses can not be pinged over a period of time
+* Network recovery is when all addresses can be pinged over a period of time
+* Upon network recovery, power is turned off
+* After a period of time, power is restored.
 
 ## Architecture
 
