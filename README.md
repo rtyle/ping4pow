@@ -13,18 +13,18 @@ There are commercially available/configurable devices that address this issue.
 * [WattBox](https://www.snapav.com/shop/en/snapav/wattbox)
 * [Ping Watchdog](https://www.netio-products.com/en/glossary/watchdog-ping-ip-watchdog)
 
-This is better solution.
+This is a better solution.
 
 ## Requirements
 
 * Small, attractive package
 * Display with touchscreen user interface
-* Home Assistant integrable but not required
-* Reliable wired (ethernet) network access for network monitoring
-* Powered by (Power-over-Ethernet)[https://en.wikipedia.org/wiki/Power_over_Ethernet]
+* Home Assistant integrable but not required for automation
+* Wired (ethernet) network access for reliable network monitoring
+* Powered by [Power-over-Ethernet](https://en.wikipedia.org/wiki/Power_over_Ethernet) (PoE)
 * Inserted in the low voltage power cord of sensitive equipment
-* Galvanic isolated switching of equipment power
-* Network health is determined by (ping)[https://en.wikipedia.org/wiki/Ping_(networking_utility)]ing multiple IP addresses
+* Galvanically isolated switching of equipment power
+* Network health is determined by [ping](https://en.wikipedia.org/wiki/Ping_(networking_utility))ing multiple IP addresses
 * Network failure is when all addresses can not be pinged over a period of time
 * Network recovery is when all addresses can be pinged over a period of time
 * Upon network recovery, power is turned off
