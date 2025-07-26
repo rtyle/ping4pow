@@ -37,7 +37,7 @@ Optionally, such a device can be used by Home Assistant.
 
 ### Hardware
 
-The stack will be assembled with the PoE module on the bottom, the relay module in the middle and the core on the top.
+The stack will be assembled with the PoE base on the bottom, the relay module in the middle and the core on the top.
 
 #### Relay Module
 
