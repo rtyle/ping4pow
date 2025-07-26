@@ -40,6 +40,7 @@ Our stack needs a core with support from relay and PoE modules.
 
 * [CoreS3-SE](https://docs.m5stack.com/en/core/M5CoreS3%20SE)
 * [Module13.2 4Relay v1.1](https://docs.m5stack.com/en/module/4Relay%20Module%2013.2_V1.1)
+* [Module Proto](https://docs.m5stack.com/en/module/proto)
 * [Base LAN PoE v1.2](https://docs.m5stack.com/en/base/lan_poe_v12)
 
 ### Software
@@ -53,9 +54,9 @@ Optionally, such a device can be used by Home Assistant.
 
 ### Hardware
 
-The stack will be assembled with the PoE base on the bottom, the relay module in the middle and the core on the top.
+The stack will be assembled in the order described above.
 
-#### Relay Module
+#### Module13.2 4Relay v1.1
 
 Only the first relay in the module will be used.
 It will be configured to provide module input power to relay output power in a Normally Closed (NC) fashion.
@@ -75,9 +76,25 @@ Wire module input power pins to an adapter pigtail that accepts the plug of the 
 Wire relay power output pins to an adapter pigtail that provides the power plug expected by the controlled device.
 Use pins 1 for the always-connected wire and pins 2 for the relay-switched wire.
 
-#### PoE Module
+#### Module Proto
 
-Supply power to the stack and network connectivity through the RJ45 jack on the PoE module.
+This module is inserted in the stack to resolve a collision,
+between the ethernet and display components,
+on the CoreS3's GPIO35 pin.
+For the ethernet component, GPIO35 is accessed over the M5-Bus.
+With this module, GPIO6 can be routed to this component instead.
+
+See M5-Bus pin locations [here](https://docs.m5stack.com/en/base/lan_poe_v12)
+Sever the pin connection to GPIO35.
+Route the pin connection to GPIO6 with a bodge wire.
+
+Alternately, this bodge could be done directly on the Base LAN PoE board
+at the risk of damaging a much more expensive board
+versus the benefit of a smaller stack.
+
+#### Base LAN PoE v1.2
+
+Power, and supply network access, over the RJ45 ethernet port.
 
 ### Software
 
