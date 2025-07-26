@@ -20,7 +20,7 @@ This is a better solution.
 * Small, attractive package
 * Display with touchscreen user interface
 * Home Assistant integrable but not required for automation
-* Wired (ethernet) network access for reliable network monitoring
+* Wired (ethernet) access for reliable network monitoring
 * Powered by [Power-over-Ethernet](https://en.wikipedia.org/wiki/Power_over_Ethernet) (PoE)
 * Inserted in the low voltage power cord of sensitive equipment
 * Galvanically isolated switching of equipment power
