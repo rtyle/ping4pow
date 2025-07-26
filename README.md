@@ -5,7 +5,7 @@
 Upon network recovery (from a power failure or an update to network infrastruture),
 sensitive equipment may need to be rebooted after things have settled.
 For many such, power to the device can be cycled to achieve this.
-Without automation, this must be down manually.
+Without automation, this must be done manually.
 It would be better with automation that could recognize such conditions and cycle power.
 
 There are commercially available/configurable devices that address this issue.
