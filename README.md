@@ -64,18 +64,21 @@ We want the relay to operate in a NC fashion so that when power is removed from 
 (power to the controlled device will be on).
 
 Remove module input power jumpers to galvanically isolate these pins from the M5-Bus (stack) HPWR and system GND.
-Add a jumper such that the module input power pin 1 is connected to the relay output power pin 1.
-Add a jumper such that the module input power pin 2 is connected to the relay common pin.
+
+![](doc/relay.hpwr.png)
+
+Set the relay jumpers in the "load" configuration.
+
+![](doc/relay.load.webp)
 
 The relay is hard-wired on the module in a Normally Open (NO) fashion.
-That is, the relay output power pin 2 is connected by PCB trace to the NO pin on the relay.
-Cut this trace and add a bodge wire to connect the relay ouput power pin 2 with the NC pin on the relay.
+That is, the relay output power is connected by PCB trace to the NO pin on the relay.
+Cut this trace and add a bodge wire to connect the relay ouput power with the NC pin on the relay.
 
 ![](doc/relay.png)
 
 Wire module input power pins to an adapter pigtail that accepts the plug of the power adapter of the controlled device.
 Wire relay power output pins to an adapter pigtail that provides the power plug expected by the controlled device.
-Use pins 1 for the always-connected wire and pins 2 for the relay-switched wire.
 
 #### Module Proto
 
