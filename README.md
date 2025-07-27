@@ -79,6 +79,9 @@ Cut this trace and add a bodge wire to connect the relay ouput power with the NC
 
 Wire module input power pins to an adapter pigtail that accepts the plug of the power adapter of the controlled device.
 Wire relay power output pins to an adapter pigtail that provides the power plug expected by the controlled device.
+Note that both always-on and relay-switched output pins are available.
+Use the relay-switched pins.
+
 
 #### Module Proto
 
