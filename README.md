@@ -84,9 +84,20 @@ on the CoreS3's GPIO35 pin.
 For the ethernet component, GPIO35 is accessed over the M5-Bus.
 With this module, GPIO6 can be routed to this component instead.
 
-See M5-Bus pin locations [here](https://docs.m5stack.com/en/base/lan_poe_v12).
-Sever the pin connecting to GPIO35 on the M5-Bus pin header.
-On the proto board, bridge between the GPIO35 pin and the GPIO6 pin with a bodge wire.
+![](doc/proto.webp)
+
+Note that the labeling of the pins on the proto board reflect M5Basic_Bus variant of the M5-Bus.
+
+![](doc/m5-bus.variants.png)
+
+We are concerned with the M5CORES3_Bus variant.
+Identify the pins by their location.
+
+![](doc/m5-bus.png)
+
+On the proto board,
+sever the male pin connecting SPI_MISO to G35 on the M5-Bus pin header.
+Bridge between the SPI_MISO socket and G6 pin with a bodge wire.
 
 Alternately, this bodge could be done directly on the Base LAN PoE board
 at the risk of damaging a much more expensive board
