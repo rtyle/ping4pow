@@ -70,7 +70,8 @@ Add a jumper such that the module input power pin 2 is connected to the relay co
 The relay is hard-wired on the module in a Normally Open (NO) fashion.
 That is, the relay output power pin 2 is connected by PCB trace to the NO pin on the relay.
 Cut this trace and add a bodge wire to connect the relay ouput power pin 2 with the NC pin on the relay.
-See PCB board layout for this [relay](https://mktechnic.com/product/hk4100f-x-shg).
+
+![](doc/relay.png)
 
 Wire module input power pins to an adapter pigtail that accepts the plug of the power adapter of the controlled device.
 Wire relay power output pins to an adapter pigtail that provides the power plug expected by the controlled device.
