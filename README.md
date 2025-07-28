@@ -93,7 +93,7 @@ With this module, GPIO6 can be routed to this component instead.
 
 ![](doc/proto.webp)
 
-Note that the labeling of the pins on the proto board reflect M5Basic_Bus variant of the M5-Bus.
+Note that the labeling of the pins on the proto board reflect the M5Basic_Bus variant of the M5-Bus.
 
 ![](doc/m5-bus.variants.png)
 
