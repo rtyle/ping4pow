@@ -63,7 +63,8 @@ It will be configured to provide module input power to relay output power in a N
 We want the relay to operate in a NC fashion so that when power is removed from the stack the relay will be closed
 (power to the controlled device will be on).
 
-Remove module input power jumpers to galvanically isolate these pins from the M5-Bus (stack) HPWR and system GND.
+Module input power must be galvanically isolated from the M5-Bus (stack) HPWR and system GND.
+Remove the jumpers that connect these.
 
 ![](doc/relay.hpwr.png)
 
