@@ -2,7 +2,7 @@
 
 ## Motivation
 
-Upon network recovery (from a power failure or an update to network infrastruture),
+Upon network recovery,
 sensitive equipment may need to be rebooted after things have settled.
 For many such, power to the device can be cycled to achieve this.
 Without automation, this must be done manually.
