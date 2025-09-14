@@ -15,6 +15,10 @@ There are commercially available/configurable devices that address this issue.
 
 This is a better solution.
 
+Ping4pow can only directly control low voltage loads that can be safely handled by its relay.
+However, this includes the capability to control something like an [iot-power-relay](https://dlidirect.com/products/iot-power-relay)
+which can switch more demanding loads.
+
 ## Requirements
 
 * Small, attractive package
