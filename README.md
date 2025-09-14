@@ -180,7 +180,7 @@ Only one state/switch can be active/on at a time.
 States can be entered through a switch action in the user interface.
 These states/switches are:
 
-0. Stop. When on, the state machine is stopped. Turn off to advance to state 1.
+0. `Stop`. When on, the state machine is stopped. Turn off to advance to state 1.
 1. Wait for `ping none`. Then advance to state 2.
 2. Wait for `ping all`. Then advance to state 3.
 3. Wait while `ping all` holds steady. Then advance to state 4; otherwise, retreat to state 2.
@@ -285,7 +285,7 @@ The middle row of buttons reflect state 0, `power` and state 4
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog.light.svg">
         <img src="docs/mdi/cog.light.svg">
-    </picture> Stop (<picture>
+    </picture> <code>Stop</code> (<picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-stop.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-stop.light.svg">
         <img src="docs/mdi/cog-stop.light.svg">
