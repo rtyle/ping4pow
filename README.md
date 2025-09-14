@@ -184,7 +184,7 @@ These states/switches are:
 1. Wait for `ping none`. Then advance to state 2.
 2. Wait for `ping all`. Then advance to state 3.
 3. Wait while `ping all` holds steady. Then advance to state 4; otherwise, retreat to state 2.
-4. Power cycle`. Turn power off, pause, turn power on and then start over in state 1.
+4. `Power cycle`. Turn power off, pause, turn power on and then start over in state 1.
 
 In addition, ping4pow exposes
 
@@ -258,7 +258,7 @@ The top row of buttons reflect states 1, 2 and 3.
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
         <img src="docs/mdi/network-off.light.svg">
         </picture>
-    </picture> Wait for ping none
+    </picture> Wait for <code>ping none</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
@@ -266,7 +266,7 @@ The top row of buttons reflect states 1, 2 and 3.
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
         <img src="docs/mdi/network.light.svg">
-    </picture> Wait for ping all
+    </picture> Wait for <code>ping all</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
@@ -277,7 +277,7 @@ The top row of buttons reflect states 1, 2 and 3.
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/dots-horizontal.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/dots-horizontal.light.svg">
         <img src="docs/mdi/dots-horizontal.light.svg">
-    </picture> Wait while ping all holds steady
+    </picture> Wait while <code>ping all</code> holds steady
 
 The middle row of buttons reflect state 0, `power` and state 4
 
@@ -294,12 +294,12 @@ The middle row of buttons reflect state 0, `power` and state 4
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power.light.svg">
         <img src="docs/mdi/power.light.svg">
-    </picture> Power
+    </picture> <code>power</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power-cycle.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power-cycle.light.svg">
         <img src="docs/mdi/power-cycle.light.svg">
-    </picture> Power cycle
+    </picture> <code>Power cycle</code>
 
 The bottom row reflects the summary ping sensors.
 At most, one of these will be on.
@@ -309,17 +309,17 @@ The label on the widget reflecting state of the `ping some` binary sensor will r
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
         <img src="docs/mdi/network-off.light.svg">
-    </picture> ping none
+    </picture> <code>ping none</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/pound.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/pound.light.svg">
         <img src="docs/mdi/pound.light.svg">
-    </picture> ping some with ping count (#)
+    </picture> <code>ping some</code> with <code>ping count</code> (#)
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
         <img src="docs/mdi/network.light.svg">
-    </picture> ping all
+    </picture> <code>ping all</code>
 
 ### Since Tile
 
@@ -330,17 +330,17 @@ This time is formatted as either "N/A" (if there was never such an event) or the
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/check-network.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/check-network.light.svg">
         <img src="docs/mdi/check-network.light.svg">
-    </picture> ping since
+    </picture> <code>ping since</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power-cycle.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power-cycle.light.svg">
         <img src="docs/mdi/power-cycle.light.svg">
-    </picture> since power cycle
+    </picture> <code>since power cycle</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/arrow-up-bold-circle.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/arrow-up-bold-circle.light.svg">
         <img src="docs/mdi/arrow-up-bold-circle.light.svg">
-    </picture> since boot
+    </picture> <code>since boot</code>
 
 ### Target Tile
 
@@ -352,7 +352,7 @@ The first row of this tile reflects whether the target is enabled and its pingab
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog.light.svg">
         <img src="docs/mdi/cog.light.svg">
-    </picture> ping # (address name) enabled (<picture>
+    </picture> <code>ping # (address name)</code> enabled (<picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-stop.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-stop.light.svg">
         <img src="docs/mdi/cog-stop.light.svg">
@@ -360,7 +360,7 @@ The first row of this tile reflects whether the target is enabled and its pingab
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
-        <img src="docs/mdi/network.light.svg"> ping # able (<picture>
+        <img src="docs/mdi/network.light.svg"> <code>ping # able</code> (<picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
         <img src="docs/mdi/network-off.light.svg">
@@ -373,9 +373,9 @@ The next two rows are for `ping # since` and for identifying the target by addre
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/check-network.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/check-network.light.svg">
         <img src="docs/mdi/check-network.light.svg">
-    </picture> ping # since
+    </picture> <code>ping # since</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/tag.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/tag.light.svg">
-        <img src="docs/mdi/tag.light.svg"> address name
+        <img src="docs/mdi/tag.light.svg"> <code>address</code> <code>name</code>
     </picture>
