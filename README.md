@@ -196,7 +196,15 @@ All since sensors are in units of seconds.
 
 A web-based user interface at http://ping4pow.local exposes these switches and sensors.
 
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/ping4pow.web.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/ping4pow.web.light.png">
+    <img src="docs/ping4pow.web.light.png">
+</picture>
+
 These are also presented locally on the ping4pow device's display.
+
+![](docs/ping4pow.home.png)
 
 Under the display is are soft buttons on the bezel
 
