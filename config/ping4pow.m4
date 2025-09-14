@@ -1,0 +1,763 @@
+dnl This YAML is not intended for direct consumption by esphome.
+dnl Because its YAML parser does not support anchors and aliases
+dnl between files using !include, we get that feature by including
+dnl files using m4.
+dnl   m4 ping4pow.m4 > ping4pow.yaml
+---
+
+include(m5stack_cores3.m4)dnl
+include(m5stack_4relay.m4)dnl
+include(m5stack_lan_poe_v12.m4)dnl
+external_components:
+  - <<: *m5stack_cores3_external_components
+  - <<: *m5stack_4relay_external_components
+  - source:
+      type: local
+      path: ../components
+    components: [_format, _m5cores3_touchscreen, _ping, _rotation, _since]
+
+esphome:
+  <<: *m5stack_cores3_esphome
+  name: ping4pow
+
+esp32: *m5stack_cores3_esp32
+
+board_m5cores3: *m5stack_cores3_board_m5cores3
+
+logger:
+  level: INFO
+
+ethernet: *m5stack_lan_poe_v12_ethernet_m5cores3_display
+
+ota:
+  platform: esphome
+api:
+  reboot_timeout: 0s
+web_server:
+
+.i2c: *m5stack_cores3_i2c
+
+sensor:
+
+binary_sensor:
+
+ifdef(`gpio_relay', `', `dnl
+_m5stack_4relay_lgfx:
+  - id: _relays
+    relays:
+      - id: _power
+        index: 0
+        name: power
+        inverted: true
+        on_state:
+          lvgl.widget.update:
+            id: __power
+            state:
+              checked: !lambda return x;'
+)dnl
+globals:
+  - id: _0_off_count
+    type: int
+    initial_value: "0"
+
+switch:
+ifdef(`gpio_relay', `dnl
+  - id: _power
+    name: power
+    platform: gpio
+    pin:
+      number: M5STACK_CORE_M5_BUS_1_03
+      inverted: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      lvgl.widget.update:
+        id: __power
+        state:
+          checked: !lambda return x;'
+
+)dnl
+  # the following switches reflect states in a state machine.
+  # they cooperate so that only one switch/state is on at a time.
+  # we start at state 1, conditionally advance through 2 & 3
+  # and when 4 is done we enter state 1 again.
+  # for testing, any of these states can be entered with a UI.
+  # entering state 0 will stop the machine until state 0 is exited.
+  - id: _state_0
+    platform: lvgl
+    widget: __state_0
+    name: 0. Stop
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - switch.turn_off: _state_1
+      - switch.turn_off: _state_2
+      - switch.turn_off: _state_3
+      - switch.turn_off: _state_4
+    on_turn_off:
+      # regardless of the restored state of switch 1,
+      # if we try to turn it on now, its on_turn_on will not be invoked!
+      if:
+        condition:
+          lambda: return id(_0_off_count)++;
+        then:
+          - switch.turn_on: _state_1
+  - id: _state_1
+    platform: lvgl
+    widget: __state_1
+    name: 1. Wait for ping none
+    restore_mode: ALWAYS_ON
+    on_turn_on:
+      - switch.turn_off: _state_0
+      - switch.turn_off: _state_2
+      - switch.turn_off: _state_3
+      - switch.turn_off: _state_4
+      - wait_until:
+          condition:
+            or:
+              - switch.is_off: _state_1
+              - binary_sensor.is_on: _ping_none
+      - if:
+          condition:
+            switch.is_on: _state_1
+          then:
+            - switch.turn_on: _state_2
+  - id: _state_2
+    platform: lvgl
+    widget: __state_2
+    name: 2. Wait for ping all
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - switch.turn_off: _state_0
+      - switch.turn_off: _state_1
+      - switch.turn_off: _state_3
+      - switch.turn_off: _state_4
+      - wait_until:
+          condition:
+            or:
+              - switch.is_off: _state_2
+              - binary_sensor.is_on: _ping_all
+      - if:
+          condition:
+            switch.is_on: _state_2
+          then:
+            - switch.turn_on: _state_3
+  - id: _state_3
+    platform: lvgl
+    widget: __state_3
+    name: 3. Wait while ping all holds steady
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - switch.turn_off: _state_0
+      - switch.turn_off: _state_1
+      - switch.turn_off: _state_2
+      - switch.turn_off: _state_4
+      - wait_until:
+          condition:
+            or:
+              - switch.is_off: _state_3
+              - binary_sensor.is_off: _ping_all
+          timeout: 10s
+      - if:
+          condition:
+            switch.is_on: _state_3
+          then:
+            - if:
+                condition:
+                  binary_sensor.is_off: _ping_all
+                then:
+                  - switch.turn_on: _state_2
+                else:
+                  - switch.turn_on: _state_4
+  - id: _state_4
+    platform: lvgl
+    widget: __state_4
+    name: 4. Power cycle
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - switch.turn_off: _state_0
+      - switch.turn_off: _state_1
+      - switch.turn_off: _state_2
+      - switch.turn_off: _state_3
+      - switch.turn_off: _power
+      - lambda: !lambda id(_power_since)->set_when();
+      - wait_until:
+          condition:
+            switch.is_off: _state_4
+          timeout: 10s
+      - if:
+          condition:
+            switch.is_on: _state_4
+          then:
+            - switch.turn_on: _power
+            - lambda: !lambda id(_power_since)->set_when();
+            - switch.turn_on: _state_1
+
+display:
+  - <<: *m5stack_cores3_display
+    id: _display
+    auto_clear_enabled: false
+    update_interval: 1ms
+
+touchscreen:
+  - id: _touchscreen
+    platform: _m5cores3_touchscreen
+    update_interval: 50ms
+    left:
+      id: _brightness_decrement
+      on_press:
+        number.decrement:
+          id: _brightness
+          cycle: false
+    center:
+      id: _home
+      on_press:
+        lambda: |-
+          auto tileview{id(_tileview)};
+          lv_obj_set_tile(tileview, id(__state_tile), LV_ANIM_OFF);
+          lv_event_send(tileview, LV_EVENT_VALUE_CHANGED, nullptr);
+          id(_tile_iterator).reset();
+    right:
+      id: _brightness_increment
+      on_press:
+        number.increment:
+          id: _brightness
+          cycle: false
+
+define(mdi_arrow_left_bold, \U000F0731)dnl
+define(mdi_arrow_right_bold, \U000F0734)dnl
+define(mdi_arrow_up_bold_circle, \U000F005F)dnl
+define(mdi_check_network, \U000F0C53)dnl
+define(mdi_cog, \U000F0493)dnl
+define(mdi_cog_stop, \U000F1937)dnl
+define(mdi_cog_pause, \U000F1933)dnl
+define(mdi_dots_horizontal, \U000F01D8)dnl
+define(mdi_lock, \U000F033E)dnl
+define(mdi_lock_open, \U000F033F)dnl
+define(mdi_network, \U000F06F3)dnl
+define(mdi_network_off, \U000F0C9B)dnl
+define(mdi_power, \U000F0425)dnl
+define(mdi_power_cycle, \U000F0901)dnl
+define(mdi_tag, \U000F04F9)dnl
+font:
+  - id: _font
+    file: "gfonts://Roboto"
+    size: 32
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Kernel
+      - GF_Latin_Core
+    extras:
+      - file: "https://raw.githubusercontent.com/Templarian/\
+                MaterialDesign-Webfont/master/fonts/\
+                materialdesignicons-webfont.ttf"
+        glyphs:
+          - "mdi_arrow_left_bold"
+          - "mdi_arrow_right_bold"
+          - "mdi_arrow_up_bold_circle"
+          - "mdi_check_network"
+          - "mdi_cog"
+          - "mdi_cog_stop"
+          - "mdi_cog_pause"
+          - "mdi_dots_horizontal"
+          - "mdi_lock"
+          - "mdi_lock_open"
+          - "mdi_network"
+          - "mdi_network_off"
+          - "mdi_power"
+          - "mdi_power_cycle"
+          - "mdi_tag"
+  - id: _font_small
+    file: "gfonts://Roboto"
+    size: 18
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Kernel
+      - GF_Latin_Core
+    extras:
+      - file: "https://raw.githubusercontent.com/Templarian/\
+                MaterialDesign-Webfont/master/fonts/\
+                materialdesignicons-webfont.ttf"
+        glyphs:
+          - "mdi_arrow_left_bold"
+          - "mdi_arrow_right_bold"
+          - "mdi_arrow_up_bold_circle"
+          - "mdi_check_network"
+          - "mdi_cog"
+          - "mdi_cog_stop"
+          - "mdi_cog_pause"
+          - "mdi_dots_horizontal"
+          - "mdi_lock"
+          - "mdi_lock_open"
+          - "mdi_network"
+          - "mdi_network_off"
+          - "mdi_power"
+          - "mdi_power_cycle"
+          - "mdi_tag"
+dnl
+define(`__increment', `define(`$1', incr($1))')dnl
+
+_format:
+
+_since:
+  - id: _boot_since
+    name: since boot
+    when: 0ns
+    on_value:
+      lvgl.label.update:
+        id: __boot_since
+        text: !lambda return _format::duration(x);
+  - id: _power_since
+    name: since power cycle
+    on_value:
+      lvgl.label.update:
+        id: __power_since
+        text: !lambda return _format::duration(x);
+
+_ping:
+  - none:
+      id: _ping_none
+      name: ping none
+      on_state:
+        lvgl.widget.update:
+          id: __ping_none
+          state:
+            checked: !lambda return x;
+    some:
+      id: _ping_some
+      name: ping some
+      on_state:
+        lvgl.widget.update:
+          id: __ping_some
+          state:
+            checked: !lambda return x;
+    all:
+      id: _ping_all
+      name: ping all
+      on_state:
+        lvgl.widget.update:
+          id: __ping_all
+          state:
+            checked: !lambda return x;
+    count:
+      id: _ping_count
+      name: ping count
+      on_value:
+        lvgl.label.update:
+          id: __ping_some_label
+          text: !lambda return to_string(static_cast<int>(x));
+    since:
+      id: _ping_since
+      name: ping since
+      on_value:
+        lvgl.label.update:
+          id: __ping_since
+          text: !lambda return _format::duration(x);
+    targets:
+define(`__count', `-1')dnl
+define(host, `__increment(`__count')dnl
+      - id: _ping_`'__count
+        name: ping __count ($1 $2)
+        address: $1
+        on_state:
+          - lvgl.widget.update:
+              id: __ping_`'__count
+              state:
+                checked: !lambda return x;
+          - lvgl.label.update:
+              id: __ping_`'__count`'_label
+              text: !lambda |-
+                return std::string{
+                  x ? "mdi_cog" : "mdi_cog_stop"};
+        able:
+          id: _ping_`'__count`'_able
+          name: ping __count able
+          on_state:
+            - lvgl.widget.update:
+                id: __ping_`'__count`'_able
+                state:
+                  checked: !lambda return x;
+            - lvgl.label.update:
+                id: __ping_`'__count`'_label_able
+                text: !lambda |-
+                  return std::string{
+                    x ? "mdi_network" : "mdi_network_off"};
+        since:
+          id: _ping_`'__count`'_since
+          name: ping __count since
+          on_value:
+            lvgl.label.update:
+              id: __ping_`'__count`'_since
+              text: !lambda return _format::duration(x);')dnl
+include(hosts.m4)dnl
+undefine(`host')dnl
+undefine(`__count')dnl
+
+define(_bg_on, 0x7D70F2)dnl
+define(_fg_on, 0x1A0D4D)dnl
+define(_bg_off, 0x3D2F80)dnl
+define(_fg_off, 0xD4CBFF)dnl
+define(_bg_on_power, 0xF27070)dnl
+define(_fg_on_power, 0x4D0D0D)dnl
+define(_bg_off_power, 0x802F2F)dnl
+define(_fg_off_power, 0xFFCBCB)dnl
+lvgl:
+  displays: [_display]
+  touchscreens:
+    - _touchscreen
+  theme:
+    obj:
+      bg_color: _bg_off
+      border_width: 0
+      radius: 0
+      pad_all: 0
+      text_font: _font
+    button:
+      border_width: 2
+      text_color: _fg_off
+      bg_color: _bg_off
+      checked:
+        bg_color: _bg_on
+        text_color: _fg_on
+        border_color: _fg_off
+      checkable: true
+      grid_cell_x_align: STRETCH
+      grid_cell_y_align: STRETCH
+      align: center
+    label:
+      grid_cell_x_align: center
+      grid_cell_y_align: center
+      align: center
+  style_definitions:
+    - id: __label_style
+      bg_color: _bg_off
+      text_color: _fg_off
+  pages:
+    - widgets:
+        - obj:
+            width: 100%
+            height: 100%
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 0
+            widgets:
+              - obj:
+                  flex_grow: 5
+                  width: 100%
+                  widgets:
+                    - tileview:
+                        id: _tileview
+                        width: 100%
+                        height: 100%
+                        bg_color: _bg_off
+                        tiles:
+                          - id: __state_tile
+                            row: 0
+                            column: 0
+                            dir: HOR
+                            layout:
+                              type: GRID
+                              grid_columns: [FR(1), FR(1), FR(1)]
+                              grid_rows: [FR(1), FR(1), FR(1)]
+                            widgets:
+                              - button:
+                                  id: __state_1
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 0
+                                  checkable: true
+                                  widgets:
+                                    - label:
+                                        text: "mdi_cog_pause`'mdi_network_off"
+                              - button:
+                                  id: __state_2
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 0
+                                  checkable: true
+                                  widgets:
+                                    - label:
+                                        text: "mdi_cog_pause`'mdi_network"
+                              - button:
+                                  id: __state_3
+                                  grid_cell_column_pos: 2
+                                  grid_cell_row_pos: 0
+                                  checkable: true
+                                  widgets:
+                                    - label:
+                                        text: "mdi_cog_pause`'mdi_network`'mdi_dots_horizontal"
+                              - button:
+                                  id: __state_0
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 1
+                                  checkable: true
+                                  widgets:
+                                    - label:
+                                        id: __state_0_label
+                                        text: "mdi_cog"
+                                  on_value:
+                                    lvgl.label.update:
+                                      id: __state_0_label
+                                      text: !lambda |-
+                                        return std::string{
+                                          x ? "mdi_cog_stop" : "mdi_cog"};
+                              - button:
+                                  id: __power
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 1
+                                  checkable: true
+                                  bg_color: _bg_off_power
+                                  text_color: _fg_off_power
+                                  border_width: 4
+                                  checked:
+                                    bg_color: _bg_on_power
+                                    text_color: _fg_on_power
+                                    border_color: _fg_off_power
+                                  widgets:
+                                    - label:
+                                        text: "mdi_power"
+                                  on_value:
+                                    if:
+                                      condition:
+                                        lambda: return x;
+                                      then:
+                                        - switch.turn_on: _power
+                                      else:
+                                        - switch.turn_off: _power
+                              - button:
+                                  id: __state_4
+                                  grid_cell_column_pos: 2
+                                  grid_cell_row_pos: 1
+                                  checkable: true
+                                  widgets:
+                                    - label:
+                                        text: "mdi_power_cycle"
+                              - button:
+                                  id: __ping_none
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 2
+                                  checkable: true
+                                  clickable: false
+                                  checked:
+                                    border_color: _fg_off
+                                  widgets:
+                                    - label:
+                                        text: "\U000F0C9B"
+                              - button:
+                                  id: __ping_some
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 2
+                                  checkable: true
+                                  clickable: false
+                                  checked:
+                                    border_color: _fg_off
+                                  widgets:
+                                    - label:
+                                        id: __ping_some_label
+                                        text: "0"
+                              - button:
+                                  id: __ping_all
+                                  grid_cell_column_pos: 2
+                                  grid_cell_row_pos: 2
+                                  checkable: true
+                                  clickable: false
+                                  checked:
+                                    border_color: _fg_off
+                                  widgets:
+                                    - label:
+                                        text: "mdi_network"
+                          - id: __since_tile
+                            row: 0
+                            column: 1
+                            dir: HOR
+                            layout:
+                              type: GRID
+                              grid_columns: [FR(1), FR(5)]
+                              grid_rows: [FR(1), FR(1), FR(1)]
+                            widgets:
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 0
+                                  text: "mdi_check_network"
+                              - label:
+                                  styles: __label_style
+                                  id: __ping_since
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 0
+                                  text: "N/A"
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 1
+                                  text: "mdi_power_cycle"
+                              - label:
+                                  styles: __label_style
+                                  id: __power_since
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 1
+                                  text: "N/A"
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 2
+                                  text: "mdi_arrow_up_bold_circle"
+                              - label:
+                                  styles: __label_style
+                                  id: __boot_since
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 2
+                                  text: "N/A"
+define(`__count', `-1')dnl
+define(host, `__increment(`__count')dnl
+                          - id: __ping_`'__count`'_tile
+                            row: 0
+                            column: eval(__count + 2)
+                            dir: HOR
+                            layout:
+                              type: GRID
+                              grid_columns:
+                                - FR(1)
+                                - FR(1)
+                                - FR(1)
+                                - FR(1)
+                                - FR(1)
+                                - FR(1)
+                              grid_rows: [FR(1), FR(1), FR(1)]
+                            widgets:
+                              - button:
+                                  id: __ping_`'__count
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 0
+                                  grid_cell_column_span: 3
+                                  checkable: true
+                                  widgets:
+                                    - label:
+                                        id: __ping_`'__count`'_label
+                                        text: "mdi_cog_stop"
+                                  on_value:
+                                    switch.control:
+                                      id: _ping_`'__count
+                                      state: !lambda return x;
+                              - button:
+                                  id: __ping_`'__count`'_able
+                                  grid_cell_column_pos: 3
+                                  grid_cell_row_pos: 0
+                                  grid_cell_column_span: 3
+                                  checkable: true
+                                  widgets:
+                                    - label:
+                                        id: __ping_`'__count`'_label_able
+                                        text: "mdi_network_off"
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 1
+                                  text: "mdi_check_network"
+                              - label:
+                                  styles: __label_style
+                                  id: __ping_`'__count`'_since
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 1
+                                  grid_cell_column_span: 5
+                                  text: "N/A"
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 2
+                                  text: "mdi_tag"
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 2
+                                  grid_cell_column_span: 5
+                                  text: "$1 $2"')dnl
+include(hosts.m4)dnl
+undefine(`host')dnl
+undefine(`__count')dnl
+                    - button:
+                        id: __unlock_overlay
+                        width: 100%
+                        height: 100%
+                        bg_opa: transp
+                        border_width: 0
+              - obj:
+                  flex_grow: 1
+                  width: 100%
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    pad_column: 0
+                  widgets:
+                    - button:
+                        flex_grow: 1
+                        height: 100%
+                        widgets:
+                          - label:
+                              text_font: _font_small
+                              text: "mdi_arrow_left_bold"
+                        on_click:
+                          lambda: |-
+                            auto tileview{id(_tileview)};
+                            auto it{id(_tile_iterator)};
+                            auto tile{reinterpret_cast<lv_obj_t *>(*--(*it))};
+                            lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
+                            lv_event_send(
+                              tileview, LV_EVENT_VALUE_CHANGED, nullptr);
+                    - button:
+                        flex_grow: 1
+                        height: 100%
+                        checkable: true
+                        widgets:
+                          - label:
+                              id: __unlock_label
+                              text_font: _font_small
+                              text: "mdi_lock"
+                        on_value:
+                          - lvgl.widget.update:
+                              id: __unlock_overlay
+                              hidden: !lambda return x;
+                          - lvgl.label.update:
+                              id: __unlock_label
+                              text: !lambda |-
+                                return std::string{
+                                  x ? "mdi_lock_open" : "mdi_lock"};
+                    - button:
+                        flex_grow: 1
+                        height: 100%
+                        widgets:
+                          - label:
+                              text_font: _font_small
+                              text: "mdi_arrow_right_bold"
+                        on_click:
+                          lambda: |-
+                            auto tileview{id(_tileview)};
+                            auto it{id(_tile_iterator)};
+                            auto tile{reinterpret_cast<lv_obj_t *>(*++(*it))};
+                            lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
+                            lv_event_send(
+                              tileview, LV_EVENT_VALUE_CHANGED, nullptr);
+
+_rotation:
+  - id: _tile_rotation
+    items:
+      - __state_tile
+      - __since_tile
+define(`__count', `-1')dnl
+define(host, `__increment(`__count')dnl
+      - __ping_`'__count`'_tile')dnl
+include(hosts.m4)dnl
+undefine(`host')dnl
+undefine(`__count')dnl
+    iterators:
+      - id: _tile_iterator
+
+number:
+  - platform: template
+    id: _brightness
+    min_value: 0
+    max_value: 255
+    step: 32
+    mode: slider
+    optimistic: true
+    restore_value: true
+    initial_value: 127
+    on_value:
+      lambda: !lambda M5.Display.setBrightness(x);

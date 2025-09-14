@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set \
+    arrow-left-bold \
+    arrow-right-bold \
+    arrow-up-bold-circle \
+    check-network \
+    chevron-double-left \
+    chevron-double-right \
+    circle-outline \
+    cog \
+    cog-stop \
+    cog-pause \
+    dots-horizontal \
+    lock \
+    lock-open \
+    network \
+    network-off \
+    power \
+    power-cycle \
+    tag \
+
+for i in $@; do 
+    for mf in light.000000 dark.ffffff; do
+        m=${mf%%.*}
+        f=${mf##*.}
+        curl -s https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/$i.svg \
+            | sed -e 's/<svg /<svg width="18" height="18" fill="#'$f'" /' \
+            > $i.$m.svg
+    done
+done

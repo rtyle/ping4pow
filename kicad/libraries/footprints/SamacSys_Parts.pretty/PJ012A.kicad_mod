@@ -1,0 +1,231 @@
+(footprint "PJ012A"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(descr "PJ-012A-2")
+	(tags "Connector")
+	(property "Reference" "J**"
+		(at -1 -4.25 0)
+		(layer "F.SilkS")
+		(uuid "d6c29d35-44b0-4b3b-8caa-e7cbc6bb0cea")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.254)
+			)
+		)
+	)
+	(property "Value" "PJ012A"
+		(at 3.975 2.85 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "f9618d3e-9168-4279-92cc-c31a438450f6")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.254)
+			)
+		)
+	)
+	(property "Datasheet" "https://www.sameskydevices.com/product/resource/pj-012a.pdf"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "4a530201-29a0-43bd-ae44-f88bea163ec1")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "7be4f032-d76c-4120-9e7f-5ec1a255a4c7")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start -6.5 -10)
+		(end 4.5 -10)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "2577721d-4a8f-4205-9d3a-f3a948cd595b")
+	)
+	(fp_line
+		(start -6.5 1.5)
+		(end -6.5 -10)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "49e163d9-f06b-4abf-963b-01d49fbea114")
+	)
+	(fp_line
+		(start 4.5 -10)
+		(end 4.5 1.5)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "2da0d6bc-04a3-4212-8f37-ed228c234a7d")
+	)
+	(fp_line
+		(start 4.5 1.5)
+		(end -6.5 1.5)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "668595e8-9926-4ce6-a9f3-be82317bb613")
+	)
+	(fp_line
+		(start -6.5 -10)
+		(end 4.5 -10)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "69fe02ca-6dfb-4124-acc2-d7b763d905b4")
+	)
+	(fp_line
+		(start -6.5 1.5)
+		(end -6.5 -10)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "aa235568-a157-4720-a507-763d5748beac")
+	)
+	(fp_line
+		(start 4.5 -10)
+		(end 4.5 1.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "0382bc57-f1d0-4d2f-92ef-07b44a1fbd80")
+	)
+	(fp_line
+		(start 4.5 1.5)
+		(end -6.5 1.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "3e5cd8c4-919f-4908-b1a0-bd297b338b5c")
+	)
+	(fp_line
+		(start -6.5 -10)
+		(end 4.5 -10)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "6ec5dbdf-9f37-4f96-b492-4b149b144d4f")
+	)
+	(fp_line
+		(start -6.5 1.5)
+		(end -6.5 -10)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "08eca2fa-6535-4f0e-b1ef-5dd28f6e602e")
+	)
+	(fp_line
+		(start 4.5 -10)
+		(end 4.5 1.5)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "0ca98fdc-1135-4452-a80e-9b5dadcfd20c")
+	)
+	(fp_line
+		(start 4.5 1.5)
+		(end -6.5 1.5)
+		(stroke
+			(width 0.2)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "0caad11b-57e4-4f1a-9edb-3768c21de75c")
+	)
+	(fp_text user "${REFERENCE}"
+		(at -1 -4.25 0)
+		(layer "F.Fab")
+		(uuid "94b4377d-abe2-4334-acbe-50469c07e66b")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.254)
+			)
+		)
+	)
+	(pad "" np_thru_hole circle
+		(at 0 0)
+		(size 1.8 1.8)
+		(drill 1.8)
+		(layers "*.Cu" "*.Mask")
+		(uuid "deaceb81-ddea-4e86-8021-e5eecef002ba")
+	)
+	(pad "1" thru_hole circle
+		(at -3.8 -7.1)
+		(size 1.5 1.5)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "0287d620-f3b2-48c9-8405-0f9f4c76a375")
+	)
+	(pad "2" thru_hole circle
+		(at 3.5 -7.5)
+		(size 1.95 1.95)
+		(drill 1.3)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "d826ed06-17ff-461e-9d64-31607b94d41b")
+	)
+	(pad "3" thru_hole circle
+		(at -0.5 -7.1)
+		(size 1.5 1.5)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "eb9a346e-5599-46fb-af5d-f640b2897231")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/../../libraries/3dmodels/same_sky/PJ-012A.step"
+		(opacity 0.8300)
+		(offset
+			(xyz -2 -1.5 5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 90)
+		)
+	)
+)
