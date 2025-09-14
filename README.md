@@ -141,7 +141,7 @@ With your virtual environment activated, install ESPHome using pip:
 Configure the order, address and name of each host to be ping-monitored.
 Each is specifed by an address, name pair in an m4 host macro invocation.
 
-    vi config/hosts.m4
+    cp config/hosts{.example,}.m4; vi config/hosts.m4
 
 Choose an ESPHome configuration for
 M5Stack Module13.2 4Relay hardware (default) or a GPIO relay.
