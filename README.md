@@ -118,10 +118,6 @@ All commands documented here are executed from this directory.
 
     cd ping4pow
 
-Update all submodules of this repository.
-
-    git submodule update --init --recursive
-
 Install python
 
     sudo dnf install python
@@ -143,13 +139,19 @@ Each is specifed by an address, name pair in an m4 host macro invocation.
 
     vi config/hosts.m4
 
-Connect, by USB cable, your computer with the M5Stack CoreS3.
-Build, install and run firmware.
+Choose an ESPHome configuration for
+M5Stack Module13.2 4Relay hardware (default) or a GPIO relay.
 
     m4 config/ping4pow.m4 > config/ping4pow.yaml
+    m4 -Dgpio_relay config/ping4pow.m4 > config/ping4pow.yaml
+
+Connect a USB cable between your computer and the M5Stack CoreS3
+and flash its firmware with this ESPHome configuration. 
+
     esphome run config/ping4pow.yaml
 
-Connect by ethernet to a power-over-ethernet capable port and unplug the USB cable. Connect the switched load to the relay.
+Connect by ethernet to a power-over-ethernet capable port and unplug the USB cable.
+Connect the switched load to the relay.
 
 ## Usage
 
