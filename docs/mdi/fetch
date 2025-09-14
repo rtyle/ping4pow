@@ -16,6 +16,7 @@ set \
     lock-open \
     network \
     network-off \
+    pound \
     power \
     power-cycle \
     tag \
