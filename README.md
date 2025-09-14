@@ -174,11 +174,11 @@ Only one state/switch can be active/on at a time.
 States can be entered through a switch action in the user interface.
 These states/switches are:
 
-* `0. Stop`. When on, the state machine is stopped. Turn off to advance to state 1.
-* `1. Wait for ping none`. Then advance to state 2.
-* `2. Wait for ping all`. Then advance to state 3.
-* `3. Wait while ping all holds steady`. Then advance to state 4; otherwise, retreat to state 2.
-* `4. Power cycle`. Turn power off, pause, turn power on and then start over in state 1.
+0. Stop. When on, the state machine is stopped. Turn off to advance to state 1.
+1. Wait for `ping none`. Then advance to state 2.
+2. Wait for `ping all`. Then advance to state 3.
+3. Wait while `ping all` holds steady. Then advance to state 4; otherwise, retreat to state 2.
+4. Power cycle`. Turn power off, pause, turn power on and then start over in state 1.
 
 In addition, ping4pow exposes
 
@@ -192,50 +192,48 @@ A web-based user interface at http://ping4pow.local exposes these switches and s
 
 These are also presented locally on the ping4pow device's display.
 
-Under the display is a labeled bezel.
-<picture>
-<source media="(prefers-color-scheme: dark)" srcset="docs/mdi/chevron-double-left.dark.svg">
-<source media="(prefers-color-scheme: light)" srcset="docs/mdi/chevron-double-left.light.svg">
-<img src="docs/mdi/chevron-double-left.light.svg">
-</picture><picture>
-<source media="(prefers-color-scheme: dark)" srcset="docs/mdi/circle-outline.dark.svg">
-<source media="(prefers-color-scheme: light)" srcset="docs/mdi/circle-outline.light.svg">
-<img src="docs/mdi/circle-outline.light.svg">
-</picture><picture>
-<source media="(prefers-color-scheme: dark)" srcset="docs/mdi/chevron-double-right.dark.svg">
-<source media="(prefers-color-scheme: light)" srcset="docs/mdi/chevron-double-right.light.svg">
-<img src="docs/mdi/chevron-double-right.light.svg">
-</picture>
+Under the display is are soft buttons on the bezel
 
-<table style="text-align: center;">
-  <tr>
-    <td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/chevron-double-left.svg" class="icon"></td>
-    <td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/circle-outline.svg" class="icon"></td>
-    <td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/chevron-double-right.svg" class="icon"></td>
-  </tr>
-</table>
-
-The following actions may be taken by touching the labels.
-
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/chevron-double-left.svg" class="icon"> Decrease display brightness
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/chevron-double-right.svg" class="icon"> Increase display brightness
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/chevron-double-left.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/chevron-double-left.light.svg">
+        <img src="docs/mdi/chevron-double-left.light.svg">
+    </picture> Decrease display brightness
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/circle-outline.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/circle-outline.light.svg">
+        <img src="docs/mdi/circle-outline.light.svg">
+    </picture> Navigate home to state tile
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/chevron-double-right.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/chevron-double-right.light.svg">
+        <img src="docs/mdi/chevron-double-right.light.svg">
+    </picture> Increase display brightness
 
 At the bottom of the display is a user interface lock and tile navigation buttons
 
-<table style="text-align: center;">
-  <tr>
-    <td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/arrow-left-bold.svg" class="icon"></td>
-    <td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/lock.svg" class="icon"></td>
-    <td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/arrow-right-bold.svg" class="icon"></td>
-  </tr>
-</table>
-
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/arrow-left-bold.svg" class="icon"> Previous tile
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/lock.svg" class="icon"> User input is locked (<img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/lock-open.svg" class="icon"> when not)
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/arrow-right-bold.svg" class="icon"> Next tile
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/arrow-left-bold.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/arrow-left-bold.light.svg">
+        <img src="docs/mdi/arrow-left-bold.light.svg">
+    </picture> Previous tile in rotation
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/lock.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/lock.light.svg">
+        <img src="docs/mdi/lock.light.svg">
+    </picture> User input is locked (<picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/lock-open.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/lock-open.light.svg">
+        <img src="docs/mdi/lock-open.light.svg">
+    </picture> when not)
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/arrow-right-bold.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/arrow-right-bold.light.svg">
+        <img src="docs/mdi/arrow-right-bold.light.svg">
+    </picture> Next tile in rotation
 
 The rest of the display is used for the current tile.
-Using the next and previous tile controls, one can cycle through them.
+Using the next and previous tile controls, one can rotate through them.
 The tiles are:
 
 * State tile
@@ -244,50 +242,99 @@ The tiles are:
 
 ### State Tile
 
-<table style="text-align: center;">
-<tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-pause.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network-off.svg" class="icon"></td>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-pause.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network.svg" class="icon"></td>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-pause.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/dots-horizontal.svg" class="icon"></td>
-</tr>
-<tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog.svg" class="icon"></td>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/power.svg" class="icon"></td>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/power-cycle.svg" class="icon"></td>
-</tr>
-<tr>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network-off.svg" class="icon"></td>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/pound.svg" class="icon"></td>
-<td><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network.svg" class="icon"></td>
-</tr>
-</table>
-
 The top row of buttons reflect states 1, 2 and 3.
 
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-pause.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network-off.svg" class="icon"> `1. Wait for ping none`
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-pause.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network.svg" class="icon"> `2. Wait for ping all`
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-pause.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network.svg" class="icon"><img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/dots-horizontal.svg" class="icon"> `3. Wait while ping all holds steady`
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
+        <img src="docs/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
+        <img src="docs/mdi/network-off.light.svg">
+        </picture>
+    </picture> Wait for ping none
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
+        <img src="docs/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
+        <img src="docs/mdi/network.light.svg">
+    </picture> Wait for ping all
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
+        <img src="docs/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
+        <img src="docs/mdi/network.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/dots-horizontal.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/dots-horizontal.light.svg">
+        <img src="docs/mdi/dots-horizontal.light.svg">
+    </picture> Wait while ping all holds steady
 
-The middle row of buttons reflect state 0, power and state 4
+The middle row of buttons reflect state 0, `power` and state 4
 
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog.svg" class="icon"> `0. Stop` (<img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-stop.svg" class="icon"> when stopped)
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/power.svg" class="icon"> `Power`
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/power-cycle.svg" class="icon"> `4. Power cycle`
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog.light.svg">
+        <img src="docs/mdi/cog.light.svg">
+    </picture> Stop (<picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-stop.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-stop.light.svg">
+        <img src="docs/mdi/cog-stop.light.svg">
+    </picture> when stopped)
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power.light.svg">
+        <img src="docs/mdi/power.light.svg">
+    </picture> Power
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power-cycle.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power-cycle.light.svg">
+        <img src="docs/mdi/power-cycle.light.svg">
+    </picture> Power cycle
 
-The bottom row reflects the summary ping sensors. Only one of these will be on. The label on the widget reflecting state of the `ping some` binary sensor will reflect the `ping count` sensor value regardless.
+The bottom row reflects the summary ping sensors.
+At most, one of these will be on.
+The label on the widget reflecting state of the `ping some` binary sensor will reflect the `ping count` sensor value regardless.
 
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network-off.svg" class="icon"> `ping none`
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/pound.svg" class="icon"> `ping some` and `ping count` (#)
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network.svg" class="icon"> `ping all`
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
+        <img src="docs/mdi/network-off.light.svg">
+    </picture> ping none
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/pound.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/pound.light.svg">
+        <img src="docs/mdi/pound.light.svg">
+    </picture> ping some with ping count (#)
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
+        <img src="docs/mdi/network.light.svg">
+    </picture> ping all
 
 ### Since Tile
 
 The three rows of this tile reflect times since an event.
 This time is formatted as either "N/A" (if there was never such an event) or the number of days, hours, minutes and seconds (D HH:MM:SS) since the event.
 
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/check-network.svg" class="icon"> `ping since`
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/power-cycle.svg" class="icon"> `since power cycle`
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/arrow-up-bold-circle.svg" class="icon"> `since boot`
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/check-network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/check-network.light.svg">
+        <img src="docs/mdi/check-network.light.svg">
+    </picture> ping since
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power-cycle.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power-cycle.light.svg">
+        <img src="docs/mdi/power-cycle.light.svg">
+    </picture> since power cycle
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/arrow-up-bold-circle.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/arrow-up-bold-circle.light.svg">
+        <img src="docs/mdi/arrow-up-bold-circle.light.svg">
+    </picture> since boot
 
 ### Target Tile
 
@@ -295,10 +342,34 @@ There is a target tile for each ping target in `hosts.m4`.
 
 The first row of this tile reflects whether the target is enabled and its pingability.
 
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog.svg" class="icon"> `ping # (address name)` enabled (<img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/cog-stop.svg" class="icon"> when not)
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network.svg" class="icon"> `ping # able` (<img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/network-off.svg" class="icon"> when not)
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog.light.svg">
+        <img src="docs/mdi/cog.light.svg">
+    </picture> ping # (address name) enabled (<picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-stop.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-stop.light.svg">
+        <img src="docs/mdi/cog-stop.light.svg">
+    </picture> when not)
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
+        <img src="docs/mdi/network.light.svg"> ping # able (<picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
+        <img src="docs/mdi/network-off.light.svg">
+        </picture> when not)
+    </picture>
 
 The next two rows are for `ping # since` and for identifying the target by address and name.
 
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/check-network.svg" class="icon"> `ping # since`
-* <img src="https://cdn.jsdelivr.net/npm/@mdi/svg/svg/tag.svg" class="icon"> `address` `name`
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/check-network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/check-network.light.svg">
+        <img src="docs/mdi/check-network.light.svg">
+    </picture> ping # since
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/tag.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/tag.light.svg">
+        <img src="docs/mdi/tag.light.svg"> address name
+    </picture>
