@@ -155,7 +155,7 @@ ifdef(`gpio_relay', `dnl
             or:
               - switch.is_off: _state_3
               - binary_sensor.is_off: _ping_all
-          timeout: 10s
+          timeout: 60s
       - if:
           condition:
             switch.is_on: _state_3
@@ -357,6 +357,8 @@ define(host, `__increment(`__count')dnl
       - id: _ping_`'__count
         name: ping __count ($1 $2)
         address: $1
+        interval: 15s
+        timeout: 2s
         on_state:
           - lvgl.widget.update:
               id: __ping_`'__count
