@@ -76,7 +76,11 @@ The adapter_relay uses a double-pole double-throw (DPDT) [signal relay](https://
 
 This solution uses the Module13.2 4Relay v1.1 and a separate M5-Bus Module Proto based adapter. The adapter can be built from the [adapter](kicad/projects/adapter) kicad project or hand made using its schematic for a reference. If hand made, the disconnected male pins should be clipped and the re-routing of signals made using bodge wires.
 
-<img src=docs/adapter.schematic.png class=dark>
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/adapter.schematic.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/adapter.schematic.light.png">
+    <img src="docs/adapter.schematic.light.png">
+</picture>
 
 Only the first [signal relay](https://www.amazon.com/gp/product/B0CWCTHCFT) in the module will be used.
 It will be configured to provide module input power to relay output power in a Normally Closed (NC) fashion.
@@ -86,11 +90,19 @@ We want the relay to operate in a NC fashion so that when power is removed from 
 Module input power must be galvanically isolated from the M5-Bus (stack) HPWR and system GND.
 **Remove** the jumpers that connect these.
 
-![](docs/relay.hpwr.png)
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/relay.hpwr.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/relay.hpwr.light.png">
+    <img src="docs/relay.hpwr.light.png">
+</picture>
 
 Set the relay jumpers in the "load" configuration.
 
-![](docs/relay.load.webp)
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/relay.load.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/relay.load.light.png">
+    <img src="docs/relay.load.light.png">
+</picture>
 
 The relay is hard-wired on the module in a Normally Open (NO) fashion.
 That is, the relay output power is connected by PCB trace to the NO pin on the relay.
