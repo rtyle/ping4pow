@@ -46,18 +46,16 @@ void M5CoreS3Touchscreen::update_touches() {
       }
       if (*this->from_) {
         (*this->from_)->publish_state(true);
+        // swallow this and future events from this gesture
+        return;
       }
-      // swallow this and future events from this gesture
-      return;
     }
   }
 
   // swallow events that started from the bezel until touch isReleased
   if (this->from_) {
     if (t.isReleased()) {
-      if (this->from_) {
-        (*this->from_)->publish_state(false);
-      }
+      (*this->from_)->publish_state(false);
       this->from_ = nullptr;
     }
     return;
