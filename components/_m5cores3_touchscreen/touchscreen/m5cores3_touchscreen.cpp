@@ -41,7 +41,7 @@ void M5CoreS3Touchscreen::update_touches() {
         case 1:
           this->from_ = &this->center_;
           break;
-	default:
+        default:
           this->from_ = &this->right_;
       }
       // publish_state(true),
