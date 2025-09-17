@@ -25,7 +25,8 @@ void M5CoreS3Touchscreen::update_touches() {
 
   if ((t.state & m5::touch_state_t::mask_touch) && (t.state & m5::touch_state_t::mask_change)) {
     // this is the beginning of a new gesture.
-    // if the last gesture started from the bezel, publish_state(false) and forget it.
+    // if the last gesture started from the bezel,
+    // publish_state(false) and forget it.
     if (this->from_ && *this->from_) {
       (*this->from_)->publish_state(false);
     }
@@ -40,15 +41,13 @@ void M5CoreS3Touchscreen::update_touches() {
         case 1:
           this->from_ = &this->center_;
           break;
-        case 2:
+	default:
           this->from_ = &this->right_;
-          break;
       }
-      if (*this->from_) {
-        (*this->from_)->publish_state(true);
-        // swallow this and future events from this gesture
-        return;
-      }
+      // publish_state(true),
+      // swallow this and future events from this gesture
+      (*this->from_)->publish_state(true);
+      return;
     }
   }
 
