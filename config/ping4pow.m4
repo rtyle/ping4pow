@@ -68,7 +68,7 @@ ifdef(`gpio_relay', `dnl
     pin:
       number: M5STACK_CORE_M5_BUS_1_03
       inverted: true
-    restore_mode: RESTORE_DEFAULT_ON
+    restore_mode: RESTORE_DEFAULT_OFF
     on_state:
       lvgl.widget.update:
         id: __power
