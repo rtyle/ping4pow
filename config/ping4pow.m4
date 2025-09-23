@@ -60,6 +60,38 @@ globals:
     type: int
     initial_value: "0"
 
+script:
+  # each switch in our state machine executes _enter for their state on_turn_on.
+  # all other states are exited.
+  - id: _enter
+    parameters:
+      state: int
+    then:
+      - lambda: |-
+          static std::array switch_button{
+            std::make_pair(id(_state_0), id(__state_0)),
+            std::make_pair(id(_state_1), id(__state_1)),
+            std::make_pair(id(_state_2), id(__state_2)),
+            std::make_pair(id(_state_3), id(__state_3)),
+            std::make_pair(id(_state_4), id(__state_4)),
+            std::make_pair(id(_state_5), id(__state_5)),
+          };
+          size_t index{0};
+          for (auto [_switch, button]: switch_button) {
+            if (index == state) {
+              if (2 == index || 4 == index) {
+                lv_obj_clear_flag(button, LV_OBJ_FLAG_HIDDEN);
+              }
+            }
+            else {
+              _switch->turn_off();
+              if (2 == index || 4 == index) {
+                lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
+              }
+            }
+            ++index;
+          }
+
 switch:
 ifdef(`gpio_relay', `dnl
   - id: _power
@@ -78,9 +110,9 @@ ifdef(`gpio_relay', `dnl
 )dnl
   # the following switches reflect states in a state machine.
   # they cooperate so that only one switch/state is on at a time.
-  # we start at state 1, conditionally advance through 2 & 3
-  # and when 4 is done we enter state 1 again.
-  # for testing, any of these states can be entered with a UI.
+  # we start at state 1, conditionally advance through 2, 3 & 4
+  # and when 5 is done we enter state 1 again.
+  # for testing, these states may be entered through a UI.
   # entering state 0 will stop the machine until state 0 is exited.
   - id: _state_0
     platform: lvgl
@@ -88,10 +120,9 @@ ifdef(`gpio_relay', `dnl
     name: 0. Stop
     restore_mode: ALWAYS_OFF
     on_turn_on:
-      - switch.turn_off: _state_1
-      - switch.turn_off: _state_2
-      - switch.turn_off: _state_3
-      - switch.turn_off: _state_4
+      - script.execute:
+          id: _enter
+          state: 0
     on_turn_off:
       # regardless of the restored state of switch 1,
       # if we try to turn it on now, its on_turn_on will not be invoked!
@@ -106,10 +137,9 @@ ifdef(`gpio_relay', `dnl
     name: 1. Wait for ping none
     restore_mode: ALWAYS_ON
     on_turn_on:
-      - switch.turn_off: _state_0
-      - switch.turn_off: _state_2
-      - switch.turn_off: _state_3
-      - switch.turn_off: _state_4
+      - script.execute:
+          id: _enter
+          state: 1
       - wait_until:
           condition:
             or:
@@ -123,69 +153,92 @@ ifdef(`gpio_relay', `dnl
   - id: _state_2
     platform: lvgl
     widget: __state_2
-    name: 2. Wait for ping all
+    name: 2. Wait while ping none
     restore_mode: ALWAYS_OFF
     on_turn_on:
-      - switch.turn_off: _state_0
-      - switch.turn_off: _state_1
-      - switch.turn_off: _state_3
-      - switch.turn_off: _state_4
+      - script.execute:
+          id: _enter
+          state: 2
       - wait_until:
           condition:
             or:
               - switch.is_off: _state_2
-              - binary_sensor.is_on: _ping_all
+              - binary_sensor.is_off: _ping_none
+          timeout: 20s
       - if:
           condition:
             switch.is_on: _state_2
           then:
-            - switch.turn_on: _state_3
+            - if:
+                condition:
+                  binary_sensor.is_off: _ping_none
+                then:
+                  - switch.turn_on: _state_1
+                else:
+                  - switch.turn_on: _state_3
   - id: _state_3
     platform: lvgl
     widget: __state_3
-    name: 3. Wait while ping all holds steady
+    name: 3. Wait for ping all
     restore_mode: ALWAYS_OFF
     on_turn_on:
-      - switch.turn_off: _state_0
-      - switch.turn_off: _state_1
-      - switch.turn_off: _state_2
-      - switch.turn_off: _state_4
+      - script.execute:
+          id: _enter
+          state: 3
       - wait_until:
           condition:
             or:
               - switch.is_off: _state_3
+              - binary_sensor.is_on: _ping_all
+      - if:
+          condition:
+            switch.is_on: _state_3
+          then:
+            - switch.turn_on: _state_4
+  - id: _state_4
+    platform: lvgl
+    widget: __state_4
+    name: 4. Wait while ping all
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - script.execute:
+          id: _enter
+          state: 4
+      - wait_until:
+          condition:
+            or:
+              - switch.is_off: _state_4
               - binary_sensor.is_off: _ping_all
           timeout: 60s
       - if:
           condition:
-            switch.is_on: _state_3
+            switch.is_on: _state_4
           then:
             - if:
                 condition:
                   binary_sensor.is_off: _ping_all
                 then:
-                  - switch.turn_on: _state_2
+                  - switch.turn_on: _state_3
                 else:
-                  - switch.turn_on: _state_4
-  - id: _state_4
+                  - switch.turn_on: _state_5
+  - id: _state_5
     platform: lvgl
-    widget: __state_4
-    name: 4. Power cycle
+    widget: __state_5
+    name: 5. Power cycle
     restore_mode: ALWAYS_OFF
     on_turn_on:
-      - switch.turn_off: _state_0
-      - switch.turn_off: _state_1
-      - switch.turn_off: _state_2
-      - switch.turn_off: _state_3
+      - script.execute:
+          id: _enter
+          state: 5
       - switch.turn_off: _power
       - lambda: !lambda id(_power_since)->set_when();
       - wait_until:
           condition:
-            switch.is_off: _state_4
+            switch.is_off: _state_5
           timeout: 10s
       - if:
           condition:
-            switch.is_on: _state_4
+            switch.is_on: _state_5
           then:
             - switch.turn_on: _power
             - lambda: !lambda id(_power_since)->set_when();
@@ -357,7 +410,7 @@ define(host, `__increment(`__count')dnl
       - id: _ping_`'__count
         name: ping __count ($1 $2)
         address: $1
-        interval: 15s
+        interval: 10s
         timeout: 2s
         on_state:
           - lvgl.widget.update:
@@ -458,12 +511,14 @@ lvgl:
                             dir: HOR
                             layout:
                               type: GRID
-                              grid_columns: [FR(1), FR(1), FR(1)]
+                              grid_columns: [
+                                FR(1), FR(1), FR(1), FR(1), FR(1), FR(1)]
                               grid_rows: [FR(1), FR(1), FR(1)]
                             widgets:
                               - button:
                                   id: __state_1
                                   grid_cell_column_pos: 0
+                                  grid_cell_column_span: 3
                                   grid_cell_row_pos: 0
                                   checkable: true
                                   widgets:
@@ -471,23 +526,37 @@ lvgl:
                                         text: "mdi_cog_pause`'mdi_network_off"
                               - button:
                                   id: __state_2
-                                  grid_cell_column_pos: 1
+                                  grid_cell_column_pos: 0
+                                  grid_cell_column_span: 3
+                                  grid_cell_row_pos: 0
+                                  checkable: true
+                                  hidden: true
+                                  widgets:
+                                    - label:
+                                        text: "mdi_cog_pause`'mdi_network_off`'mdi_dots_horizontal"
+                              - button:
+                                  id: __state_3
+                                  grid_cell_column_pos: 3
+                                  grid_cell_column_span: 3
                                   grid_cell_row_pos: 0
                                   checkable: true
                                   widgets:
                                     - label:
                                         text: "mdi_cog_pause`'mdi_network"
                               - button:
-                                  id: __state_3
-                                  grid_cell_column_pos: 2
+                                  id: __state_4
+                                  grid_cell_column_pos: 3
+                                  grid_cell_column_span: 3
                                   grid_cell_row_pos: 0
                                   checkable: true
+                                  hidden: true
                                   widgets:
                                     - label:
                                         text: "mdi_cog_pause`'mdi_network`'mdi_dots_horizontal"
                               - button:
                                   id: __state_0
                                   grid_cell_column_pos: 0
+                                  grid_cell_column_span: 2
                                   grid_cell_row_pos: 1
                                   checkable: true
                                   widgets:
@@ -502,7 +571,8 @@ lvgl:
                                           x ? "mdi_cog_stop" : "mdi_cog"};
                               - button:
                                   id: __power
-                                  grid_cell_column_pos: 1
+                                  grid_cell_column_pos: 2
+                                  grid_cell_column_span: 2
                                   grid_cell_row_pos: 1
                                   checkable: true
                                   bg_color: _bg_off_power
@@ -524,8 +594,9 @@ lvgl:
                                       else:
                                         - switch.turn_off: _power
                               - button:
-                                  id: __state_4
-                                  grid_cell_column_pos: 2
+                                  id: __state_5
+                                  grid_cell_column_pos: 4
+                                  grid_cell_column_span: 2
                                   grid_cell_row_pos: 1
                                   checkable: true
                                   widgets:
@@ -534,6 +605,7 @@ lvgl:
                               - button:
                                   id: __ping_none
                                   grid_cell_column_pos: 0
+                                  grid_cell_column_span: 2
                                   grid_cell_row_pos: 2
                                   checkable: true
                                   clickable: false
@@ -544,7 +616,8 @@ lvgl:
                                         text: "\U000F0C9B"
                               - button:
                                   id: __ping_some
-                                  grid_cell_column_pos: 1
+                                  grid_cell_column_pos: 2
+                                  grid_cell_column_span: 2
                                   grid_cell_row_pos: 2
                                   checkable: true
                                   clickable: false
@@ -556,7 +629,8 @@ lvgl:
                                         text: "0"
                               - button:
                                   id: __ping_all
-                                  grid_cell_column_pos: 2
+                                  grid_cell_column_pos: 4
+                                  grid_cell_column_span: 2
                                   grid_cell_row_pos: 2
                                   checkable: true
                                   clickable: false
