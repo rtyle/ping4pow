@@ -15,22 +15,25 @@ There are commercially available/configurable devices that address this issue.
 
 This is a better solution.
 
-Ping4pow can only directly control low voltage loads that can be safely handled by its relay.
-However, this includes the capability to control something like an [iot-power-relay](https://dlidirect.com/products/iot-power-relay)
-which can switch more demanding loads.
+Ping4pow can only switch loads that can be safely handled by its relay.
+Relay solutions that are embedded in its small footprint will only be able to switch low voltage loads.
+However, an external relay solution (like an [iot-power-relay](https://dlidirect.com/products/iot-power-relay))
+can be controlled by a GPIO pin for more demanding loads.
 
-## Requirements
+## Features
 
 * Small, attractive package
 * Display with touchscreen user interface
+* Display can be turned off
+* User interface can be locked
 * Home Assistant integrable but not required for automation
 * Wired (ethernet) access for reliable network monitoring
 * Powered by [Power-over-Ethernet](https://en.wikipedia.org/wiki/Power_over_Ethernet) (PoE)
-* Inserted in the low voltage power cord of sensitive equipment
+* Flexible relay solutions for handling loads
 * Galvanically isolated switching of equipment power
 * Network health is determined by [ping](https://en.wikipedia.org/wiki/Ping_(networking_utility))ing multiple IP addresses
-* Network failure is when all addresses can not be pinged.
-* Network recovery is when all addresses can be pinged steadily.
+* Network failure is when all addresses can not be pinged for a while.
+* Network recovery is when all addresses can be pinged for a while.
 * Upon network recovery, power is cycled.
 
 ## Architecture
@@ -53,6 +56,9 @@ To switch the load we will need a relay. M5Stack provides a 4Relay Module. Alter
 * [Module13.2 4Relay v1.1](https://docs.m5stack.com/en/module/4Relay%20Module%2013.2_V1.1)
 * [Module13.2 Proto](https://docs.m5stack.com/en/module/proto13.2)
 
+A Module13.2 Proto might also be used to bodge-wire the M5-Bus adapter and provide external access to the same GPIO pin used by the adapter_relay.
+This could be used to drive an external relay for more demanding loads.
+
 ### Software
 
 [ESPHome](https://esphome.io/) is used because of its ability to support our chosen hardware and the potential for other choices.
@@ -64,7 +70,7 @@ Optionally, such a device can be used by Home Assistant.
 
 ### Hardware
 
-The stack should be assembled with the core on top, followed by the relay solution, the adapter solution and finally the base.
+The stack should be assembled with the core on top, followed by the relay solution, the adapter solution and finally the PoE base.
 
 #### Module13.2 Proto adapter_relay
 
@@ -194,9 +200,10 @@ These states/switches are:
 
 0. `Stop`. When on, the state machine is stopped. Turn off to advance to state 1.
 1. Wait for `ping none`. Then advance to state 2.
-2. Wait for `ping all`. Then advance to state 3.
-3. Wait while `ping all` holds steady. Then advance to state 4; otherwise, retreat to state 2.
-4. `Power cycle`. Turn power off, pause, turn power on and then start over in state 1.
+2. Wait while `ping none`. Then advance to state 3; otherwise, retreat to state 1.
+3. Wait for `ping all`. Then advance to state 4.
+4. Wait while `ping all`. Then advance to state 5; otherwise, retreat to state 3.
+5. `Power cycle`. Turn power off, pause, turn power on and then start over in state 1.
 
 In addition, ping4pow exposes
 
@@ -268,7 +275,7 @@ The tiles are:
 
 ### State Tile
 
-The top row of buttons reflect states 1, 2 and 3.
+The top row of buttons reflect states 1, 2, 3 and 4.
 
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
@@ -279,6 +286,17 @@ The top row of buttons reflect states 1, 2 and 3.
         <img src="docs/mdi/network-off.light.svg">
         </picture>
     </picture> Wait for <code>ping none</code>
+* <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
+        <img src="docs/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
+        <img src="docs/mdi/network.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/dots-horizontal.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/dots-horizontal.light.svg">
+        <img src="docs/mdi/dots-horizontal.light.svg">
+    </picture> Wait while <code>ping none</code>
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
@@ -297,7 +315,7 @@ The top row of buttons reflect states 1, 2 and 3.
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/dots-horizontal.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/dots-horizontal.light.svg">
         <img src="docs/mdi/dots-horizontal.light.svg">
-    </picture> Wait while <code>ping all</code> holds steady
+    </picture> Wait while <code>ping all</code>
 
 The middle row of buttons reflect state 0, `power` and state 4
 
