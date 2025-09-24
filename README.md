@@ -114,7 +114,11 @@ The relay is hard-wired on the module in a Normally Open (NO) fashion.
 That is, the relay output power is connected by PCB trace to the NO pin on the relay.
 Cut this trace and add a bodge wire to connect the relay ouput power with the NC pin on the relay.
 
-<img src=docs/relay.png class=dark>
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/relay.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/relay.light.png">
+    <img src="docs/relay.light.png">
+</picture>
 
 Wire module input power pins to an adapter pigtail that accepts the plug of the power adapter of the controlled device.
 Alternately, cut the plug off the power adapter and wire the adapter directly to the 4relay input power plug.
