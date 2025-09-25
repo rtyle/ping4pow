@@ -34,10 +34,46 @@ ota:
 api:
   reboot_timeout: 0s
 web_server:
+  version: 3
+  sorting_groups:
+    - id: _state_group
+      name: State
+      sorting_weight: 0.0
+    - id: _ping_summary_group
+      name: Ping Summary
+      sorting_weight: 0.1
+    - id: _ping_target_group
+      name: Ping Targets
+      sorting_weight: 0.2
+    - id: _power_group
+      name: Power
+      sorting_weight: 0.3
+    - id: _uptime_group
+      name: Uptime
+      sorting_weight: 0.4
 
-.i2c: *m5stack_cores3_i2c
+debug:
+  update_interval: 10s
+
+text_sensor:
+  - platform: debug
+    device:
+      name: debug device
+    reset_reason:
+      name: debug reset_reason
 
 sensor:
+  - platform: debug
+    free:
+      name: debug free
+    block:
+      name: debug block
+    loop_time:
+      name: debug loop_time
+    psram:
+      name: debug psram
+    cpu_frequency:
+      name: debug cpu_frequency
 
 binary_sensor:
 
@@ -49,6 +85,10 @@ _m5stack_4relay_lgfx:
         index: 0
         name: power
         inverted: true
+        icon: mdi:power
+        web_server:
+          sorting_group_id: _power_group
+          sorting_weight: 0
         on_state:
           lvgl.widget.update:
             id: __power
@@ -101,6 +141,10 @@ ifdef(`gpio_relay', `dnl
       number: M5STACK_CORE_M5_BUS_1_03
       inverted: true
     restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:power
+    web_server:
+      sorting_group_id: _power_group
+      sorting_weight: 0
     on_state:
       lvgl.widget.update:
         id: __power
@@ -117,8 +161,12 @@ ifdef(`gpio_relay', `dnl
   - id: _state_0
     platform: lvgl
     widget: __state_0
-    name: 0. Stop
+    name: stop
     restore_mode: ALWAYS_OFF
+    icon: mdi:cog
+    web_server:
+      sorting_group_id: _state_group
+      sorting_weight: 0
     on_turn_on:
       - script.execute:
           id: _enter
@@ -134,8 +182,12 @@ ifdef(`gpio_relay', `dnl
   - id: _state_1
     platform: lvgl
     widget: __state_1
-    name: 1. Wait for ping none
+    name: wait for ping none
     restore_mode: ALWAYS_ON
+    icon: mdi:network-off
+    web_server:
+      sorting_group_id: _state_group
+      sorting_weight: 1
     on_turn_on:
       - script.execute:
           id: _enter
@@ -153,8 +205,12 @@ ifdef(`gpio_relay', `dnl
   - id: _state_2
     platform: lvgl
     widget: __state_2
-    name: 2. Wait while ping none
+    name: wait while ping none
     restore_mode: ALWAYS_OFF
+    icon: mdi:dots-horizontal
+    web_server:
+      sorting_group_id: _state_group
+      sorting_weight: 2
     on_turn_on:
       - script.execute:
           id: _enter
@@ -179,8 +235,12 @@ ifdef(`gpio_relay', `dnl
   - id: _state_3
     platform: lvgl
     widget: __state_3
-    name: 3. Wait for ping all
+    name: wait for ping all
     restore_mode: ALWAYS_OFF
+    icon: mdi:network
+    web_server:
+      sorting_group_id: _state_group
+      sorting_weight: 3
     on_turn_on:
       - script.execute:
           id: _enter
@@ -198,8 +258,12 @@ ifdef(`gpio_relay', `dnl
   - id: _state_4
     platform: lvgl
     widget: __state_4
-    name: 4. Wait while ping all
+    name: wait while ping all
     restore_mode: ALWAYS_OFF
+    icon: mdi:dots-horizontal
+    web_server:
+      sorting_group_id: _state_group
+      sorting_weight: 4
     on_turn_on:
       - script.execute:
           id: _enter
@@ -224,8 +288,12 @@ ifdef(`gpio_relay', `dnl
   - id: _state_5
     platform: lvgl
     widget: __state_5
-    name: 5. Power cycle
+    name: power cycle
     restore_mode: ALWAYS_OFF
+    icon: mdi:power-cycle
+    web_server:
+      sorting_group_id: _state_group
+      sorting_weight: 5
     on_turn_on:
       - script.execute:
           id: _enter
@@ -354,12 +422,20 @@ _since:
   - id: _boot_since
     name: since boot
     when: 0ns
+    icon: mdi:arrow-up-bold-circle
+    web_server:
+      sorting_group_id: _uptime_group
+      sorting_weight: 0
     on_value:
       lvgl.label.update:
         id: __boot_since
         text: !lambda return _format::duration(x);
   - id: _power_since
     name: since power cycle
+    icon: mdi:power-cycle
+    web_server:
+      sorting_group_id: _power_group
+      sorting_weight: 1
     on_value:
       lvgl.label.update:
         id: __power_since
@@ -369,6 +445,10 @@ _ping:
   - none:
       id: _ping_none
       name: ping none
+      icon: mdi:network-off
+      web_server:
+        sorting_group_id: _ping_summary_group
+        sorting_weight: 0
       on_state:
         lvgl.widget.update:
           id: __ping_none
@@ -377,6 +457,10 @@ _ping:
     some:
       id: _ping_some
       name: ping some
+      icon: mdi:circle-half-full
+      web_server:
+        sorting_group_id: _ping_summary_group
+        sorting_weight: 1
       on_state:
         lvgl.widget.update:
           id: __ping_some
@@ -385,6 +469,10 @@ _ping:
     all:
       id: _ping_all
       name: ping all
+      icon: mdi:network
+      web_server:
+        sorting_group_id: _ping_summary_group
+        sorting_weight: 2
       on_state:
         lvgl.widget.update:
           id: __ping_all
@@ -393,6 +481,10 @@ _ping:
     count:
       id: _ping_count
       name: ping count
+      icon: mdi:pound
+      web_server:
+        sorting_group_id: _ping_summary_group
+        sorting_weight: 3
       on_value:
         lvgl.label.update:
           id: __ping_some_label
@@ -400,6 +492,10 @@ _ping:
     since:
       id: _ping_since
       name: ping since
+      icon: mdi:check-network
+      web_server:
+        sorting_group_id: _ping_summary_group
+        sorting_weight: 4
       on_value:
         lvgl.label.update:
           id: __ping_since
@@ -412,6 +508,10 @@ define(host, `__increment(`__count')dnl
         address: $1
         interval: 10s
         timeout: 2s
+        icon: mdi:cog
+        web_server:
+          sorting_group_id: _ping_target_group
+          sorting_weight: __count
         on_state:
           - lvgl.widget.update:
               id: __ping_`'__count
@@ -425,6 +525,10 @@ define(host, `__increment(`__count')dnl
         able:
           id: _ping_`'__count`'_able
           name: ping __count able
+          icon: mdi:network
+          web_server:
+            sorting_group_id: _ping_target_group
+            sorting_weight: __count
           on_state:
             - lvgl.widget.update:
                 id: __ping_`'__count`'_able
@@ -438,6 +542,10 @@ define(host, `__increment(`__count')dnl
         since:
           id: _ping_`'__count`'_since
           name: ping __count since
+          icon: mdi:check-network
+          web_server:
+            sorting_group_id: _ping_target_group
+            sorting_weight: __count
           on_value:
             lvgl.label.update:
               id: __ping_`'__count`'_since
