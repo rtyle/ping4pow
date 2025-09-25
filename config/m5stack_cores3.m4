@@ -59,13 +59,12 @@ define(M5STACK_CORE_M5_BUS_1_12, GPIO14)dnl
     refresh: 0s
 
   esphome: &NAMESPACE`'_esphome
-    platformio_options:
-      board_build.f_cpu: 240000000L
     libraries:
       - m5stack/M5Unified@^0.1.11
 
   esp32: &NAMESPACE`'_esp32
-    board: esp32-s3-devkitc-1
+    board: m5stack-cores3
+    cpu_frequency: 240Mhz
     framework:
       type: esp-idf
 
