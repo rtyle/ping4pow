@@ -202,12 +202,12 @@ Only one state/switch can be active/on at a time.
 States can be entered through a switch action in the user interface.
 These states/switches are:
 
-0. `stop`. When on, the state machine is stopped. Turn off to advance to the next state.
-1. wait for `ping none`, then advance to the next state.
-2. wait while `ping none`, then advance to the next state; otherwise, the previous state.
-3. wait for `ping all`, then advance to the next state.
-4. wait while `ping all`, then advance to the next state; otherwise, the previous state.
-5. `power cycle`: turn power off, pause, turn power on and then start over.
+* `stop`. When on, the state machine is stopped. Turn off to advance to the next state.
+* wait for `ping none`, then advance to the next state.
+* wait while `ping none`, then advance to the next state; otherwise, the previous state.
+* wait for `ping all`, then advance to the next state.
+* wait while `ping all`, then advance to the next state; otherwise, the previous state.
+* `power cycle`: turn power off, pause, turn power on and then start over.
 
 In addition, ping4pow exposes
 
