@@ -20,7 +20,16 @@ esphome:
   <<: *m5stack_cores3_esphome
   name: ping4pow
 
-esp32: *m5stack_cores3_esp32
+define(`target_count', 16)dnl
+esp32:
+  board: m5stack-cores3
+  cpu_frequency: 240Mhz
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_LWIP_MAX_SOCKETS: "eval(10 + 8 + target_count)"
+      CONFIG_LWIP_MAX_RAW_PCBS: "eval(16 + target_count)"
+undefine(`target_count')dnl
 
 board_m5cores3: *m5stack_cores3_board_m5cores3
 
@@ -53,7 +62,7 @@ web_server:
       sorting_weight: 0.4
 
 debug:
-  update_interval: 10s
+  update_interval: 60s
 
 text_sensor:
   - platform: debug
@@ -109,23 +118,23 @@ script:
     then:
       - lambda: |-
           static std::array switch_button{
-            std::make_pair(id(_state_0), id(__state_0)),
-            std::make_pair(id(_state_1), id(__state_1)),
-            std::make_pair(id(_state_2), id(__state_2)),
-            std::make_pair(id(_state_3), id(__state_3)),
-            std::make_pair(id(_state_4), id(__state_4)),
-            std::make_pair(id(_state_5), id(__state_5)),
+            std::make_tuple(id(_state_0), id(__state_0), false),
+            std::make_tuple(id(_state_1), id(__state_1), false),
+            std::make_tuple(id(_state_2), id(__state_2), true),
+            std::make_tuple(id(_state_3), id(__state_3), false),
+            std::make_tuple(id(_state_4), id(__state_4), true),
+            std::make_tuple(id(_state_5), id(__state_5), false),
           };
           size_t index{0};
-          for (auto [_switch, button]: switch_button) {
+          for (auto [_switch, button, hidden]: switch_button) {
             if (index == state) {
-              if (2 == index || 4 == index) {
+              if (hidden) {
                 lv_obj_clear_flag(button, LV_OBJ_FLAG_HIDDEN);
               }
             }
             else {
               _switch->turn_off();
-              if (2 == index || 4 == index) {
+              if (hidden) {
                 lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
               }
             }
