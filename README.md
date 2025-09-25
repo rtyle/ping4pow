@@ -202,12 +202,12 @@ Only one state/switch can be active/on at a time.
 States can be entered through a switch action in the user interface.
 These states/switches are:
 
-0. `Stop`. When on, the state machine is stopped. Turn off to advance to state 1.
+0. `stop`. When on, the state machine is stopped. Turn off to advance to state 1.
 1. Wait for `ping none`. Then advance to state 2.
 2. Wait while `ping none`. Then advance to state 3; otherwise, retreat to state 1.
 3. Wait for `ping all`. Then advance to state 4.
 4. Wait while `ping all`. Then advance to state 5; otherwise, retreat to state 3.
-5. `Power cycle`. Turn power off, pause, turn power on and then start over in state 1.
+5. `power cycle`. Turn power off, pause, turn power on and then start over in state 1.
 
 In addition, ping4pow exposes
 
@@ -327,7 +327,7 @@ The middle row of buttons reflect state 0, `power` and state 4
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog.light.svg">
         <img src="docs/mdi/cog.light.svg">
-    </picture> <code>Stop</code> (<picture>
+    </picture> <code>stop</code> (<picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-stop.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-stop.light.svg">
         <img src="docs/mdi/cog-stop.light.svg">
@@ -341,7 +341,7 @@ The middle row of buttons reflect state 0, `power` and state 4
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power-cycle.dark.svg">
         <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power-cycle.light.svg">
         <img src="docs/mdi/power-cycle.light.svg">
-    </picture> <code>Power cycle</code>
+    </picture> <code>power cycle</code>
 
 The bottom row reflects the summary ping sensors.
 At most, one of these will be on.
