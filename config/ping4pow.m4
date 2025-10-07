@@ -229,7 +229,7 @@ ifdef(`gpio_relay', `dnl
             or:
               - switch.is_off: _state_2
               - binary_sensor.is_off: _ping_none
-          timeout: 20s
+          timeout: 10s
       - if:
           condition:
             switch.is_on: _state_2
@@ -499,15 +499,15 @@ _ping:
           id: __ping_some_label
           text: !lambda return to_string(static_cast<int>(x));
     since:
-      id: _ping_since
-      name: ping since
+      id: _ping_since_change
+      name: ping since change
       icon: mdi:check-network
       web_server:
         sorting_group_id: _ping_summary_group
         sorting_weight: 4
       on_value:
         lvgl.label.update:
-          id: __ping_since
+          id: __ping_since_change
           text: !lambda return _format::duration(x);
     targets:
 define(`__count', `-1')dnl
@@ -549,15 +549,15 @@ define(host, `__increment(`__count')dnl
                   return std::string{
                     x ? "mdi_network" : "mdi_network_off"};
         since:
-          id: _ping_`'__count`'_since
-          name: ping __count since
+          id: _ping_`'__count`'_since_change
+          name: ping __count since change
           icon: mdi:check-network
           web_server:
             sorting_group_id: _ping_target_group
             sorting_weight: __count
           on_value:
             lvgl.label.update:
-              id: __ping_`'__count`'_since
+              id: __ping_`'__count`'_since_change
               text: !lambda return _format::duration(x);')dnl
 include(hosts.m4)dnl
 undefine(`host')dnl
@@ -772,7 +772,7 @@ lvgl:
                                   text: "mdi_check_network"
                               - label:
                                   styles: __label_style
-                                  id: __ping_since
+                                  id: __ping_since_change
                                   grid_cell_column_pos: 1
                                   grid_cell_row_pos: 0
                                   text: "N/A"
@@ -846,7 +846,7 @@ define(host, `__increment(`__count')dnl
                                   text: "mdi_check_network"
                               - label:
                                   styles: __label_style
-                                  id: __ping_`'__count`'_since
+                                  id: __ping_`'__count`'_since_change
                                   grid_cell_column_pos: 1
                                   grid_cell_row_pos: 1
                                   grid_cell_column_span: 5
