@@ -37,7 +37,7 @@ void Target::publish(bool success) {
     ESP_LOGW(TAG, "%s ping failure", this->tag_.c_str());
   }
   if (this->success_ != success) {
-    ESP_LOGD(TAG, "%s ping %s", this->tag_.c_str(), success ? "failure→success" : "success→failure");
+    ESP_LOGI(TAG, "%s ping %s", this->tag_.c_str(), success ? "failure→success" : "success→failure");
     this->success_ = success;
     this->when_ = esp_timer_get_time();
     if (this->able_)
