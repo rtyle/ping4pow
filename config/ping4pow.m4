@@ -1,8 +1,33 @@
-dnl This YAML is not intended for direct consumption by esphome.
-dnl Because its YAML parser does not support anchors and aliases
-dnl between files using !include, we get that feature by including
-dnl files using m4.
-dnl   m4 ping4pow.m4 > ping4pow.yaml
+dnl NAME
+dnl   ping4pow - ping hosts as a condition for powering a load
+dnl
+dnl SYNOPSIS
+dnl   m4 [options] ping4pow.m4 > ping4pow.yaml
+dnl
+dnl DESCRIPTION
+dnl   Use m4 to preprocess this YAML for esphome
+dnl   because esphome's YAML parser does not support anchors and aliases
+dnl   between files using !include.
+dnl   m4 macro definitions and expansions are used to enhance readability
+dnl   and maintainability.
+dnl
+dnl OPTIONS
+dnl   -DNAME=name
+dnl     Value of the name key of the esphome component.
+dnl     This will be used for the mDNS name of the device.
+ifdef(`NAME', `', `define(`NAME', `ping4pow')')dnl
+dnl
+dnl   -DHOSTS=hosts
+dnl     Name of the file that defines the hosts to be pinged.
+dnl     Each line should define a host by invoking the host macro
+dnl     with the host's address and name.
+dnl
+ifdef(`HOSTS', `', `define(`HOSTS', `hosts.m4')')dnl
+dnl
+dnl   -DGPIO_RELAY
+dnl     Control the loads NC relay through a GPIO pin
+dnl     as opposed to an M5Stack 4Relay module.
+dnl
 ---
 
 include(m5stack_cores3.m4)dnl
@@ -18,7 +43,7 @@ external_components:
 
 esphome:
   <<: *m5stack_cores3_esphome
-  name: ping4pow
+  name: NAME
 
 define(`target_count', 16)dnl
 esp32:
@@ -86,7 +111,7 @@ sensor:
 
 binary_sensor:
 
-ifdef(`gpio_relay', `', `dnl
+ifdef(`GPIO_RELAY', `', `dnl
 _m5stack_4relay_lgfx:
   - id: _relays
     relays:
@@ -142,7 +167,7 @@ script:
           }
 
 switch:
-ifdef(`gpio_relay', `dnl
+ifdef(`GPIO_RELAY', `dnl
   - id: _power
     name: power
     platform: gpio
@@ -559,7 +584,7 @@ define(host, `__increment(`__count')dnl
             lvgl.label.update:
               id: __ping_`'__count`'_since_change
               text: !lambda return _format::duration(x);')dnl
-include(hosts.m4)dnl
+include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
 
@@ -862,7 +887,7 @@ define(host, `__increment(`__count')dnl
                                   grid_cell_row_pos: 2
                                   grid_cell_column_span: 5
                                   text: "$1 $2"')dnl
-include(hosts.m4)dnl
+include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
                     - button:
@@ -936,7 +961,7 @@ _rotation:
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
       - __ping_`'__count`'_tile')dnl
-include(hosts.m4)dnl
+include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
     iterators:
