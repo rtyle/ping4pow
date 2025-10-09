@@ -88,12 +88,39 @@ web_server:
 debug:
   update_interval: 60s
 
+define(`__increment', `define(`$1', incr($1))')dnl
 text_sensor:
   - platform: debug
     device:
       name: debug device
     reset_reason:
       name: debug reset_reason
+  - platform: template
+    id: _boot_since_text
+    name: since boot (D HH:MM:SS)
+    icon: mdi:arrow-up-bold-circle
+    web_server:
+      sorting_group_id: _uptime_group
+      sorting_weight: 1
+  - platform: template
+    id: _ping_since_change_text
+    name: ping since change (D HH:MM:SS)
+    icon: mdi:check-network
+    web_server:
+      sorting_group_id: _ping_summary_group
+      sorting_weight: 5
+define(`__count', `-1')dnl
+define(host, `__increment(`__count')dnl
+  - platform: template
+    id: _ping_`'__count`'_since_change_text
+    name: ping __count since change (D HH:MM:SS)
+    icon: mdi:check-network
+    web_server:
+      sorting_group_id: _ping_target_group
+      sorting_weight: __count')dnl
+include(HOSTS)dnl
+undefine(`host')dnl
+undefine(`__count')dnl
 
 sensor:
   - platform: debug
@@ -447,7 +474,6 @@ font:
           - "mdi_power_cycle"
           - "mdi_tag"
 dnl
-define(`__increment', `define(`$1', incr($1))')dnl
 
 _format:
 
@@ -460,9 +486,12 @@ _since:
       sorting_group_id: _uptime_group
       sorting_weight: 0
     on_value:
-      lvgl.label.update:
-        id: __boot_since
-        text: !lambda return _format::duration(x);
+      - text_sensor.template.publish:
+          id: _boot_since_text
+          state: !lambda return _format::duration(x);
+      - lvgl.label.update:
+          id: __boot_since
+          text: !lambda return _format::duration(x);
   - id: _power_since
     name: since power cycle
     icon: mdi:power-cycle
@@ -530,9 +559,12 @@ _ping:
         sorting_group_id: _ping_summary_group
         sorting_weight: 4
       on_value:
-        lvgl.label.update:
-          id: __ping_since_change
-          text: !lambda return _format::duration(x);
+        - text_sensor.template.publish:
+            id: _ping_since_change_text
+            state: !lambda return _format::duration(x);
+        - lvgl.label.update:
+            id: __ping_since_change
+            text: !lambda return _format::duration(x);
     targets:
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
@@ -580,9 +612,12 @@ define(host, `__increment(`__count')dnl
             sorting_group_id: _ping_target_group
             sorting_weight: __count
           on_value:
-            lvgl.label.update:
-              id: __ping_`'__count`'_since_change
-              text: !lambda return _format::duration(x);')dnl
+            - text_sensor.template.publish:
+                id: _ping_`'__count`'_since_change_text
+                state: !lambda return _format::duration(x);
+            - lvgl.label.update:
+                id: __ping_`'__count`'_since_change
+                text: !lambda return _format::duration(x);')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
