@@ -12,7 +12,7 @@ namespace _format {
 
 std::string duration(float seconds) {
   if (std::isnan(seconds)) {
-    return "N/A";
+    return "NA";
   }
 
   auto result{[](uint32_t remainder) -> std::array<uint32_t, 4> {
