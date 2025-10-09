@@ -1,3 +1,6 @@
 /.esphome/
 /hosts.m4
+/hosts-*.m4
 /ping4pow.yaml
+/ping4pow-*.yaml
+/ping4pow-*.sh
