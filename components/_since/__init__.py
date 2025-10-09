@@ -18,7 +18,15 @@ def since_schema(class_: MockObjClass = Since) -> cv.Schema:
                 cv.Optional(CONF_WHEN): cv.positive_time_period_nanoseconds,
             }
         )
-        .extend(sensor.sensor_schema(class_))
+        .extend(
+            sensor.sensor_schema(
+                class_,
+                unit_of_measurement="s",
+                accuracy_decimals=0,
+                device_class="duration",
+                state_class="measurement",
+            )
+        )
         .extend(cv.polling_component_schema("10s"))
     )
 

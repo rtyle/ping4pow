@@ -21,7 +21,6 @@ dnl   -DHOSTS=hosts
 dnl     Name of the file that defines the hosts to be pinged.
 dnl     Each line should define a host by invoking the host macro
 dnl     with the host's address and name.
-dnl
 ifdef(`HOSTS', `', `define(`HOSTS', `hosts.m4')')dnl
 dnl
 dnl   -DGPIO_RELAY
