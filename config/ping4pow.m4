@@ -103,6 +103,13 @@ text_sensor:
       sorting_group_id: _uptime_group
       sorting_weight: 1
   - platform: template
+    id: _power_since_text
+    name: since power cycle (D HH:MM:SS)
+    icon: mdi:power-cycle
+    web_server:
+      sorting_group_id: _power_group
+      sorting_weight: 2
+  - platform: template
     id: _ping_since_change_text
     name: ping since change (D HH:MM:SS)
     icon: mdi:check-network
@@ -499,9 +506,12 @@ _since:
       sorting_group_id: _power_group
       sorting_weight: 1
     on_value:
-      lvgl.label.update:
-        id: __power_since
-        text: !lambda return _format::duration(x);
+      - text_sensor.template.publish:
+          id: _power_since_text
+          state: !lambda return _format::duration(x);
+      - lvgl.label.update:
+          id: __power_since
+          text: !lambda return _format::duration(x);
 
 _ping:
   - none:
