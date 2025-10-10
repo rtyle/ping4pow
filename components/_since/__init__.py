@@ -3,7 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import sensor, text_sensor
 from esphome.cpp_generator import MockObjClass
 
-DEPENDENCIES = ["sensor"]
+DEPENDENCIES = ["sensor", "_format"]
 
 since_ns = cg.esphome_ns.namespace("_since")
 Since = since_ns.class_("Since", cg.PollingComponent, sensor.Sensor)
