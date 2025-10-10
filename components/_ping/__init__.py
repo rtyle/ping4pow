@@ -46,7 +46,9 @@ CONFIG_SCHEMA = cv.All(
                             cv.Optional(
                                 CONF_TIMEOUT, default="4s"
                             ): cv.positive_time_period_milliseconds,
-                            cv.Optional(CONF_ABLE): binary_sensor.binary_sensor_schema(),
+                            cv.Optional(
+                                CONF_ABLE
+                            ): binary_sensor.binary_sensor_schema(),
                             cv.Optional(CONF_SINCE): _since.since_schema(),
                         }
                     )
@@ -97,4 +99,6 @@ async def to_code(configs):
                 if CONF_SINCE in target_config:
                     since_config = target_config[CONF_SINCE]
                     await _since.to_code([since_config])
-                    cg.add(target.set_since(await cg.get_variable(since_config[CONF_ID])))
+                    cg.add(
+                        target.set_since(await cg.get_variable(since_config[CONF_ID]))
+                    )
