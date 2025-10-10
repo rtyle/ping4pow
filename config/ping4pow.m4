@@ -88,46 +88,12 @@ web_server:
 debug:
   update_interval: 60s
 
-define(`__increment', `define(`$1', incr($1))')dnl
 text_sensor:
   - platform: debug
     device:
       name: debug device
     reset_reason:
       name: debug reset_reason
-  - platform: template
-    id: _boot_since_text
-    name: since boot (D HH:MM:SS)
-    icon: mdi:arrow-up-bold-circle
-    web_server:
-      sorting_group_id: _uptime_group
-      sorting_weight: 1
-  - platform: template
-    id: _power_since_text
-    name: since power cycle (D HH:MM:SS)
-    icon: mdi:power-cycle
-    web_server:
-      sorting_group_id: _power_group
-      sorting_weight: 2
-  - platform: template
-    id: _ping_since_change_text
-    name: ping since change (D HH:MM:SS)
-    icon: mdi:check-network
-    web_server:
-      sorting_group_id: _ping_summary_group
-      sorting_weight: 5
-define(`__count', `-1')dnl
-define(host, `__increment(`__count')dnl
-  - platform: template
-    id: _ping_`'__count`'_since_change_text
-    name: ping __count since change (D HH:MM:SS)
-    icon: mdi:check-network
-    web_server:
-      sorting_group_id: _ping_target_group
-      sorting_weight: __count')dnl
-include(HOSTS)dnl
-undefine(`host')dnl
-undefine(`__count')dnl
 
 sensor:
   - platform: debug
@@ -492,17 +458,28 @@ _since:
     web_server:
       sorting_group_id: _uptime_group
       sorting_weight: 0
-    text: _boot_since_text
     label: __boot_since
+    text:
+      name: since boot (D HH:MM:SS)
+      icon: mdi:arrow-up-bold-circle
+      web_server:
+        sorting_group_id: _uptime_group
+        sorting_weight: 1
   - id: _power_since
     name: since power cycle
     icon: mdi:power-cycle
     web_server:
       sorting_group_id: _power_group
       sorting_weight: 1
-    text: _power_since_text
     label: __power_since
+    text:
+      name: since power cycle (D HH:MM:SS)
+      icon: mdi:power-cycle
+      web_server:
+        sorting_group_id: _power_group
+        sorting_weight: 2
 
+define(`__increment', `define(`$1', incr($1))')dnl
 _ping:
   - none:
       id: _ping_none
@@ -558,8 +535,13 @@ _ping:
       web_server:
         sorting_group_id: _ping_summary_group
         sorting_weight: 4
-      text: _ping_since_change_text
       label: __ping_since_change
+      text:
+        name: ping since change (D HH:MM:SS)
+        icon: mdi:check-network
+        web_server:
+          sorting_group_id: _ping_summary_group
+          sorting_weight: 5
     targets:
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
@@ -606,8 +588,13 @@ define(host, `__increment(`__count')dnl
           web_server:
             sorting_group_id: _ping_target_group
             sorting_weight: __count
-          text: _ping_`'__count`'_since_change_text
-          label: __ping_`'__count`'_since_change')dnl
+          label: __ping_`'__count`'_since_change
+          text:
+            name: ping __count since change (D HH:MM:SS)
+            icon: mdi:check-network
+            web_server:
+              sorting_group_id: _ping_target_group
+              sorting_weight: __count')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
