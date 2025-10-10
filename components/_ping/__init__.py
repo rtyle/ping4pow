@@ -77,9 +77,8 @@ async def to_code(configs):
             cg.add(ping.set_count(await sensor.new_sensor(config[CONF_COUNT])))
         if CONF_SINCE in config:
             since_config = config[CONF_SINCE]
-            since = await sensor.new_sensor(since_config)
-            await cg.register_component(since, since_config)
-            cg.add(ping.set_since(since))
+            await _since.to_code([since_config])
+            cg.add(ping.set_since(await cg.get_variable(since_config[CONF_ID])))
         if CONF_TARGETS in config:
             for target_config in config[CONF_TARGETS]:
                 target = await switch.new_switch(target_config)
@@ -97,6 +96,5 @@ async def to_code(configs):
                     )
                 if CONF_SINCE in target_config:
                     since_config = target_config[CONF_SINCE]
-                    since = await sensor.new_sensor(since_config)
-                    await cg.register_component(since, since_config)
-                    cg.add(target.set_since(since))
+                    await _since.to_code([since_config])
+                    cg.add(target.set_since(await cg.get_variable(since_config[CONF_ID])))

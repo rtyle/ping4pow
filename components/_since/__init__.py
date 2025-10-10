@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import sensor
+from esphome.components import sensor, text_sensor
 from esphome.cpp_generator import MockObjClass
 
 DEPENDENCIES = ["sensor"]
@@ -9,6 +9,8 @@ since_ns = cg.esphome_ns.namespace("_since")
 Since = since_ns.class_("Since", cg.PollingComponent, sensor.Sensor)
 
 CONF_WHEN = "when"
+CONF_TEXT = "text"
+CONF_LABEL = "label"
 
 
 def since_schema(class_: MockObjClass = Since) -> cv.Schema:
@@ -16,6 +18,8 @@ def since_schema(class_: MockObjClass = Since) -> cv.Schema:
         cv.Schema(
             {
                 cv.Optional(CONF_WHEN): cv.positive_time_period_nanoseconds,
+                cv.Optional(CONF_TEXT): cv.use_id(text_sensor.TextSensor),
+                cv.Optional(CONF_LABEL): cv.use_id(cg.global_ns.class_("lv_obj_t")),
             }
         )
         .extend(
@@ -40,3 +44,7 @@ async def to_code(configs):
         await cg.register_component(since, config)
         if CONF_WHEN in config:
             cg.add(since.set_when(config[CONF_WHEN]))
+        if CONF_TEXT in config:
+            cg.add(since.set_text(await cg.get_variable(config[CONF_TEXT])))
+        if CONF_LABEL in config:
+            cg.add(since.set_label(await cg.get_variable(config[CONF_LABEL])))

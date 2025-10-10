@@ -492,26 +492,16 @@ _since:
     web_server:
       sorting_group_id: _uptime_group
       sorting_weight: 0
-    on_value:
-      - text_sensor.template.publish:
-          id: _boot_since_text
-          state: !lambda return _format::duration(x);
-      - lvgl.label.update:
-          id: __boot_since
-          text: !lambda return _format::duration(x);
+    text: _boot_since_text
+    label: __boot_since
   - id: _power_since
     name: since power cycle
     icon: mdi:power-cycle
     web_server:
       sorting_group_id: _power_group
       sorting_weight: 1
-    on_value:
-      - text_sensor.template.publish:
-          id: _power_since_text
-          state: !lambda return _format::duration(x);
-      - lvgl.label.update:
-          id: __power_since
-          text: !lambda return _format::duration(x);
+    text: _power_since_text
+    label: __power_since
 
 _ping:
   - none:
@@ -568,13 +558,8 @@ _ping:
       web_server:
         sorting_group_id: _ping_summary_group
         sorting_weight: 4
-      on_value:
-        - text_sensor.template.publish:
-            id: _ping_since_change_text
-            state: !lambda return _format::duration(x);
-        - lvgl.label.update:
-            id: __ping_since_change
-            text: !lambda return _format::duration(x);
+      text: _ping_since_change_text
+      label: __ping_since_change
     targets:
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
@@ -621,13 +606,8 @@ define(host, `__increment(`__count')dnl
           web_server:
             sorting_group_id: _ping_target_group
             sorting_weight: __count
-          on_value:
-            - text_sensor.template.publish:
-                id: _ping_`'__count`'_since_change_text
-                state: !lambda return _format::duration(x);
-            - lvgl.label.update:
-                id: __ping_`'__count`'_since_change
-                text: !lambda return _format::duration(x);')dnl
+          text: _ping_`'__count`'_since_change_text
+          label: __ping_`'__count`'_since_change')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
