@@ -23,6 +23,10 @@ dnl     Each line should define a host by invoking the host macro
 dnl     with the host's address and name.
 ifdef(`HOSTS', `', `define(`HOSTS', `hosts.m4')')dnl
 dnl
+dnl   -DLOGGER_LEVEL=logger_level
+dnl     Value of the level key of the logger component.
+ifdef(`LOGGER_LEVEL', `', `define(`LOGGER_LEVEL', `INFO')')dnl
+dnl
 dnl   -DGPIO_RELAY
 dnl     Control the loads NC relay through a GPIO pin
 dnl     as opposed to an M5Stack 4Relay module.
@@ -58,7 +62,7 @@ undefine(`target_count')dnl
 board_m5cores3: *m5stack_cores3_board_m5cores3
 
 logger:
-  level: INFO
+  level: LOGGER_LEVEL
 
 ethernet: *m5stack_lan_poe_v12_ethernet_m5cores3_display
 
@@ -173,7 +177,7 @@ ifdef(`GPIO_RELAY', `dnl
     pin:
       number: M5STACK_CORE_M5_BUS_1_03
       inverted: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_ON
     icon: mdi:power
     web_server:
       sorting_group_id: _power_group
