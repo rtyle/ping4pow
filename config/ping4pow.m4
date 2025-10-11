@@ -390,6 +390,7 @@ define(mdi_cog_pause, \U000F1933)dnl
 define(mdi_dots_horizontal, \U000F01D8)dnl
 define(mdi_lock, \U000F033E)dnl
 define(mdi_lock_open, \U000F033F)dnl
+define(mdi_map_marker, \U000F034E)dnl
 define(mdi_network, \U000F06F3)dnl
 define(mdi_network_off, \U000F0C9B)dnl
 define(mdi_power, \U000F0425)dnl
@@ -418,6 +419,7 @@ font:
           - "mdi_dots_horizontal"
           - "mdi_lock"
           - "mdi_lock_open"
+          - "mdi_map_marker"
           - "mdi_network"
           - "mdi_network_off"
           - "mdi_power"
@@ -445,6 +447,7 @@ font:
           - "mdi_dots_horizontal"
           - "mdi_lock"
           - "mdi_lock_open"
+          - "mdi_map_marker"
           - "mdi_network"
           - "mdi_network_off"
           - "mdi_power"
@@ -853,7 +856,7 @@ define(host, `__increment(`__count')dnl
                                 - FR(1)
                                 - FR(1)
                                 - FR(1)
-                              grid_rows: [FR(1), FR(1), FR(1)]
+                              grid_rows: [FR(1), FR(1), FR(1), FR(1)]
                             widgets:
                               - button:
                                   id: __ping_`'__count
@@ -890,18 +893,29 @@ define(host, `__increment(`__count')dnl
                                   grid_cell_column_pos: 1
                                   grid_cell_row_pos: 1
                                   grid_cell_column_span: 5
-                                  text: "N/A"
+                                  text: "NA"
                               - label:
                                   styles: __label_style
                                   grid_cell_column_pos: 0
                                   grid_cell_row_pos: 2
-                                  text: "mdi_tag"
+                                  text: "mdi_map_marker"
                               - label:
                                   styles: __label_style
                                   grid_cell_column_pos: 1
                                   grid_cell_row_pos: 2
                                   grid_cell_column_span: 5
-                                  text: "$1 $2"')dnl
+                                  text: "$1"
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 0
+                                  grid_cell_row_pos: 3
+                                  text: "mdi_tag"
+                              - label:
+                                  styles: __label_style
+                                  grid_cell_column_pos: 1
+                                  grid_cell_row_pos: 3
+                                  grid_cell_column_span: 5
+                                  text: "$2"')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
