@@ -1,13 +1,10 @@
+import socket
+
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import switch, sensor, binary_sensor, _since
-from esphome.const import (
-    CONF_ID,
-    CONF_NAME,
-    CONF_ADDRESS,
-    CONF_INTERVAL,
-    CONF_TIMEOUT,
-)
+from esphome.components import _since, binary_sensor, sensor, switch
+from esphome.const import (CONF_ADDRESS, CONF_ID, CONF_INTERVAL, CONF_NAME,
+                           CONF_TIMEOUT)
 
 DEPENDENCIES = ["sensor", "binary_sensor"]
 
@@ -24,6 +21,17 @@ CONF_TARGETS = "targets"
 CONF_ABLE = "able"
 CONF_SINCE = "since"
 
+
+def resolvable(address: str) -> str:
+    try:
+        return str(cv.ipv4address(address))
+    except cv.Invalid:
+        try:
+            return str(cv.ipv4address(socket.gethostbyname(address)))
+        except socket.gaierror as e:
+            raise cv.Invalid(f"{address} not resolved: {e}")
+
+
 CONFIG_SCHEMA = cv.All(
     cv.ensure_list(
         cv.Schema(
@@ -39,7 +47,7 @@ CONFIG_SCHEMA = cv.All(
                     switch.switch_schema(Target).extend(
                         {
                             cv.GenerateID(): cv.declare_id(Target),
-                            cv.Required(CONF_ADDRESS): cv.string,
+                            cv.Required(CONF_ADDRESS): resolvable,
                             cv.Optional(
                                 CONF_INTERVAL, default="16s"
                             ): cv.positive_time_period_milliseconds,
