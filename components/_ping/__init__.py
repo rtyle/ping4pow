@@ -5,6 +5,7 @@ import esphome.config_validation as cv
 from esphome.components import _since, binary_sensor, sensor, switch
 from esphome.const import (CONF_ADDRESS, CONF_ID, CONF_INTERVAL, CONF_NAME,
                            CONF_TIMEOUT)
+from esphome.core import CORE
 
 DEPENDENCIES = ["sensor", "binary_sensor"]
 
@@ -22,6 +23,12 @@ CONF_ABLE = "able"
 CONF_SINCE = "since"
 
 
+def requires_esp_idf(value):
+    if not CORE.using_esp_idf:
+        raise cv.Invalid("requires esp32.framework.type: esp-idf)")
+    return value
+
+
 def resolvable(address: str) -> str:
     try:
         return str(cv.ipv4address(address))
@@ -33,6 +40,7 @@ def resolvable(address: str) -> str:
 
 
 CONFIG_SCHEMA = cv.All(
+    requires_esp_idf,
     cv.ensure_list(
         cv.Schema(
             {
@@ -63,7 +71,7 @@ CONFIG_SCHEMA = cv.All(
                 ),
             }
         ).extend(cv.COMPONENT_SCHEMA)
-    )
+    ),
 )
 
 
