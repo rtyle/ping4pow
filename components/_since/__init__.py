@@ -35,16 +35,17 @@ def since_schema(class_: MockObjClass = Since) -> cv.Schema:
     )
 
 
-CONFIG_SCHEMA = cv.All(cv.ensure_list(since_schema()))
+MULTI_CONF = True
+
+CONFIG_SCHEMA = since_schema()
 
 
-async def to_code(configs):
-    for config in configs:
-        since = await sensor.new_sensor(config)
-        await cg.register_component(since, config)
-        if CONF_WHEN in config:
-            cg.add(since.set_when(config[CONF_WHEN]))
-        if CONF_LABEL in config:
-            cg.add(since.set_label(await cg.get_variable(config[CONF_LABEL])))
-        if CONF_TEXT in config:
-            cg.add(since.set_text(await text_sensor.new_text_sensor(config[CONF_TEXT])))
+async def to_code(config):
+    since = await sensor.new_sensor(config)
+    await cg.register_component(since, config)
+    if CONF_WHEN in config:
+        cg.add(since.set_when(config[CONF_WHEN]))
+    if CONF_LABEL in config:
+        cg.add(since.set_label(await cg.get_variable(config[CONF_LABEL])))
+    if CONF_TEXT in config:
+        cg.add(since.set_text(await text_sensor.new_text_sensor(config[CONF_TEXT])))
