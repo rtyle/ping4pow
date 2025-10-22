@@ -31,6 +31,9 @@ dnl   -DGPIO_RELAY
 dnl     Control the loads NC relay through a GPIO pin
 dnl     as opposed to an M5Stack 4Relay module.
 dnl
+dnl   -DSMTP=smtp
+dnl     Value is the name of the file that declares the _smtp component
+ifdef(`SMTP', `', `define(`SMTP', `smtp.m4')')dnl
 ---
 
 include(m5stack_cores3.m4)dnl
@@ -42,7 +45,8 @@ external_components:
   - source:
       type: local
       path: ../components
-    components: [_format, _m5cores3_touchscreen, _ping, _rotation, _since]
+    components: [
+      _format, _m5cores3_touchscreen, _ping, _rotation, _since, _smtp]
 
 esphome:
   <<: *m5stack_cores3_esphome
@@ -68,8 +72,10 @@ ethernet: *m5stack_lan_poe_v12_ethernet_m5cores3_display
 
 ota:
   platform: esphome
+
 api:
   reboot_timeout: 0s
+
 web_server:
   version: 3
   sorting_groups:
@@ -114,6 +120,14 @@ sensor:
 
 binary_sensor:
 
+define(`_repeat', `ifelse(0, `$1', `', `$2`'_repeat(decr(`$1'), `$2')')')dnl
+define(`_indent', `_repeat(`$1', `  ')')dnl
+define(`_smtp_send')dnl
+define(`_smtp_define', $1define(`_smtp_send', `_indent($1)- _smtp.send:
+_indent(eval(2+$1))subject: NAME $2'))dnl
+sinclude(SMTP)dnl
+undefine(`_smtp_define')dnl
+dnl
 ifdef(`GPIO_RELAY', `', `dnl
 _m5stack_4relay_lgfx:
   - id: _relays
@@ -337,6 +351,7 @@ ifdef(`GPIO_RELAY', `dnl
           state: 5
       - switch.turn_off: _power
       - lambda: !lambda id(_power_since)->set_when();
+_smtp_send(3, power cycle)
       - wait_until:
           condition:
             switch.is_off: _state_5
