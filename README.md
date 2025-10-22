@@ -35,6 +35,7 @@ can be controlled by a GPIO pin for more demanding loads.
 * Network failure is when all addresses can not be pinged for a while.
 * Network recovery is when all addresses can be pinged for a while.
 * Upon network recovery, power is cycled.
+* Email notification of power cycle.
 
 ## Architecture
 
@@ -164,6 +165,10 @@ Configure the order, address and name of each host to be ping-monitored.
 Each is specifed by an address, name pair in an m4 host macro invocation.
 
     cp config/hosts{.example,}.m4; vi config/hosts.m4
+
+Optionally, configure (smtp) email notification.
+
+    cp config/smtp{.example,}.m4; vi config/smtp.m4
 
 Choose an ESPHome configuration for
 M5Stack Module13.2 4Relay hardware (default) or a GPIO relay.
