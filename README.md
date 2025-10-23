@@ -80,9 +80,9 @@ The stack should be assembled with the core on top, followed by the relay soluti
 This solution uses the Module13.2 4Relay v1.1 and a separate M5-Bus Module Proto based adapter. The adapter can be built from the [adapter](kicad/projects/adapter) kicad project or hand made using its schematic for a reference. If hand made, the disconnected male pins should be clipped and the re-routing of signals made using bodge wires.
 
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/adapter.schematic.dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/adapter.schematic.light.png">
-    <img src="docs/adapter.schematic.light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="README/adapter.schematic.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="README/adapter.schematic.light.png">
+    <img src="README/adapter.schematic.light.png">
 </picture>
 
 Only the first [signal relay](https://www.amazon.com/gp/product/B0CWCTHCFT) in the module will be used.
@@ -94,17 +94,17 @@ Module input power must be galvanically isolated from the M5-Bus (stack) HPWR an
 **Remove** the jumpers that connect these.
 
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/relay.hpwr.dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/relay.hpwr.light.png">
-    <img src="docs/relay.hpwr.light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="README/relay.hpwr.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="README/relay.hpwr.light.png">
+    <img src="README/relay.hpwr.light.png">
 </picture>
 
 Set the relay jumpers in the "load" configuration.
 
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/relay.load.dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/relay.load.light.png">
-    <img src="docs/relay.load.light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="README/relay.load.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="README/relay.load.light.png">
+    <img src="README/relay.load.light.png">
 </picture>
 
 The relay is hard-wired on the module in a Normally Open (NO) fashion.
@@ -112,9 +112,9 @@ That is, the relay output power is connected by PCB trace to the NO pin on the r
 Cut this trace and add a bodge wire to connect the relay ouput power with the NC pin on the relay.
 
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/relay.dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/relay.light.png">
-    <img src="docs/relay.light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="README/relay.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="README/relay.light.png">
+    <img src="README/relay.light.png">
 </picture>
 
 Wire module input power pins to an adapter pigtail that accepts the plug of the power adapter of the controlled device.
@@ -227,9 +227,9 @@ All since sensors are in units of seconds.
 A web-based user interface at http://ping4pow.local exposes these switches and sensors.
 
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/ping4pow.web.dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/ping4pow.web.light.png">
-    <img src="docs/ping4pow.web.light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="README/ping4pow.web.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="README/ping4pow.web.light.png">
+    <img src="README/ping4pow.web.light.png">
 </picture>
 
 These are also presented locally on the ping4pow device's display.
@@ -237,41 +237,41 @@ These are also presented locally on the ping4pow device's display.
 Under the display are soft buttons on the bezel
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/chevron-double-left.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/chevron-double-left.light.svg">
-        <img src="docs/mdi/chevron-double-left.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/chevron-double-left.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/chevron-double-left.light.svg">
+        <img src="README/mdi/chevron-double-left.light.svg">
     </picture> Decrease display brightness
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/circle-outline.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/circle-outline.light.svg">
-        <img src="docs/mdi/circle-outline.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/circle-outline.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/circle-outline.light.svg">
+        <img src="README/mdi/circle-outline.light.svg">
     </picture> Navigate home to state tile
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/chevron-double-right.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/chevron-double-right.light.svg">
-        <img src="docs/mdi/chevron-double-right.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/chevron-double-right.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/chevron-double-right.light.svg">
+        <img src="README/mdi/chevron-double-right.light.svg">
     </picture> Increase display brightness
 
 At the bottom of the display is a user interface lock and tile navigation buttons
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/arrow-left-bold.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/arrow-left-bold.light.svg">
-        <img src="docs/mdi/arrow-left-bold.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/arrow-left-bold.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/arrow-left-bold.light.svg">
+        <img src="README/mdi/arrow-left-bold.light.svg">
     </picture> Previous tile in rotation
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/lock.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/lock.light.svg">
-        <img src="docs/mdi/lock.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/lock.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/lock.light.svg">
+        <img src="README/mdi/lock.light.svg">
     </picture> User input is locked (<picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/lock-open.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/lock-open.light.svg">
-        <img src="docs/mdi/lock-open.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/lock-open.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/lock-open.light.svg">
+        <img src="README/mdi/lock-open.light.svg">
     </picture> when not)
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/arrow-right-bold.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/arrow-right-bold.light.svg">
-        <img src="docs/mdi/arrow-right-bold.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/arrow-right-bold.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/arrow-right-bold.light.svg">
+        <img src="README/mdi/arrow-right-bold.light.svg">
     </picture> Next tile in rotation
 
 The rest of the display is used for the current tile.
@@ -287,65 +287,65 @@ The tiles are:
 The top row of buttons reflect states 1, 2, 3 and 4.
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
-        <img src="docs/mdi/cog-pause.light.svg"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
-        <img src="docs/mdi/network-off.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog-pause.light.svg">
+        <img src="README/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network-off.light.svg">
+        <img src="README/mdi/network-off.light.svg">
         </picture>
     </picture> wait for <code>ping none</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
-        <img src="docs/mdi/cog-pause.light.svg"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
-        <img src="docs/mdi/network.light.svg"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/dots-horizontal.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/dots-horizontal.light.svg">
-        <img src="docs/mdi/dots-horizontal.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog-pause.light.svg">
+        <img src="README/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network-off.light.svg">
+        <img src="README/mdi/network.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/dots-horizontal.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/dots-horizontal.light.svg">
+        <img src="README/mdi/dots-horizontal.light.svg">
     </picture> wait while <code>ping none</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
-        <img src="docs/mdi/cog-pause.light.svg"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
-        <img src="docs/mdi/network.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog-pause.light.svg">
+        <img src="README/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network.light.svg">
+        <img src="README/mdi/network.light.svg">
     </picture> wait for <code>ping all</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-pause.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-pause.light.svg">
-        <img src="docs/mdi/cog-pause.light.svg"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
-        <img src="docs/mdi/network.light.svg"><picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/dots-horizontal.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/dots-horizontal.light.svg">
-        <img src="docs/mdi/dots-horizontal.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog-pause.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog-pause.light.svg">
+        <img src="README/mdi/cog-pause.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network.light.svg">
+        <img src="README/mdi/network.light.svg"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/dots-horizontal.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/dots-horizontal.light.svg">
+        <img src="README/mdi/dots-horizontal.light.svg">
     </picture> wait while <code>ping all</code>
 
 The middle row of buttons reflect state 0, `power` and state 4
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog.light.svg">
-        <img src="docs/mdi/cog.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog.light.svg">
+        <img src="README/mdi/cog.light.svg">
     </picture> <code>stop</code> (<picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-stop.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-stop.light.svg">
-        <img src="docs/mdi/cog-stop.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog-stop.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog-stop.light.svg">
+        <img src="README/mdi/cog-stop.light.svg">
     </picture> when stopped)
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power.light.svg">
-        <img src="docs/mdi/power.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/power.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/power.light.svg">
+        <img src="README/mdi/power.light.svg">
     </picture> <code>power</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power-cycle.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power-cycle.light.svg">
-        <img src="docs/mdi/power-cycle.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/power-cycle.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/power-cycle.light.svg">
+        <img src="README/mdi/power-cycle.light.svg">
     </picture> <code>power cycle</code>
 
 The bottom row reflects the summary ping sensors.
@@ -353,19 +353,19 @@ At most, one of these will be on.
 The label on the widget reflecting state of the `ping some` binary sensor will reflect the `ping count` sensor value regardless.
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
-        <img src="docs/mdi/network-off.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network-off.light.svg">
+        <img src="README/mdi/network-off.light.svg">
     </picture> <code>ping none</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/pound.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/pound.light.svg">
-        <img src="docs/mdi/pound.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/pound.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/pound.light.svg">
+        <img src="README/mdi/pound.light.svg">
     </picture> <code>ping some</code> with <code>ping count</code> (#)
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
-        <img src="docs/mdi/network.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network.light.svg">
+        <img src="README/mdi/network.light.svg">
     </picture> <code>ping all</code>
 
 ### Since Tile
@@ -374,19 +374,19 @@ The three rows of this tile reflect times since an event.
 This time is formatted as either "N/A" (if there was never such an event) or the number of days, hours, minutes and seconds (D HH:MM:SS) since the event.
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/check-network.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/check-network.light.svg">
-        <img src="docs/mdi/check-network.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/check-network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/check-network.light.svg">
+        <img src="README/mdi/check-network.light.svg">
     </picture> <code>ping since</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/power-cycle.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/power-cycle.light.svg">
-        <img src="docs/mdi/power-cycle.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/power-cycle.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/power-cycle.light.svg">
+        <img src="README/mdi/power-cycle.light.svg">
     </picture> <code>since power cycle</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/arrow-up-bold-circle.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/arrow-up-bold-circle.light.svg">
-        <img src="docs/mdi/arrow-up-bold-circle.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/arrow-up-bold-circle.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/arrow-up-bold-circle.light.svg">
+        <img src="README/mdi/arrow-up-bold-circle.light.svg">
     </picture> <code>since boot</code>
 
 ### Target Tile
@@ -396,33 +396,33 @@ There is a target tile for each ping target in `hosts.m4`.
 The first row of this tile reflects whether the target is enabled and its pingability.
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog.light.svg">
-        <img src="docs/mdi/cog.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog.light.svg">
+        <img src="README/mdi/cog.light.svg">
     </picture> <code>ping # (address name)</code> enabled (<picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/cog-stop.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/cog-stop.light.svg">
-        <img src="docs/mdi/cog-stop.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog-stop.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/cog-stop.light.svg">
+        <img src="README/mdi/cog-stop.light.svg">
     </picture> when not)
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network.light.svg">
-        <img src="docs/mdi/network.light.svg"> <code>ping # able</code> (<picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/network-off.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/network-off.light.svg">
-        <img src="docs/mdi/network-off.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network.light.svg">
+        <img src="README/mdi/network.light.svg"> <code>ping # able</code> (<picture>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/network-off.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/network-off.light.svg">
+        <img src="README/mdi/network-off.light.svg">
         </picture> when not)
     </picture>
 
 The next two rows are for `ping # since` and for identifying the target by address and name.
 
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/check-network.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/check-network.light.svg">
-        <img src="docs/mdi/check-network.light.svg">
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/check-network.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/check-network.light.svg">
+        <img src="README/mdi/check-network.light.svg">
     </picture> <code>ping # since</code>
 * <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/tag.dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="docs/mdi/tag.light.svg">
-        <img src="docs/mdi/tag.light.svg"> <code>address</code> <code>name</code>
+        <source media="(prefers-color-scheme: dark)" srcset="README/mdi/tag.dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="README/mdi/tag.light.svg">
+        <img src="README/mdi/tag.light.svg"> <code>address</code> <code>name</code>
     </picture>
