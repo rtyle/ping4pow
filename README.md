@@ -15,7 +15,7 @@ There are commercially available/configurable devices that address this issue.
 
 This is a better solution.
 
-![](docs/ping4pow.png)
+![](README/ping4pow.png)
 
 Ping4pow can only switch loads that can be safely handled by its relay.
 Relay solutions that are embedded in its small footprint will only be able to switch low voltage loads.
