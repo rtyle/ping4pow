@@ -75,12 +75,6 @@ Optionally, such a device can be used by Home Assistant.
 
 The stack should be assembled with the core on top, followed by the relay solution, the adapter solution and finally the PoE base.
 
-#### Module13.2 Proto adapter_relay
-
-This solution uses a Module13.2 Proto frame with the PCB replaced with one built from the [adapter_relay](kicad/projects/adapter_relay) kicad project. There is no need for a separate M5-Bus adapter.
-
-The adapter_relay uses a double-pole double-throw (DPDT) [signal relay](https://na.industrial.panasonic.com/products/relays-contactors/mechanical-signal-relays/lineup/signal-relays/series/119572/model/119942) to switch both conductors of the galvanically isolated DC load. Jumpers must be installed in the normally-closed (NC) positions. The load is passed through the board using standard 5.5mm x 2.1mm DC barrel connections. Openings in the frame of the Module13.2 Proto must be expanded to accomodate the DC jacks. It doesn't matter which jack is used for which plug.
-
 #### Module13.2 4Relay v1.1 and Module Proto adapter
 
 This solution uses the Module13.2 4Relay v1.1 and a separate M5-Bus Module Proto based adapter. The adapter can be built from the [adapter](kicad/projects/adapter) kicad project or hand made using its schematic for a reference. If hand made, the disconnected male pins should be clipped and the re-routing of signals made using bodge wires.
@@ -127,6 +121,12 @@ Wire module input power pins to an adapter pigtail that accepts the plug of the 
 Alternately, cut the plug off the power adapter and wire the adapter directly to the 4relay input power plug.
 Wire relay power output pins to an adapter pigtail that provides the power plug expected by the controlled device.
 Alternately, cut the plug off the power adapter and wire the plug directly to the 4relay output power plug.
+
+#### Module13.2 Proto adapter_relay
+
+This solution uses a Module13.2 Proto frame with the PCB replaced with one built from the [adapter_relay](kicad/projects/adapter_relay) kicad project. There is no need for a separate M5-Bus adapter.
+
+The adapter_relay uses a double-pole double-throw (DPDT) [signal relay](https://na.industrial.panasonic.com/products/relays-contactors/mechanical-signal-relays/lineup/signal-relays/series/119572/model/119942) to switch both conductors of the galvanically isolated DC load. Jumpers must be installed in the normally-closed (NC) positions. The load is passed through the board using standard 5.5mm x 2.1mm DC barrel connections. Openings in the frame of the Module13.2 Proto must be expanded to accomodate the DC jacks. It doesn't matter which jack is used for which plug.
 
 #### Base LAN PoE v1.2
 
@@ -234,7 +234,7 @@ A web-based user interface at http://ping4pow.local exposes these switches and s
 
 These are also presented locally on the ping4pow device's display.
 
-Under the display is are soft buttons on the bezel
+Under the display are soft buttons on the bezel
 
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/mdi/chevron-double-left.dark.svg">
