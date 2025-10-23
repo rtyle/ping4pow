@@ -46,7 +46,7 @@ class Component : public esphome::Component {
   // use RAII to guard mbedtls resources for our lifetime
   raii::Resource<mbedtls_entropy_context> entropy_{raii::make(mbedtls_entropy_init, mbedtls_entropy_free)};
   raii::Resource<mbedtls_ctr_drbg_context> ctr_drbg_{raii::make(mbedtls_ctr_drbg_init, mbedtls_ctr_drbg_free)};
-  raii::Resource<mbedtls_x509_crt> ca_chain{raii::make(mbedtls_x509_crt_init, mbedtls_x509_crt_free)};
+  raii::Resource<mbedtls_x509_crt> x509_crt_{raii::make(mbedtls_x509_crt_init, mbedtls_x509_crt_free)};
   raii::Resource<mbedtls_ssl_config> ssl_config_{raii::make(mbedtls_ssl_config_init, mbedtls_ssl_config_free)};
 
   static void run_that_(void *);

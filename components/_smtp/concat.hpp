@@ -3,10 +3,11 @@
 #include <stdexcept>
 
 namespace concat {
+
 // return size of null terminated string_view input
 constexpr std::size_t size(std::string_view input) {
-  auto size_{input.length()};
-#if defined(_cpp_exceptions)
+  auto size_{input.size()};
+#if defined(__cpp_exceptions)
   if (!size_)
     throw std::invalid_argument("input must be null terminated");
 #endif
@@ -26,7 +27,7 @@ constexpr void copy(char *&output, std::string_view input) {
   char last{1};  // not null
   for (char next : input)
     *output++ = last = next;  // copy including last (terminator)
-#if defined(_cpp_exceptions)
+#if defined(__cpp_exceptions)
   if (last)
     throw std::invalid_argument("input must be null terminated");
 #endif
