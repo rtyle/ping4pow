@@ -15,6 +15,8 @@ There are commercially available/configurable devices that address this issue.
 
 This is a better solution.
 
+![](docs/ping4pow.png)
+
 Ping4pow can only switch loads that can be safely handled by its relay.
 Relay solutions that are embedded in its small footprint will only be able to switch low voltage loads.
 However, an external relay solution (like an [iot-power-relay](https://dlidirect.com/products/iot-power-relay))
@@ -231,8 +233,6 @@ A web-based user interface at http://ping4pow.local exposes these switches and s
 </picture>
 
 These are also presented locally on the ping4pow device's display.
-
-![](docs/ping4pow.home.png)
 
 Under the display is are soft buttons on the bezel
 
