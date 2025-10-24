@@ -71,8 +71,8 @@ void Component::setup() {
     mbedtls_ssl_conf_authmode(this->ssl_config_, MBEDTLS_SSL_VERIFY_NONE);
   } else {
     ESP_LOGD(TAG, "parse CA certificates");
-    MbedTlsResult result{
-        mbedtls_x509_crt_parse(this->x509_crt_, (const unsigned char *) this->cas_.c_str(), this->cas_.size() + 1)};
+    MbedTlsResult result{mbedtls_x509_crt_parse(
+        this->x509_crt_, reinterpret_cast<const unsigned char *>(this->cas_.c_str()), this->cas_.size() + 1)};
     if (result.is_error()) {
       ESP_LOGW(TAG, "mbedtls_x509_crt_parse: %s", result.to_string().c_str());
       this->mark_failed();
