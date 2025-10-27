@@ -19,21 +19,11 @@ Each protection mechanism is **independently validated** to ensure the circuit s
 
 ### Schematic Overview
 
-```
-Power Path (5V to DC Jack):
-5V (PoE) → F1 (10/50mA) → D1 (Schottky) → R1 (82Ω) → F2 (80/200mA) → DC Jack (+)
-                                              ↓
-                                         D2 (Zener 5.1V) → DC Jack (-)
-
-Control Path (GPIO to DC Jack):
-GPIO → R2 (330Ω) → U1 LED → (5000V isolation) → U1 Phototransistor → GND
-                                                        ↓
-                                                   DC Jack (-)
-
-Protection Elements:
-- D2 (Zener): Connected between DC Jack (+) and DC Jack (-)
-- U1 Phototransistor: Switches DC Jack (-) to GND when GPIO HIGH
-```
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="README/schematic.dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="README/schematic.light.png">
+    <img src="README/schematic.light.png">
+</picture>
 
 ### Signal Flow
 
