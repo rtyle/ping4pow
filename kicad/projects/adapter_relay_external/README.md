@@ -738,7 +738,6 @@ These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 - Bench power supply (variable, 0-12V)
 - Digital multimeter (DMM)
 - DLI IoT Power Relay
-- Test load: 100Ω resistor (for characterization)
 
 **Test 1: Normal Operation**
 1. Connect IoT relay to DC Jack
@@ -750,7 +749,7 @@ These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 7. **Verify:** Relay deactivates
 
 **Test 2: Relay Current Measurement**
-1. Insert DMM (mA mode) in series between DC Jack (+) and relay (+)
+1. Measure voltage drop across R1 and divide by R1 value (82).
 2. GPIO HIGH
 3. **Measure:** Current should be 0.9-1.0mA
 4. **Verify:** Current well above 0.2mA trigger threshold
@@ -830,19 +829,3 @@ These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 5. [MCC SMBJ Zener Diode Series Datasheet](https://www.mccsemi.com/pdf/Products/SMBJ5338B-SMBJ5388B(SMB).pdf)
 6. [Lite-On LTV-817S Opto-Isolator Datasheet](http://optoelectronics.liteon.com/upload/download/DS-70-96-0016/LTV-8X7%20series%20201610%20.pdf)
 7. [ping4pow GitHub Repository](https://github.com/rtyle/ping4pow)
-
-## Revision History
-
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0 | 2025-01-26 | Initial design with empirical relay characterization and fault analysis | Based on collaborative design session |
-
-## License
-
-This design documentation is provided as-is for reference and educational purposes. The circuit design is intended for integration into the ping4pow project.
-
----
-
-**Design Status:** Validated through analysis and bench testing. Ready for PCB layout and prototype manufacturing.
-
-**Key Takeaway:** This protection circuit provides multiple independent layers of protection, ensuring the ESP32 GPIO and 5V PoE supply remain safe even under severe fault conditions (dead shorts, 48V overvoltage, reverse polarity). All protection mechanisms have been analyzed and verified with adequate safety margins.
