@@ -50,7 +50,7 @@ Protection Elements:
 
 **Zener D2 monitoring:**
 - Connected across DC Jack (+) and DC Jack (-)
-- During normal operation: 4.67V < 5.1V threshold, Zener not conducting
+- During normal operation: 4.75V < 5.1V threshold, Zener not conducting
 - During fault: Clamps voltage between DC Jack (+) and DC Jack (-) to ~5.6V
 
 ## Component Selection and Justification
@@ -104,9 +104,9 @@ Protection Elements:
 
 **Selection Rationale:**
 - **5.1V nominal voltage:** 
-  - Normal operation: 4.67V at DC jack < 5.1V threshold, Zener doesn't conduct
+  - Normal operation: 4.75V < 5.1V threshold, Zener doesn't conduct
   - Under load: Clamps at ~5.6V
-  - Chosen as closest available voltage to operating point (4.67V) while maintaining margin
+  - Chosen as closest available voltage to operating point (4.75V) while maintaining margin
 - **Why not 5.0V:** Not available in 5W SMB package from major distributors
 - **Why not 6.2V:** Would clamp at ~6.8V, allowing higher voltage to reach relay and increasing Zener power dissipation (3.2W vs 2.9W at 48V fault)
 - **5W power rating critical for 48V fault:**
@@ -226,9 +226,9 @@ The relay's electrical characteristics were measured using bench power supply th
 - Conclusion: Relay input has current-limiting/regulation circuitry
 
 **4. Rate of Current Increase Slows at Higher Voltages**
-- 2.1V to 3.0V (+0.9V): Current increases +0.42mA
-- 3.0V to 4.0V (+1.0V): Current increases +0.17mA  
-- 4.7V to 5.0V (+0.3V): Current increases only +0.04mA
+- 2.1V to 3.0V (+0.9V): Current increases 0.42mA
+- 3.0V to 4.0V (+1.0V): Current increases 0.17mA  
+- 4.0V to 5.0V (+1.0V): Current increases 0.11mA
 - Shows increasing regulation effect at higher voltages
 
 ### Circuit Operating Point
@@ -268,54 +268,11 @@ The relay's electrical characteristics were measured using bench power supply th
 
 **Current path:**
 ```
-5V PoE → F1 → D1 (0.25V drop) → R1 (82Ω) → DC Jack (+) → SHORT → DC Jack (-) → [no path to GND - open circuit]
+5V PoE → F1 → D1 (0.25V drop) → R1 (82Ω) → DC Jack (+) → SHORT → DC Jack (-) → Opto ON → GND
 ```
 
-**Wait - where does current go?**
+For current to flow in a dead short, it needs a path back to GND. **This requires the Opto to be ON**.
 
-The short circuit **connects DC Jack (+) to DC Jack (-)** directly. The Zener D2 is also connected across these same points:
-```
-5V → F1 → D1 → R1 → [Junction: DC Jack (+) tied to DC Jack (-) by short]
-                      ↓
-                 D2 Zener (across the short)
-                      ↓
-                 DC Jack (-)
-```
-
-**The short bypasses both the relay AND the Zener!** Current path:
-```
-5V → F1 → D1 (4.75V after drop) → R1 → Short → Back to GND somehow?
-```
-
-Actually, let me reconsider. The short connects DC+ directly to DC-. The Zener is in parallel with the short. Current flows through whichever path has lower resistance:
-- Short: ~0Ω
-- Zener trying to clamp: Would conduct but shorted out
-
-**Result:** Current flows through R1, then through the short directly back to... where?
-
-**The issue:** DC Jack (-) is NOT directly connected to GND. It connects to:
-- Zener anode
-- Opto-isolator collector
-
-For current to flow in a dead short, we need a path back to GND. **This requires the opto to be ON**, or the Zener to provide a path.
-
-**Revised understanding - Two cases:**
-
-**Case A: GPIO LOW (Opto OFF)**
-- DC Jack (-) is floating (not connected to GND)
-- Short connects DC+ to DC-, but neither connects to GND
-- Zener is across DC+ to DC-, also not connected to GND on DC- side
-- **No complete circuit, no current flows**
-
-**Case B: GPIO HIGH (Opto ON)**
-- Opto connects DC- to GND
-- Now current can flow: 5V → F1 → D1 → R1 → Short → DC- → Opto → GND
-- Current: 4.75V / 82Ω = **58mA**
-- F1 trips at 50mA threshold ✓
-
-**Conclusion:** Dead short only draws current if GPIO is HIGH. This is actually **good** - user can turn off GPIO to remove fault current.
-
-**With GPIO HIGH (active fault):**
 1. **Initial state:** 58mA flows through R1, then through short to GND
 2. **F1 heating:** At 58mA (1.16x trip current), F1 heats and trips in 5-30 seconds
 3. **Component stress during fault:**
@@ -489,31 +446,11 @@ But this creates issues - where does current flow to complete circuit?
 
 **Result:**
 - Zener forward conduction limits voltage to ~0.7V across jack
-- Insufficient voltage for relay operation
 - Zener dissipates: 0.7V × 138mA ≈ 97mW (safe)
 - No damage to circuit
 - User notices relay doesn't work
 
 **Note:** Reverse polarity protection is a beneficial side-effect of the Zener's forward conduction characteristic, not a primary design goal. The low forward voltage prevents damage.
-
-### Scenario 6: AC Voltage (Unsupported)
-
-**Fault condition:** User applies AC voltage (e.g., 12VAC transformer) to DC jack.
-
-**Disclaimer:** This circuit is **NOT designed for AC operation**. Analysis provided for completeness only.
-
-**Circuit behavior:**
-- **Positive half-cycle:** Zener clamps as in DC overvoltage case
-- **Negative half-cycle:** Zener conducts forward like reverse polarity case
-- Result: Alternating clamping at AC frequency
-
-**Concerns:**
-- Repeated high-current pulses at AC frequency (50/60Hz)
-- F2 may or may not trip depending on AC amplitude and RMS current
-- Zener undergoes thermal cycling (heat/cool at AC rate)
-- Component stress not characterized for AC
-
-**Status:** Circuit provides partial protection but AC operation is **outside design scope**. User documentation must specify **DC only**.
 
 ## Design Trade-offs and Alternatives Considered
 
