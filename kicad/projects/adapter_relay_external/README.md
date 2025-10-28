@@ -33,7 +33,7 @@ Each protection mechanism is **independently validated** to ensure the circuit s
 3. Series resistor R1 (82Ω) limits current
 4. Output polyfuse F2 provides additional overcurrent protection
 5. Voltage arrives at DC Jack (+) at ~4.67V
-6. GPIO HIGH drives opto-isolator U1 LED with 10mA
+6. GPIO HIGH drives optocoupler U1 LED with 10mA
 7. U1 phototransistor conducts, connecting DC Jack (-) to GND
 8. Relay circuit completes: DC Jack (+) → Relay → DC Jack (-) → U1 → GND
 9. Relay receives ~0.95mA at ~4.67V and activates
@@ -105,7 +105,7 @@ Each protection mechanism is **independently validated** to ensure the circuit s
   - Duration: 1-2 seconds until F2 trips
 - **Thermal management:** SMB package with ≥100mm² copper pour per pin (top + bottom layers, thermal vias) provides adequate heat dissipation
 
-**Connection:** Zener is connected directly across DC jack output (cathode to DC+, anode to DC-), NOT between DC+ and GND. This allows it to clamp voltage regardless of opto-isolator state.
+**Connection:** Zener is connected directly across DC jack output (cathode to DC+, anode to DC-), NOT between DC+ and GND. This allows it to clamp voltage regardless of optocoupler state.
 
 ### R1 - Series Resistor (Panasonic ERJ-P14F82R0U)
 **Specification:** 82Ω, 0.5W, 1% tolerance, 1210 package
@@ -150,7 +150,7 @@ Each protection mechanism is **independently validated** to ensure the circuit s
 ### R2 - GPIO Current Limiter (Panasonic ERJ-S08J331V)
 **Specification:** 330Ω, 1/4W, 5% tolerance, 1206 package
 
-**Purpose:** Limits current from ESP32 GPIO to opto-isolator LED.
+**Purpose:** Limits current from ESP32 GPIO to optocoupler LED.
 
 **Selection Rationale:**
 - **Value:** At GPIO HIGH (3.3V): I = 3.3V / 330Ω = 10mA
@@ -295,7 +295,7 @@ DC Jack (-)
 12V wall wart (-) terminal
 ```
 
-**The wall adapter completes the circuit** regardless of GPIO/opto state. The Zener sees 12V across it and clamps.
+**The wall adapter completes the circuit** regardless of GPIO/optocoupler state. The Zener sees 12V across it and clamps.
 
 **Analysis:**
 1. **Zener clamping:** D2 conducts in breakdown mode, clamping voltage across DC jack to ~5.6V
@@ -556,8 +556,8 @@ The 82Ω value balances three competing requirements:
 **Alternative considered:** Use NPN transistor directly (GPIO → base, DC- to collector, GND to emitter)
 
 **Advantages of transistor:**
-- Lower cost (~$0.05 vs ~$0.25 for opto)
-- Lower voltage drop (Vce(sat) ~0.2V vs ~0.3V for opto)
+- Lower cost (~$0.05 vs ~$0.25 for optocoupler)
+- Lower voltage drop (Vce(sat) ~0.2V vs ~0.3V for optocoupler)
 - Simpler
 
 **Critical disadvantage:**
@@ -566,12 +566,12 @@ The 82Ω value balances three competing requirements:
 - Even with base resistor, high voltage can break down transistor junctions
 - GPIO damage possible
 
-**Opto-isolator advantage:**
+**Optocoupler advantage:**
 - 5000V isolation barrier - **complete protection** even if all other protection fails
-- This is the **primary defense** - if Zener fails open, F2 doesn't trip, etc., the opto still protects GPIO
+- This is the **primary defense** - if Zener fails open, F2 doesn't trip, etc., the optocoupler still protects GPIO
 - Cost difference ($0.20) is trivial compared to protecting $20-30 ESP32 module
 
-**Decision:** Opto-isolator is non-negotiable for robust protection. The isolation is the primary reason the GPIO is safe.
+**Decision:** Optocoupler is non-negotiable for robust protection. The isolation is the primary reason the GPIO is safe.
 
 ## PCB Layout Guidelines
 
@@ -581,7 +581,7 @@ The 82Ω value balances three competing requirements:
 - Net **DC+** (DC Jack + to F2): **30 mil**
 - Net **F2** (between F2 and R1): **30 mil**
 - Net **Z** (R1 to Zener cathode/DC Jack +): **30 mil**
-- Net **DC-** (DC Jack - to Zener anode/Opto collector): **30 mil**
+- Net **DC-** (DC Jack - to Zener anode/optocoupler collector): **30 mil**
 
 These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 
@@ -657,7 +657,7 @@ These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 
 | Clearance | Distance | Reason |
 |-----------|----------|--------|
-| D2 to U1 | ≥10mm | Keep Zener heat away from opto-isolator |
+| D2 to U1 | ≥10mm | Keep Zener heat away from optocoupler |
 | D2 to board edge | ≥5mm | Allow airflow around Zener |
 | High-voltage traces (DC+, DC-) to other nets | ≥8-10 mil | Standard clearance for 48V |
 | F1, F2 to other components | ≥3mm | Polyfuses get warm when tripping |
@@ -715,7 +715,7 @@ These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 **U1 (Opto) alternatives:**
 - Vishay LTV-817 (same device, different vendor)
 - PC817C (very common, slightly lower CTR spec but adequate)
-- Any opto-isolator with CTR≥50%, 5000V isolation, compatible pinout
+- Any optocoupler with CTR≥50%, 5000V isolation, compatible pinout
 
 **R1 upgrade option:**
 - Panasonic ERJ-1TNF82R0U (82Ω, 1W, 2512 package) for extra thermal margin
