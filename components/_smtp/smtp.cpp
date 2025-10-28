@@ -17,6 +17,8 @@ namespace _smtp {
 
 static const char *const TAG = "_smtp";
 
+static constexpr char CRLF[]{"\r\n"};  // SMTP protocol line terminator
+
 // wrap mbedtls function result value with methods to interpret success or error
 class MbedTlsResult {
  private:
@@ -336,9 +338,6 @@ static constexpr size_t base64_encoded_size(size_t decoded_size) {
   return ((decoded_size + (decoded - 1)) / decoded) * encoded;
 }
 
-// SMTP protocol line terminator
-static constexpr char crlf[]{"\r\n"};
-
 // base64_encode in to out with SMTP line terminator appended
 static MbedTlsResult base64_encode(std::string_view in, std::string &out) {
   size_t const encoded_size_in{base64_encoded_size(in.size())};
@@ -348,7 +347,7 @@ static MbedTlsResult base64_encode(std::string_view in, std::string &out) {
                                              &encoded_size_out, reinterpret_cast<unsigned char const *>(in.data()),
                                              in.size())};
   if (!result.is_error()) {
-    out = std::string(encoded) + crlf;
+    out = std::string(encoded) + CRLF;
   }
   return result;
 }
@@ -378,8 +377,8 @@ static SmtpReply command(Transport &transport, std::string_view request, std::st
 
   std::string line;
   std::string text;
-  while (std::getline(transport.stream, line, crlf[1])) {
-    if (!line.empty() && line.back() == crlf[0])
+  while (std::getline(transport.stream, line, CRLF[1])) {
+    if (!line.empty() && line.back() == CRLF[0])
       line.pop_back();
     ESP_LOGI(TAG, "< %s", line.c_str());
     if (4 <= line.size() && std::isdigit(line[0]) && std::isdigit(line[1]) && std::isdigit(line[2])) {
@@ -413,7 +412,7 @@ static SmtpReply greeting_and_ehlo(Transport &transport) {
       return reply;
   }
   {
-    static constexpr auto request{concat::array("EHLO esphome", crlf)};
+    static constexpr auto request{concat::array("EHLO esphome", CRLF)};
     SmtpReply reply{command(transport, request)};
     return reply;
   }
@@ -462,7 +461,7 @@ std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) 
         return std::format("greeting and ehlo: {}", reply.text);
     }
     {
-      static constexpr auto request{concat::array("STARTTLS", crlf)};
+      static constexpr auto request{concat::array("STARTTLS", CRLF)};
       SmtpReply reply{command(transport, request)};
       if (!reply.is_positive_completion())
         return std::format("command STARTTLS: {}", reply.text);
@@ -481,7 +480,7 @@ std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) 
 
   // login
   {
-    static constexpr auto request{concat::array("AUTH LOGIN", crlf)};
+    static constexpr auto request{concat::array("AUTH LOGIN", CRLF)};
     SmtpReply reply{command(transport, request)};
     if (!reply.is_positive_intermediate())
       return std::format("command AUTH LOGIN: {}", reply.text);
@@ -509,25 +508,25 @@ std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) 
   // send each message in the queue
   while (auto message = dequeue()) {
     {
-      std::string request = std::format("MAIL FROM:<{}>{}", this->from_, crlf);
+      std::string request = std::format("MAIL FROM:<{}>{}", this->from_, CRLF);
       SmtpReply reply{command(transport, request)};
       if (!reply.is_positive_completion())
         return std::format("command MAIL FROM: {}", reply.text);
     }
     {
-      std::string request = std::format("RCPT TO:<{}>{}", message->to, crlf);
+      std::string request = std::format("RCPT TO:<{}>{}", message->to, CRLF);
       SmtpReply reply{command(transport, request)};
       if (!reply.is_positive_completion())
         return std::format("command RCPT TO: {}", reply.text);
     }
     {
-      static constexpr auto request{concat::array("DATA", crlf)};
+      static constexpr auto request{concat::array("DATA", CRLF)};
       SmtpReply reply{command(transport, request)};
       if (!reply.is_positive_intermediate())
         return std::format("command DATA: {}", reply.text);
     }
     {
-      static constexpr auto format{concat::array("From: {}", crlf, "To: {}", crlf, "Subject: {}", crlf, crlf)};
+      static constexpr auto format{concat::array("From: {}", CRLF, "To: {}", CRLF, "Subject: {}", CRLF, CRLF)};
       std::string request = std::format(format.data(), this->from_, message->to, message->subject);
       MbedTlsResult result{ssl_send(ssl, request)};
       if (result.is_error())
@@ -539,7 +538,7 @@ std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) 
         return std::format("command DATA body: {}", result.to_string());
     }
     {
-      static constexpr auto request{concat::array(crlf, ".", crlf)};
+      static constexpr auto request{concat::array(CRLF, ".", CRLF)};
       SmtpReply reply{command(transport, request)};
       if (!reply.is_positive_completion())
         return std::format("command DATA end: {}", reply.text);
@@ -548,7 +547,7 @@ std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) 
 
   // end session
   {
-    static constexpr auto request{concat::array("QUIT", crlf)};
+    static constexpr auto request{concat::array("QUIT", CRLF)};
     SmtpReply reply{command(transport, request)};
     if (!reply.is_positive_completion())
       return std::format("command QUIT: {}", reply.text);
