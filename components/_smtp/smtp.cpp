@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include "smtp.h"
-#include "raii.hpp"
 
 #include "esphome/core/log.h"
 
