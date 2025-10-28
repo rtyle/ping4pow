@@ -93,7 +93,7 @@ void Component::setup() {
 
   ESP_LOGD(TAG, "create task");
   BaseType_t result = xTaskCreate(Component::run_that_, "smtp",
-                                  8192,  // stack size
+                                  8192,  // stack size tuned from logged headroom reports during run_
                                   this,
                                   5,  // priority
                                   &this->task_handle_);
@@ -156,6 +156,12 @@ void Component::run_() {
       if (!error.empty()) {
         // send_ aborted with an error message. log it in context
         ESP_LOGW(TAG, "send %s: %s", context.c_str(), error.c_str());
+      }
+
+      {
+        // used for tuning our task's stack size
+        auto headroom{uxTaskGetStackHighWaterMark(nullptr)};
+        ESP_LOGD(TAG, "stack headroom %u", static_cast<unsigned>(headroom));
       }
 
       // pause before trying again
