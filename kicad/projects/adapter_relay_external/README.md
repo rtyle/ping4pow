@@ -158,7 +158,7 @@ Each protection mechanism is **independently validated** to ensure the circuit s
 - **Opto LED requirement:** 10mA provides adequate CTR for phototransistor saturation
 - **Power:** (10mA)² × 330Ω = 33mW (13% of 0.25W rating)
 
-### U1 - Opto-Isolator (Lite-On LTV-817S)
+### U1 - Optocoupler (Lite-On LTV-817S)
 **Specification:** CTR ≥50%, 5000V isolation, SOP-4 package
 
 **Purpose:** Provides complete galvanic isolation between ESP32 GPIO and DC jack. This is the **primary protection** preventing any external voltage from reaching the GPIO.
@@ -551,7 +551,7 @@ The 82Ω value balances three competing requirements:
 
 **Trade-off:** Accepted tighter thermal margin on 48V fault in exchange for smaller size and lower cost. Analysis confirms safety with margin.
 
-### Opto-Isolator: Why Not Direct Transistor Switching?
+### Optocoupler: Why Not Direct Transistor Switching?
 
 **Alternative considered:** Use NPN transistor directly (GPIO → base, DC- to collector, GND to emitter)
 
@@ -693,7 +693,7 @@ These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 | D2 | Zener Diode | MCC SMBJ5338B-TP | 5.1V, 5W | SMB | 1 | $0.35 | 833-SMBJ5338B-TP |
 | R1 | Resistor | Panasonic ERJ-P14F82R0U | 82Ω, 0.5W, 1% | 1210 | 1 | $0.10 | 667-ERJ-P14F82R0U |
 | R2 | Resistor | Panasonic ERJ-S08J331V | 330Ω, 1/4W, 5% | 1206 | 1 | $0.02 | 667-ERJ-S08J331V |
-| U1 | Opto-Isolator | Lite-On LTV-817S | CTR≥50%, 5000V | SOP-4 | 1 | $0.25 | 859-LTV-817S |
+| U1 | Optocoupler | Lite-On LTV-817S | CTR≥50%, 5000V | SOP-4 | 1 | $0.25 | 859-LTV-817S |
 | J1 | DC Jack | XKB DC-0440-2.5A-2.0 | 5.5mm×2.1mm, 2A | Through-hole | 1 | $0.50 | (LCSC C381118) |
 | | | | | **Total per board:** | | **~$1.60** | |
 
@@ -817,5 +817,5 @@ These traces must handle up to 517mA during 48V fault for 1-2 seconds.
 3. [Littelfuse 0603L Series Polyfuse Datasheet](https://www.littelfuse.com/media?resourcetype=datasheets&itemid=879563f9-97a7-4e71-adba-37de085b333f&filename=littelfuse_ptc_0603l_datasheet.pdf)
 4. [OnSemi SS16 Schottky Diode Datasheet](https://www.onsemi.com/pub/Collateral/SS16-D.PDF)
 5. [MCC SMBJ Zener Diode Series Datasheet](https://www.mccsemi.com/pdf/Products/SMBJ5338B-SMBJ5388B(SMB).pdf)
-6. [Lite-On LTV-817S Opto-Isolator Datasheet](http://optoelectronics.liteon.com/upload/download/DS-70-96-0016/LTV-8X7%20series%20201610%20.pdf)
+6. [Lite-On LTV-817S Optocoupler Datasheet](http://optoelectronics.liteon.com/upload/download/DS-70-96-0016/LTV-8X7%20series%20201610%20.pdf)
 7. [ping4pow GitHub Repository](https://github.com/rtyle/ping4pow)
