@@ -50,7 +50,7 @@ Our stack needs a core with support from a base LAN PoE module.
 * [CoreS3-SE](https://docs.m5stack.com/en/core/M5CoreS3%20SE)
 * [Base LAN PoE v1.2](https://docs.m5stack.com/en/base/lan_poe_v12)
 
-To support both the core display and the ethernet LAN at the same time, a custom M5-Bus adapter must be used to resolve GPIO pin conflicts. This might be done using an M5Bus wire-bodged Module Proto. Alternately, the PCB of the Module Proto might be swapped out with one that has the bodge baked in (see [adapter](kicad/projects/adapter)).
+To support both the core display and the ethernet LAN at the same time, a custom M5-Bus adapter must be used to resolve GPIO pin conflicts. This might be done using an M5Bus bodge-wired Module Proto. Alternately, the PCB of the Module Proto might be swapped out with one that has the bodge baked in (see [adapter](kicad/projects/adapter)).
 
 * [Module Proto](https://docs.m5stack.com/en/module/proto)
 
