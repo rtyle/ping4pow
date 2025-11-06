@@ -424,14 +424,8 @@ static SmtpReply greeting_and_ehlo(Transport &transport) {
 }
 
 std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) {
-  // use RAII to guard mbedtls resources for our lifetime
-  auto net{raii::make(mbedtls_net_init, mbedtls_net_free)};
-  auto ssl{raii::make(mbedtls_ssl_init, [](mbedtls_ssl_context *a) {
-    mbedtls_ssl_close_notify(a);
-    mbedtls_ssl_free(a);
-  })};
-
   // connect
+  auto net{raii::make(mbedtls_net_init, mbedtls_net_free)};
   {
     ESP_LOGD(TAG, "net connect to %s:%d", this->server_.c_str(), this->port_);
     std::string port{std::format("{}", this->port_)};
@@ -441,6 +435,10 @@ std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) 
   }
 
   // ssl configuration
+  auto ssl{raii::make(mbedtls_ssl_init, [](mbedtls_ssl_context *a) {
+    mbedtls_ssl_close_notify(a);
+    mbedtls_ssl_free(a);
+  })};
   {
     ESP_LOGD(TAG, "set hostname: %s", this->server_.c_str());
     MbedTlsResult result{mbedtls_ssl_set_hostname(ssl, this->server_.c_str())};

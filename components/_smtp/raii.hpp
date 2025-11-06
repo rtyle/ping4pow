@@ -87,7 +87,7 @@ template<typename Callable> struct deduce_argument {
   using type = typename deduce_argument<decltype(&std::decay_t<Callable>::operator())>::type;
 };
 
-// Callable function, deduce_argument from what it decays to
+// Callable, deduce_argument from what it decays to
 template<typename Callable> using deduce_argument_t = typename deduce_argument<std::decay_t<Callable>>::type;
 
 // factory
