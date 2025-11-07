@@ -6,7 +6,7 @@
 namespace raii {
 
 // Raii implements RAII for a Resource with unary Acquirer and Releaser callables
-// that will be invoked with a pointer its default_initializable Resource member.
+// that will be invoked with a pointer to its default_initializable Resource member.
 // The Acquirer is invoked upon construction and, if successful, the Releaser
 // will be invoked upon destruction.
 // Implicit accessor operators are provided to the protected Resource member
