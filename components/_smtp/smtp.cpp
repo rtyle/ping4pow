@@ -140,7 +140,7 @@ void Component::run_() {
       // establishing a session or sending a message.
       // as long as a message was not dequeued, we will try again.
       std::string context{"session"};
-      std::string error{this->send_([this, &context]() -> std::unique_ptr<Message> {
+      auto error{this->send_([this, &context]() -> std::unique_ptr<Message> {
         // dequeue the next message without blocking
         // and transfer ownwership to caller
         Message *message;
@@ -153,9 +153,9 @@ void Component::run_() {
         return nullptr;
       })};
 
-      if (!error.empty()) {
+      if (error.has_value()) {
         // send_ aborted with an error message. log it in context
-        ESP_LOGW(TAG, "send %s: %s", context.c_str(), error.c_str());
+        ESP_LOGW(TAG, "send %s: %s", context.c_str(), error->c_str());
       }
 
       {
@@ -165,7 +165,7 @@ void Component::run_() {
       }
 
       // pause before trying again
-      vTaskDelay(pdMS_TO_TICKS(60 * 1000));
+      vTaskDelay(pdMS_TO_TICKS(60'000));
     }
   }
 }
@@ -423,7 +423,7 @@ static SmtpReply greeting_and_ehlo(Transport &transport) {
   }
 }
 
-std::string Component::send_(std::function<std::unique_ptr<Message>()> dequeue) {
+std::optional<std::string> Component::send_(std::function<std::unique_ptr<Message>()> dequeue) {
   // connect
   auto net{raii::make(mbedtls_net_init, mbedtls_net_free)};
   {

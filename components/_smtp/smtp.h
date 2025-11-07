@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 #include <string>
 
 #include "freertos/FreeRTOS.h"
@@ -51,7 +52,7 @@ class Component : public esphome::Component {
 
   static void run_that_(void *);
   void run_();
-  std::string send_(std::function<std::unique_ptr<Message>()>);
+  std::optional<std::string> send_(std::function<std::unique_ptr<Message>()>);
 
   TaskHandle_t task_handle_{nullptr};
   QueueHandle_t queue_{nullptr};
