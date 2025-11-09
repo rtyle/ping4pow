@@ -47,7 +47,7 @@ void Component::setup() {
 
   {
     ESP_LOGD(TAG, "seed random number generator");
-    MbedTlsResult result{mbedtls_ctr_drbg_seed(this->ctr_drbg_, mbedtls_entropy_func, this->entropy_, nullptr, 0)};
+    MbedTlsResult result{mbedtls_ctr_drbg_seed(&this->ctr_drbg_, mbedtls_entropy_func, &this->entropy_, nullptr, 0)};
     if (result.is_error()) {
       ESP_LOGW(TAG, "mbedtls_ctr_drbg_seed: %s", result.to_string().c_str());
       this->mark_failed();
@@ -57,7 +57,7 @@ void Component::setup() {
 
   {
     ESP_LOGD(TAG, "ssl config defaults");
-    MbedTlsResult result{mbedtls_ssl_config_defaults(this->ssl_config_, MBEDTLS_SSL_IS_CLIENT,
+    MbedTlsResult result{mbedtls_ssl_config_defaults(&this->ssl_config_, MBEDTLS_SSL_IS_CLIENT,
                                                      MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT)};
     if (result.is_error()) {
       ESP_LOGW(TAG, "mbedtls_ssl_config_defaults: %s", result.to_string().c_str());
@@ -66,21 +66,21 @@ void Component::setup() {
     }
   }
 
-  mbedtls_ssl_conf_rng(this->ssl_config_, mbedtls_ctr_drbg_random, this->ctr_drbg_);
+  mbedtls_ssl_conf_rng(&this->ssl_config_, mbedtls_ctr_drbg_random, &this->ctr_drbg_);
 
   if (this->cas_.empty()) {
-    mbedtls_ssl_conf_authmode(this->ssl_config_, MBEDTLS_SSL_VERIFY_NONE);
+    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_NONE);
   } else {
     ESP_LOGD(TAG, "parse CA certificates");
     MbedTlsResult result{mbedtls_x509_crt_parse(
-        this->x509_crt_, reinterpret_cast<const unsigned char *>(this->cas_.c_str()), this->cas_.size() + 1)};
+        &this->x509_crt_, reinterpret_cast<const unsigned char *>(this->cas_.c_str()), this->cas_.size() + 1)};
     if (result.is_error()) {
       ESP_LOGW(TAG, "mbedtls_x509_crt_parse: %s", result.to_string().c_str());
       this->mark_failed();
       return;
     }
-    mbedtls_ssl_conf_authmode(this->ssl_config_, MBEDTLS_SSL_VERIFY_REQUIRED);
-    mbedtls_ssl_conf_ca_chain(this->ssl_config_, this->x509_crt_, nullptr);
+    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_ca_chain(&this->ssl_config_, &this->x509_crt_, nullptr);
   }
 
   ESP_LOGD(TAG, "create queue");
@@ -429,35 +429,35 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
   {
     ESP_LOGD(TAG, "net connect to %s:%d", this->server_.c_str(), this->port_);
     std::string port{std::format("{}", this->port_)};
-    MbedTlsResult result{mbedtls_net_connect(net, this->server_.c_str(), port.c_str(), MBEDTLS_NET_PROTO_TCP)};
+    MbedTlsResult result{mbedtls_net_connect(&net, this->server_.c_str(), port.c_str(), MBEDTLS_NET_PROTO_TCP)};
     if (result.is_error())
       return std::format("mbedtls_net_connect: {}", result.to_string());
   }
 
   // ssl configuration
-  auto ssl{raii::make(mbedtls_ssl_init, [](mbedtls_ssl_context *a) {
-    mbedtls_ssl_close_notify(a);
-    mbedtls_ssl_free(a);
+  auto ssl{raii::make(mbedtls_ssl_init, [](mbedtls_ssl_context *ssl) {
+    mbedtls_ssl_close_notify(ssl);
+    mbedtls_ssl_free(ssl);
   })};
   {
     ESP_LOGD(TAG, "set hostname: %s", this->server_.c_str());
-    MbedTlsResult result{mbedtls_ssl_set_hostname(ssl, this->server_.c_str())};
+    MbedTlsResult result{mbedtls_ssl_set_hostname(&ssl, this->server_.c_str())};
     if (result.is_error())
       return std::format("mbedtls_ssl_set_hostname: {}", result.to_string());
   }
   {
     ESP_LOGD(TAG, "ssl setup");
-    MbedTlsResult result{mbedtls_ssl_setup(ssl, this->ssl_config_)};
+    MbedTlsResult result{mbedtls_ssl_setup(&ssl, &this->ssl_config_)};
     if (result.is_error())
       return std::format("mbedtls_ssl_setup: {}", result.to_string());
   }
-  mbedtls_ssl_set_bio(ssl, net, mbedtls_net_send, mbedtls_net_recv, nullptr /* non-blocking I/O */);
+  mbedtls_ssl_set_bio(&ssl, &net, mbedtls_net_send, mbedtls_net_recv, nullptr /* non-blocking I/O */);
 
-  SslTransport transport{static_cast<mbedtls_ssl_context *>(ssl)};
+  SslTransport transport{&ssl};
 
   // negotiate an encrypted session
   if (this->starttls_) {
-    NetTransport transport{static_cast<mbedtls_net_context *>(net)};
+    NetTransport transport{&net};
     {
       SmtpReply reply{greeting_and_ehlo(transport)};
       if (!reply.is_positive_completion())
@@ -471,7 +471,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     }
   }
   {
-    MbedTlsResult result{ssl_handshake(ssl)};
+    MbedTlsResult result{ssl_handshake(&ssl)};
     if (result.is_error())
       return std::format("ssl handshake: {}", result.to_string());
   }
@@ -531,12 +531,12 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     {
       static constexpr auto format{concat::array("From: {}", CRLF, "To: {}", CRLF, "Subject: {}", CRLF, CRLF)};
       std::string request = std::format(format.data(), this->from_, message->to, message->subject);
-      MbedTlsResult result{ssl_send(ssl, request)};
+      MbedTlsResult result{ssl_send(&ssl, request)};
       if (result.is_error())
         return std::format("command DATA From, To, Subject: {}", result.to_string());
     }
     {
-      MbedTlsResult result{ssl_send(ssl, message->body)};
+      MbedTlsResult result{ssl_send(&ssl, message->body)};
       if (result.is_error())
         return std::format("command DATA body: {}", result.to_string());
     }
