@@ -15,7 +15,7 @@ namespace _smtp {
 
 #include "concat.hpp"
 
-static const char *const TAG = "_smtp";
+static constexpr char const TAG[]{"_smtp"};
 
 static constexpr char CRLF[]{"\r\n"};  // SMTP protocol line terminator
 
@@ -93,11 +93,11 @@ void Component::setup() {
   }
 
   ESP_LOGD(TAG, "create task");
-  BaseType_t result = xTaskCreate(Component::run_that_, "smtp",
+  BaseType_t result{xTaskCreate(Component::run_that_, "smtp",
                                   8192,  // stack size tuned from logged headroom reports during run_
                                   this,
                                   5,  // priority
-                                  &this->task_handle_);
+                                  &this->task_handle_)};
 
   if (result != pdPASS || this->task_handle_ == nullptr) {
     ESP_LOGW(TAG, "xTaskCreate: %d", result);
@@ -116,7 +116,7 @@ void Component::dump_config() {
 }
 
 void Component::enqueue(const std::string &subject, const std::string &body, const std::string &to) {
-  Message *message = new Message{subject, body, to.empty() ? this->to_ : to};
+  Message *message{new Message{subject, body, to.empty() ? this->to_ : to}};
   ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
   if (pdTRUE != xQueueSend(this->queue_, &message, 0)) {
     ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
@@ -137,7 +137,7 @@ void Component::run_() {
       // call send_ with a lambda
       // that it will use to dequeue and send each immediately available message
       // once a session context is established.
-      // send will abort and return a error (non-empty) string if there was a problem
+      // send_ will abort and return an error if there was a problem
       // establishing a session or sending a message.
       // as long as a message was not dequeued, we will try again.
       std::string context{"session"};
@@ -205,7 +205,7 @@ template<size_t N> class StreamBuffer : public std::basic_streambuf<char> {
   std::array<char, N> buffer_;
 
  public:
-  StreamBuffer(Recv recv) : recv_(std::move(recv)) {
+  StreamBuffer(Recv recv) : recv_{std::move(recv)} {
     // set get buffer base, gptr, egptr for empty buffer
     this->setg(this->buffer_.data(), this->buffer_.data(), this->buffer_.data());
   }
@@ -228,7 +228,7 @@ template<size_t N> class InputStream : public std::basic_istream<char> {
   StreamBuffer<N> buffer;
 
  public:
-  InputStream(Recv recv) : buffer(std::move(recv)), std::basic_istream<char>(&buffer) {}
+  InputStream(Recv recv) : buffer{std::move(recv)}, std::basic_istream<char>{&buffer} {}
   // non-copyable
   InputStream(const InputStream &) = delete;
   InputStream &operator=(const InputStream &) = delete;
@@ -365,9 +365,9 @@ class SmtpReply {
   std::string text;
 
   SmtpReply() = default;
-  SmtpReply(int code_) : code(code_) {}
-  SmtpReply(int code_, std::string_view text_) : code(code_), text(text_) {}
-  SmtpReply(MbedTlsResult result) : code(result), text(result.to_string()) {}
+  SmtpReply(int code_) : code{code_} {}
+  SmtpReply(int code_, std::string_view text_) : code{code_}, text{text_} {}
+  SmtpReply(MbedTlsResult result) : code{result}, text{result.to_string()} {}
 
   bool is_positive_completion() const { return 200 <= code && code < 300; }
   bool is_positive_intermediate() const { return 300 <= code && code < 400; }
@@ -421,7 +421,7 @@ static SmtpReply command(Transport &transport, std::string_view request, std::st
     static constexpr size_t size{3};
     static constexpr auto isdigit{[](char c){ return std::isdigit(static_cast<unsigned char>(c)); }};
     if (size < line.size() && std::ranges::all_of(line | std::views::take(size), isdigit)) {
-      int code = std::stoi(line.substr(0, size));
+      int code{std::stoi(line.substr(0, size))};
       if (!text.empty())
         text += '\n';
       text += line.substr(size + 1);
@@ -551,13 +551,13 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
   // send each message in the queue
   while (auto message = dequeue()) {
     {
-      std::string request = std::format("MAIL FROM:<{}>{}", this->from_, CRLF);
+      std::string request{std::format("MAIL FROM:<{}>{}", this->from_, CRLF)};
       SmtpReply reply{command(transport, request)};
       if (!reply.is_positive_completion())
         return std::format("command MAIL FROM: {}", reply.text);
     }
     {
-      std::string request = std::format("RCPT TO:<{}>{}", message->to, CRLF);
+      std::string request{std::format("RCPT TO:<{}>{}", message->to, CRLF)};
       SmtpReply reply{command(transport, request)};
       if (!reply.is_positive_completion())
         return std::format("command RCPT TO: {}", reply.text);
@@ -570,7 +570,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     }
     {
       static constexpr auto format{concat::array("From: {}", CRLF, "To: {}", CRLF, "Subject: {}", CRLF, CRLF)};
-      std::string request = std::format(format.data(), this->from_, message->to, message->subject);
+      std::string request{std::format(format.data(), this->from_, message->to, message->subject)};
       MbedTlsResult result{ssl_send(&ssl, request)};
       if (result.is_error())
         return std::format("command DATA From, To, Subject: {}", result.to_string());
