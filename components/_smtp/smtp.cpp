@@ -374,6 +374,37 @@ class SmtpReply {
   bool is_negative_permanent_completion() const { return 500 <= code && code < 600; }
 };
 
+// put CRLF terminated input from captured istream into captured line
+class Getline {
+ private:
+  std::istream &istream;
+  std::string &line;
+
+  // recursively append LF terminated segments until eof/error or CRLF
+  void append() {
+    std::string segment;
+    if (!std::getline(istream, segment, CRLF[1]))
+      return;  // eof/error
+    if (!segment.empty() && segment.back() == CRLF[0]) {
+      segment.pop_back();
+      line += segment;
+      return;  // CRLF
+    }
+    line += segment;
+    line += CRLF[1];
+    append();  // recurse
+  }
+
+ public:
+  Getline(std::istream &istream_, std::string &line_) : istream{istream_}, line{line_} {}
+
+  std::istream &operator()() {
+    line.clear();
+    append();
+    return istream;
+  }
+};
+
 // perform an SMTP command by sending the request and compiling the reply over a transport
 static SmtpReply command(Transport &transport, std::string_view request, std::string_view log = {}) {
   MbedTlsResult result{transport.send(request, log)};
@@ -382,24 +413,31 @@ static SmtpReply command(Transport &transport, std::string_view request, std::st
 
   std::string line;
   std::string text;
-  while (std::getline(transport.stream, line, CRLF[1])) {
-    if (!line.empty() && line.back() == CRLF[0])
-      line.pop_back();
+  Getline getline{transport.stream, line};
+  while (getline()) {
     ESP_LOGI(TAG, "< %s", line.c_str());
-    if (4 <= line.size() && std::isdigit(line[0]) && std::isdigit(line[1]) && std::isdigit(line[2])) {
-      int code = std::stoi(line.substr(0, 3));
-      if (text.empty())
+    // parse line with a 3 digit code, character separator and text
+    static constexpr size_t size{3};
+    if (size < line.size() && std::all_of(line.begin(), line.begin() + size, ::isdigit)) {
+      int code = std::stoi(line.substr(0, size));
+      if (!text.empty())
         text += '\n';
-      text += line.substr(4);
-      if (line[3] == ' ') {
-        return {code, text};
-      } else if (line[3] == '-') {
-        continue;
+      text += line.substr(size + 1);
+      switch (line[size]) {
+        case ' ':
+          return {code, text};  // last line
+        case '-':
+          continue;  // another line
+        default:
+          transport.stream.setstate(std::ios_base::failbit);
+          return {MBEDTLS_ERR_ERROR_GENERIC_ERROR, std::format("bad code termination in reply line: {}", line)};
       }
+    } else {
       transport.stream.setstate(std::ios_base::failbit);
-      return {MBEDTLS_ERR_ERROR_GENERIC_ERROR, std::format("unexpected reply line: {}", line)};
+      return {MBEDTLS_ERR_ERROR_GENERIC_ERROR, std::format("no code in reply line: {}", line)};
     }
   }
+  transport.stream.setstate(std::ios_base::failbit);
   return {MBEDTLS_ERR_ERROR_GENERIC_ERROR, std::format("incomplete reply: {}", text)};
 }
 
