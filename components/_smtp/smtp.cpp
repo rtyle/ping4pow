@@ -1,5 +1,6 @@
 #include <format>
 #include <iostream>
+#include <ranges>
 
 #include "smtp.h"
 
@@ -418,7 +419,8 @@ static SmtpReply command(Transport &transport, std::string_view request, std::st
     ESP_LOGI(TAG, "< %s", line.c_str());
     // parse line with a 3 digit code, character separator and text
     static constexpr size_t size{3};
-    if (size < line.size() && std::all_of(line.begin(), line.begin() + size, ::isdigit)) {
+    static constexpr auto isdigit{[](char c){ return std::isdigit(static_cast<unsigned char>(c)); }};
+    if (size < line.size() && std::ranges::all_of(line | std::views::take(size), isdigit)) {
       int code = std::stoi(line.substr(0, size));
       if (!text.empty())
         text += '\n';
