@@ -228,7 +228,7 @@ template<size_t N> class InputStream : public std::basic_istream<char> {
   StreamBuffer<N> buffer;
 
  public:
-  InputStream(Recv recv) : buffer{std::move(recv)}, std::basic_istream<char>{&buffer} {}
+  InputStream(Recv recv) : std::basic_istream<char>{&buffer}, buffer{std::move(recv)} {}
   // non-copyable
   InputStream(const InputStream &) = delete;
   InputStream &operator=(const InputStream &) = delete;
