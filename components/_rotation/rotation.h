@@ -62,7 +62,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     }
 
     Iterator operator--(int) {
-      Iterator tmp = *this;
+      Iterator tmp{*this};
       --(*this);
       return tmp;
     }

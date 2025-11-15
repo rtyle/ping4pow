@@ -7,7 +7,7 @@
 namespace esphome {
 namespace m5cores3 {
 
-static const char *const TAG = "m5cores3.touchscreen";
+static constexpr char const TAG[]{"m5cores3.touchscreen"};
 
 void M5CoreS3Touchscreen::setup() {
   esph_log_config(TAG, "Setting up M5CoreS3 Touchscreen...");
@@ -21,7 +21,7 @@ void M5CoreS3Touchscreen::dump_config() { esph_log_config(TAG, "M5CoreS3 Touchsc
 void M5CoreS3Touchscreen::update_touches() {
   M5.update();
 
-  auto t = M5.Touch.getDetail();
+  auto t{M5.Touch.getDetail()};
 
   if ((t.state & m5::touch_state_t::mask_touch) && (t.state & m5::touch_state_t::mask_change)) {
     // this is the beginning of a new gesture.

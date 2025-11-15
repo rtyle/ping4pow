@@ -50,7 +50,7 @@ template<typename... Inputs> consteval auto array(const Inputs &...inputs) {
   // output size is the sum of each null terminated input string plus 1
   std::array<char, (concat::size(inputs) + ...) + 1> output;
   // for each of the inputs, copy to the next part in output
-  char *next = output.data();
+  char *next{output.data()};
   (..., copy(next, inputs));
   return output;
 }

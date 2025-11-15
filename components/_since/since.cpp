@@ -13,10 +13,8 @@ void Since::update() {
   // publish state in units of seconds.
   // in a 32 bit float (with a 24 bit mantissa)
   // we will not lose precision until 2**24 seconds (over 194 days).
-  float state{0 > this->when_
-    ? std::numeric_limits<float>::quiet_NaN()
-    : static_cast<float>((esp_timer_get_time() - this->when_) / 1000000)
-  };
+  float state{0 > this->when_ ? std::numeric_limits<float>::quiet_NaN()
+                              : static_cast<float>((esp_timer_get_time() - this->when_) / 1000000)};
   this->publish_state(state);
 
   // if there is a text or label associated with us ...
@@ -28,7 +26,7 @@ void Since::update() {
 #endif
   ) {
     // ... format our state and forward it
-    auto s{ _format::duration(state)};
+    auto s{_format::duration(state)};
     if (this->text_) {
       this->text_->publish_state(s);
     }

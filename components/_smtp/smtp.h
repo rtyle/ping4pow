@@ -71,7 +71,7 @@ class Component : public esphome::Component {
 // Action for sending emails
 template<typename... Ts> class Action : public esphome::Action<Ts...> {
  public:
-  explicit Action(Component *parent) : parent_(parent) {}
+  explicit Action(Component *parent) : parent_{parent} {}
 
   TEMPLATABLE_VALUE(std::string, subject)
   TEMPLATABLE_VALUE(std::string, body)

@@ -40,7 +40,7 @@ void Interface::setup() {
   }
 
   for (auto relay : this->relays_) {
-    if (auto state = this->read_state(relay->index_)) {
+    if (auto state{this->read_state(relay->index_)}) {
       ESP_LOGD(TAG, "relay %d publish state %s", relay->index_, *state ? "ON" : "OFF");
       relay->publish_state(*state);
     } else {

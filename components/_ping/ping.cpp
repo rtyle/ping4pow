@@ -49,7 +49,7 @@ void Target::publish(bool success) {
 }
 
 void Target::setup() {
-  esp_ping_config_t config = ESP_PING_DEFAULT_CONFIG();
+  esp_ping_config_t config ESP_PING_DEFAULT_CONFIG();
   config.count = ESP_PING_COUNT_INFINITE;
   config.interval_ms = this->interval_;
   config.timeout_ms = this->timeout_;
