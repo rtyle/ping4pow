@@ -44,7 +44,7 @@ void Interface::setup() {
       ESP_LOGD(TAG, "relay %d publish state %s", relay->index_, *state ? "ON" : "OFF");
       relay->publish_state(*state);
     } else {
-      ESP_LOGE(TAG, "relay %d read state %s failed", relay->index_);
+      ESP_LOGE(TAG, "relay %d read state failed", relay->index_);
     }
   }
 }
