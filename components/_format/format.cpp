@@ -1,11 +1,9 @@
 #include "format.h"
 
+#include <array>
 #include <cmath>
 #include <cstdint>
-
-#include <array>
-#include <sstream>
-#include <iomanip>
+#include <format>
 
 namespace esphome {
 namespace _format {
@@ -15,7 +13,7 @@ std::string duration(float seconds) {
     return "NA";
   }
 
-  auto result{[](uint32_t remainder) -> std::array<uint32_t, 4> {
+  auto [d, h, m, s] = [](uint32_t remainder) -> std::array<uint32_t, 4> {
     static constexpr uint32_t SPM{60};
     static constexpr uint32_t SPH{60 * SPM};
     static constexpr uint32_t SPD{24 * SPH};
@@ -35,16 +33,9 @@ std::string duration(float seconds) {
     *it++ = remainder;
 
     return result;
-  }(static_cast<uint32_t>(seconds))};
-  auto it{result.begin()};
+  }(static_cast<uint32_t>(seconds));
 
-  return (std::stringstream{}
-    << *it << " "
-    << std::setfill('0')
-    << std::setw(2) << *(++it) << ":"
-    << std::setw(2) << *(++it) << ":"
-    << std::setw(2) << *(++it)
-  ).str();
+  return std::format("{} {:02d}:{:02d}:{:02d}", d, h, m, s);
 }
 
 }  // namespace _format
