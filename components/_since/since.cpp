@@ -7,7 +7,7 @@
 namespace esphome {
 namespace _since {
 
-static const char *const TAG = "_since";
+static constexpr char const TAG[]{"_since"};
 
 void Since::update() {
   // publish state in units of seconds.
@@ -28,7 +28,7 @@ void Since::update() {
 #endif
   ) {
     // ... format our state and forward it
-    auto s = _format::duration(state);
+    auto s{ _format::duration(state)};
     if (this->text_) {
       this->text_->publish_state(s);
     }

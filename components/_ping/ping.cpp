@@ -5,7 +5,7 @@
 namespace esphome {
 namespace _ping {
 
-static const char *const TAG = "_ping";
+static constexpr char const TAG[]{"_ping"};
 
 Target::Target() {}
 
@@ -85,7 +85,7 @@ void Target::setup() {
            "priority=%d, interface=%d}",
            this->tag_.c_str(), config.count, config.interval_ms, config.timeout_ms, config.data_size, config.tos,
            config.ttl, this->address_.str().c_str(), config.task_stack_size, config.task_prio, config.interface);
-  auto result = esp_ping_new_session(&config, &callbacks, &this->session_);
+  auto result{esp_ping_new_session(&config, &callbacks, &this->session_)};
   if (ESP_OK != result) {
     ESP_LOGE(TAG, "%s ping session failed: %s", this->tag_.c_str(), esp_err_to_name(result));
   } else {
@@ -97,7 +97,7 @@ void Target::write_state(bool state) {
   if (this->session_) {
     if (state) {
       ESP_LOGD(TAG, "%s ping start", this->tag_.c_str());
-      auto result = esp_ping_start(this->session_);
+      auto result{esp_ping_start(this->session_)};
       if (ESP_OK == result) {
         this->publish_state(true);
       } else {
@@ -107,7 +107,7 @@ void Target::write_state(bool state) {
       this->ping_->publish();
     } else {
       ESP_LOGD(TAG, "%s ping stop", this->tag_.c_str());
-      auto result = esp_ping_stop(this->session_);
+      auto result{esp_ping_stop(this->session_)};
       if (ESP_OK != result) {
         ESP_LOGE(TAG, "%s ping stop failed: %s", this->tag_.c_str(), esp_err_to_name(result));
       }
@@ -130,7 +130,7 @@ void Ping::setup() {
 }
 
 bool Ping::enqueue(std::function<void()> f) {
-  auto *copy = new std::function<void()>(std::move(f));
+  auto *copy{new std::function<void()>(std::move(f))};
   if (pdPASS == xQueueSend(this->queue_, &copy, portMAX_DELAY)) {
     return true;
   }

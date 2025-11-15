@@ -26,7 +26,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     Iterator(Rotation *rotation) : list_{&rotation->list_}, it_{rotation->list_.begin()} {}
 
     Iterator &reset() {
-      it_ = this->list_->begin();
+      this->it_ = this->list_->begin();
       return *this;
     }
 
@@ -45,7 +45,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     }
 
     Iterator operator++(int) {
-      Iterator tmp = *this;
+      Iterator tmp{*this};
       ++(*this);
       return tmp;
     }

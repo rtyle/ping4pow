@@ -8,7 +8,7 @@
 namespace esphome {
 namespace _m5stack_4relay_lgfx {
 
-static const char *const TAG = "_m5stack_4relay_lgfx";
+static constexpr char const TAG[]{"_m5stack_4relay_lgfx"};
 
 static constexpr int PORT{I2C_NUM_1};
 static constexpr int ADDRESS{0x26};
@@ -48,7 +48,7 @@ void Interface::setup() {
   }
 
   for (auto relay : this->relays_) {
-    if (auto state = this->read_state(relay->index_)) {
+    if (auto state{this->read_state(relay->index_)}) {
       ESP_LOGD(TAG, "relay %d publish state %s", relay->index_, *state ? "ON" : "OFF");
       relay->publish_state(*state);
     } else {
@@ -78,7 +78,7 @@ std::optional<bool> Interface::read_state(uint8_t index) {
     return {};
   }
 
-  auto states = this->read_states();
+  auto states{this->read_states()};
   if (!states) {
     return {};
   }
@@ -92,13 +92,13 @@ bool Interface::write_state(uint8_t index, bool state) {
     return false;
   }
 
-  auto read_states = this->read_states();
+  auto read_states{this->read_states()};
   if (!read_states) {
     return false;
   }
 
-  uint8_t write_states = *read_states;
-  uint8_t bit = 1 << index;
+  uint8_t write_states{*read_states};
+  uint8_t bit{1 << index};
   if (state) {
     write_states |= bit;
   } else {
@@ -109,7 +109,7 @@ bool Interface::write_state(uint8_t index, bool state) {
 }
 
 std::optional<uint8_t> Interface::read_states() {
-  auto states = lgfx::i2c::readRegister8(this->port_, this->address_, REGISTER);
+  auto states{lgfx::i2c::readRegister8(this->port_, this->address_, REGISTER)};
   if (states.has_error()) {
     ESP_LOGW(TAG, "read failed: error %d", states.error());
     return {};
@@ -125,7 +125,7 @@ bool Interface::write_states(uint8_t write_states) {
     return false;
   }
 
-  auto read_states = this->read_states();
+  auto read_states{this->read_states()};
   if (!read_states) {
     return false;
   }

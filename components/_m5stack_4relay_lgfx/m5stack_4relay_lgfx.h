@@ -23,8 +23,8 @@ class Relay : public switch_::Switch {
   void write_state(bool state) override;
 
  protected:
-  Interface *interface_ = {nullptr};
-  uint8_t index_ = 0;
+  Interface *interface_{nullptr};
+  uint8_t index_{0};
 };
 
 class Interface : public Component {

@@ -5,7 +5,7 @@
 namespace esphome {
 namespace _m5stack_4relay_esphome {
 
-static const char *const TAG = "_m5stack_4relay_esphome";
+static constexpr char const TAG[]{"_m5stack_4relay_esphome"};
 
 static constexpr uint8_t REGISTER{0x10};
 static constexpr uint8_t COUNT{4};
@@ -70,7 +70,7 @@ std::optional<bool> Interface::read_state(uint8_t index) {
     return {};
   }
 
-  auto states = this->read_states();
+  auto states{this->read_states()};
   if (!states) {
     return {};
   }
@@ -84,13 +84,13 @@ bool Interface::write_state(uint8_t index, bool state) {
     return false;
   }
 
-  auto read_states = this->read_states();
+  auto read_states{this->read_states()};
   if (!read_states) {
     return false;
   }
 
-  uint8_t write_states = *read_states;
-  uint8_t bit = 1 << index;
+  uint8_t write_states{*read_states};
+  uint8_t bit{1 << index};
   if (state) {
     write_states |= bit;
   } else {
@@ -101,7 +101,7 @@ bool Interface::write_state(uint8_t index, bool state) {
 }
 
 std::optional<uint8_t> Interface::read_states() {
-  auto states = this->read_byte(REGISTER);
+  auto states{this->read_byte(REGISTER)};
   if (!states) {
     ESP_LOGW(TAG, "read failed");
     return {};
@@ -117,7 +117,7 @@ bool Interface::write_states(uint8_t write_states) {
     return false;
   }
 
-  auto read_states = this->read_states();
+  auto read_states{this->read_states()};
   if (!read_states) {
     return false;
   }
