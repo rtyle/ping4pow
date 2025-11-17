@@ -33,7 +33,7 @@ inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
 
 }   // namespace /* unnamed */
 
-Target::Target() {}
+Target::Target() = default;
 
 void Target::set_ping(Ping *ping) {
   this->ping_ = ping;
@@ -42,7 +42,7 @@ void Target::set_ping(Ping *ping) {
 
 void Target::set_address(esphome::network::IPAddress address) {
   this->address_ = address;
-  this->tag_ = this->get_name() + " " + this->address_.str().c_str();
+  this->tag_ = std::string(this->get_name()) + ' ' + this->address_.str();
 }
 
 void Target::set_able(binary_sensor::BinarySensor *able) {
