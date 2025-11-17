@@ -1,3 +1,16 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
+#pragma GCC diagnostic warning "-Wpedantic"
+#pragma GCC diagnostic warning "-Wconversion"
+#pragma GCC diagnostic warning "-Wsign-conversion"
+#pragma GCC diagnostic warning "-Wold-style-cast"
+#pragma GCC diagnostic warning "-Wshadow"
+#pragma GCC diagnostic warning "-Wnull-dereference"
+#pragma GCC diagnostic warning "-Wformat=2"
+#pragma GCC diagnostic warning "-Wsuggest-override"
+#pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
+
 #include "ping.h"
 
 #include <esp_timer.h>
@@ -6,6 +19,15 @@ namespace esphome {
 namespace _ping {
 
 static constexpr char const TAG[]{"_ping"};
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+static constexpr auto pdPASS_{pdPASS};
+static constexpr auto pdTRUE_{pdTRUE};
+static constexpr auto portMAX_DELAY_{portMAX_DELAY};
+static constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
+static constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
+#pragma GCC diagnostic pop
 
 Target::Target() {}
 
@@ -93,9 +115,9 @@ void Target::setup() {
   }
 }
 
-void Target::write_state(bool state) {
+void Target::write_state(bool state_) {
   if (this->session_) {
-    if (state) {
+    if (state_) {
       ESP_LOGD(TAG, "%s ping start", this->tag_.c_str());
       auto result{esp_ping_start(this->session_)};
       if (ESP_OK == result) {
@@ -116,7 +138,7 @@ void Target::write_state(bool state) {
   }
 }
 
-Ping::Ping() : queue_{xQueueCreate(32, sizeof(std::function<void()> *))} {}
+Ping::Ping() : queue_{xQueueGenericCreate(32, sizeof(std::function<void()> *), queueQUEUE_TYPE_BASE_)} {}
 
 void Ping::add(Target *target) { this->targets_.push_back(target); }
 
@@ -131,7 +153,7 @@ void Ping::setup() {
 
 bool Ping::enqueue(std::function<void()> f) {
   auto *copy{new std::function<void()>(std::move(f))};
-  if (pdPASS == xQueueSend(this->queue_, &copy, portMAX_DELAY)) {
+  if (pdPASS_ == xQueueGenericSend(this->queue_, &copy, portMAX_DELAY_, queueSEND_TO_BACK_)) {
     return true;
   }
   ESP_LOGE(TAG, "enqueue failed");
@@ -143,7 +165,7 @@ void Ping::loop() {
   // all esphome code should run in its (this) thread.
   // run such deferred code now.
   std::function<void()> *f;
-  while (pdTRUE == xQueueReceive(queue_, &f, 0)) {
+  while (pdTRUE_ == xQueueReceive(queue_, &f, 0)) {
     (*f)();
     delete f;
   }
@@ -219,10 +241,12 @@ void Ping::publish() {
   if (this->all_)
     this->all_->publish_state(all);
   if (this->count_)
-    this->count_->publish_state(count);
+    this->count_->publish_state(static_cast<float>(count));
   if (this->since_)
     this->since_->set_when(latest);
 }
 
 }  // namespace _ping
 }  // namespace esphome
+
+#pragma GCC diagnostic pop

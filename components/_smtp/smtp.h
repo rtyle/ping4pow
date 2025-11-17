@@ -6,13 +6,19 @@
 
 #include "freertos/FreeRTOS.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #include "esphome/core/component.h"
 #include "esphome/core/automation.h"
+#pragma GCC diagnostic pop
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_crt.h"
+#pragma GCC diagnostic pop
 
 namespace esphome {
 namespace _smtp {

@@ -1,3 +1,16 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
+#pragma GCC diagnostic warning "-Wpedantic"
+#pragma GCC diagnostic warning "-Wconversion"
+#pragma GCC diagnostic warning "-Wsign-conversion"
+#pragma GCC diagnostic warning "-Wold-style-cast"
+#pragma GCC diagnostic warning "-Wshadow"
+#pragma GCC diagnostic warning "-Wnull-dereference"
+#pragma GCC diagnostic warning "-Wformat=2"
+#pragma GCC diagnostic warning "-Wsuggest-override"
+#pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
+
 #include "m5stack_4relay_esphome.h"
 
 #include "esphome/core/log.h"
@@ -16,12 +29,12 @@ void Relay::set_interface(Interface *interface) {
   this->interface_->add(this);
 }
 
-void Relay::write_state(bool state) {
-  if (!this->interface_->write_state(this->index_, state)) {
-    ESP_LOGE(TAG, "relay %d write state %s failed", this->index_, state ? "ON" : "OFF");
+void Relay::write_state(bool state_) {
+  if (!this->interface_->write_state(this->index_, state_)) {
+    ESP_LOGE(TAG, "relay %d write state %s failed", this->index_, state_ ? "ON" : "OFF");
   } else {
-    ESP_LOGD(TAG, "relay %d publish state %s", this->index_, state ? "ON" : "OFF");
-    this->publish_state(state);
+    ESP_LOGD(TAG, "relay %d publish state %s", this->index_, state_ ? "ON" : "OFF");
+    this->publish_state(state_);
   }
 }
 
@@ -90,7 +103,7 @@ bool Interface::write_state(uint8_t index, bool state) {
   }
 
   uint8_t write_states{*read_states};
-  uint8_t bit{1 << index};
+  uint8_t bit{static_cast<uint8_t>(1 << index)};
   if (state) {
     write_states |= bit;
   } else {
@@ -133,3 +146,5 @@ bool Interface::write_states(uint8_t write_states) {
 
 }  // namespace _m5stack_4relay_esphome
 }  // namespace esphome
+
+#pragma GCC diagnostic pop

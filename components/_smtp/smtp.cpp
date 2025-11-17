@@ -1,8 +1,21 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wall"
+#pragma GCC diagnostic warning "-Wextra"
+#pragma GCC diagnostic warning "-Wpedantic"
+#pragma GCC diagnostic warning "-Wconversion"
+#pragma GCC diagnostic warning "-Wsign-conversion"
+#pragma GCC diagnostic warning "-Wold-style-cast"
+#pragma GCC diagnostic warning "-Wshadow"
+#pragma GCC diagnostic warning "-Wnull-dereference"
+#pragma GCC diagnostic warning "-Wformat=2"
+#pragma GCC diagnostic warning "-Wsuggest-override"
+#pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
+
+#include "smtp.h"
+
 #include <format>
 #include <iostream>
 #include <ranges>
-
-#include "smtp.h"
 
 #include "esphome/core/log.h"
 
@@ -18,6 +31,16 @@ namespace _smtp {
 static constexpr char const TAG[]{"_smtp"};
 
 static constexpr char CRLF[]{"\r\n"};  // SMTP protocol line terminator
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+static constexpr auto DELAY{pdMS_TO_TICKS(60'000)};
+static constexpr auto pdPASS_{pdPASS};
+static constexpr auto pdTRUE_{pdTRUE};
+static constexpr auto portMAX_DELAY_{portMAX_DELAY};
+static constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
+static constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
+#pragma GCC diagnostic pop
 
 // wrap mbedtls function result value with methods to interpret success or error
 class MbedTlsResult {
@@ -85,7 +108,7 @@ void Component::setup() {
   }
 
   ESP_LOGD(TAG, "create queue");
-  this->queue_ = xQueueCreate(8, sizeof(Message *));
+  this->queue_ = xQueueGenericCreate(8, sizeof(Message *), queueQUEUE_TYPE_BASE_);
   if (!this->queue_) {
     ESP_LOGW(TAG, "xQueueCreate failed");
     this->mark_failed();
@@ -99,7 +122,7 @@ void Component::setup() {
                                 5,  // priority
                                 &this->task_handle_)};
 
-  if (result != pdPASS || this->task_handle_ == nullptr) {
+  if (result != pdPASS_ || this->task_handle_ == nullptr) {
     ESP_LOGW(TAG, "xTaskCreate: %d", result);
     this->mark_failed();
     return;
@@ -118,7 +141,7 @@ void Component::dump_config() {
 void Component::enqueue(const std::string &subject, const std::string &body, const std::string &to) {
   Message *message{new Message{subject, body, to.empty() ? this->to_ : to}};
   ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
-  if (pdTRUE != xQueueSend(this->queue_, &message, 0)) {
+  if (pdTRUE_ != xQueueGenericSend(this->queue_, &message, 0, queueSEND_TO_BACK_)) {
     ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
     delete message;
   }
@@ -131,7 +154,7 @@ void Component::run_() {
   while (true) {
     Message *message;
     // block until there is a message to send
-    if (xQueuePeek(this->queue_, &message, portMAX_DELAY) == pdTRUE) {
+    if (xQueuePeek(this->queue_, &message, portMAX_DELAY_) == pdTRUE_) {
       ESP_LOGD(TAG, "send message: %s", message->subject.c_str());
 
       // call send_ with a lambda
@@ -144,11 +167,11 @@ void Component::run_() {
       auto error{this->send_([this, &context]() -> std::unique_ptr<Message> {
         // dequeue the next message without blocking
         // and transfer ownwership to caller
-        Message *message;
-        if (xQueueReceive(this->queue_, &message, 0) == pdTRUE) {
-          ESP_LOGD(TAG, "dequeue %s", message->subject.c_str());
-          context = std::string("message: ") + message->subject;
-          return std::unique_ptr<Message>(message);
+        Message *message_;
+        if (xQueueReceive(this->queue_, &message_, 0) == pdTRUE_) {
+          ESP_LOGD(TAG, "dequeue %s", message_->subject.c_str());
+          context = std::string("message: ") + message_->subject;
+          return std::unique_ptr<Message>(message_);
         }
         // queue is empty
         return nullptr;
@@ -166,7 +189,7 @@ void Component::run_() {
       }
 
       // pause before trying again
-      vTaskDelay(pdMS_TO_TICKS(60'000));
+      vTaskDelay(DELAY);
     }
   }
 }
@@ -187,8 +210,8 @@ static MbedTlsResult ssl_send(mbedtls_ssl_context *ssl, std::string_view request
         ESP_LOGW(TAG, "mbedtls_ssl_write: %s", result.to_string().c_str());
         return result;
       }
-      left -= result;
-      next += result;
+      left -= static_cast<size_t>(result);
+      next += static_cast<size_t>(result);
     }
   }
   return {static_cast<int>(request.size())};
@@ -254,7 +277,7 @@ class NetTransport : public Transport {
 
  public:
   NetTransport(mbedtls_net_context *context) : context_{context} {}
-  MbedTlsResult send(std::string_view request, std::string_view log) {
+  MbedTlsResult send(std::string_view request, std::string_view log) override {
     if (!request.empty()) {
       if (!log.data())
         log = request;
@@ -268,7 +291,7 @@ class NetTransport : public Transport {
     }
     return {static_cast<int>(request.size())};
   }
-  MbedTlsResult recv(char *buffer, size_t length) {
+  MbedTlsResult recv(char *buffer, size_t length) override {
     MbedTlsResult result{mbedtls_net_recv(this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
     if (result.is_error()) {
       ESP_LOGW(TAG, "mbedtls_net_recv: %s", result.to_string().c_str());
@@ -284,8 +307,8 @@ class SslTransport : public Transport {
 
  public:
   SslTransport(mbedtls_ssl_context *context) : context_{context} {}
-  MbedTlsResult send(std::string_view request, std::string_view log) { return ssl_send(this->context_, request, log); }
-  MbedTlsResult recv(char *buffer, size_t length) {
+  MbedTlsResult send(std::string_view request, std::string_view log) override { return ssl_send(this->context_, request, log); }
+  MbedTlsResult recv(char *buffer, size_t length) override {
     while (true) {
       MbedTlsResult result{mbedtls_ssl_read(this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
       if (result.is_error()) {
@@ -315,7 +338,7 @@ static MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
     }
   }
   {
-    int verified{static_cast<int>(mbedtls_ssl_get_verify_result(ssl))};
+    auto verified{static_cast<int>(mbedtls_ssl_get_verify_result(ssl))};
     switch (verified) {
       case 0:
         ESP_LOGD(TAG, "ssl certificate verified");
@@ -325,7 +348,7 @@ static MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
         break;
       default: {
         char info[64];
-        info[mbedtls_x509_crt_verify_info(info, sizeof info - 1, "", verified)] = 0;
+        info[mbedtls_x509_crt_verify_info(info, sizeof info - 1, "", static_cast<size_t>(verified))] = 0;
         ESP_LOGD(TAG, "ssl cerfificate verify info: %s", info);
       }
     }
@@ -346,14 +369,14 @@ static constexpr size_t base64_encoded_size(size_t decoded_size) {
 
 // base64_encode in to out with SMTP line terminator appended
 static MbedTlsResult base64_encode(std::string_view in, std::string &out) {
-  size_t const encoded_size_in{base64_encoded_size(in.size())};
-  char encoded[encoded_size_in + 1];
+  size_t const encoded_size_in{base64_encoded_size(in.size()) + 1};
+  auto encoded{std::make_unique<char[]>(encoded_size_in)};
   size_t encoded_size_out;
-  MbedTlsResult result{mbedtls_base64_encode(reinterpret_cast<unsigned char *>(encoded), sizeof encoded,
+  MbedTlsResult result{mbedtls_base64_encode(reinterpret_cast<unsigned char *>(encoded.get()), encoded_size_in,
                                              &encoded_size_out, reinterpret_cast<unsigned char const *>(in.data()),
                                              in.size())};
   if (!result.is_error()) {
-    out = std::string(encoded) + CRLF;
+    out = std::string(encoded.get()) + CRLF;
   }
   return result;
 }
@@ -475,9 +498,9 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
   }
 
   // ssl configuration
-  auto ssl{raii::make(mbedtls_ssl_init, [](mbedtls_ssl_context *ssl) {
-    mbedtls_ssl_close_notify(ssl);
-    mbedtls_ssl_free(ssl);
+  auto ssl{raii::make(mbedtls_ssl_init, [](mbedtls_ssl_context *ssl_) {
+    mbedtls_ssl_close_notify(ssl_);
+    mbedtls_ssl_free(ssl_);
   })};
   {
     ESP_LOGD(TAG, "set hostname: %s", this->server_.c_str());
@@ -497,15 +520,15 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
 
   // negotiate an encrypted session
   if (this->starttls_) {
-    NetTransport transport{&net};
+    NetTransport net_transport{&net};
     {
-      SmtpReply reply{greeting_and_ehlo(transport)};
+      SmtpReply reply{greeting_and_ehlo(net_transport)};
       if (!reply.is_positive_completion())
         return std::format("greeting and ehlo: {}", reply.text);
     }
     {
       static constexpr auto request{concat::array("STARTTLS", CRLF)};
-      SmtpReply reply{command(transport, request)};
+      SmtpReply reply{command(net_transport, request)};
       if (!reply.is_positive_completion())
         return std::format("command STARTTLS: {}", reply.text);
     }
@@ -602,3 +625,5 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
 
 }  // namespace _smtp
 }  // namespace esphome
+
+#pragma GCC diagnostic pop

@@ -3,9 +3,14 @@
 #include <optional>
 #include <vector>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wshadow"
 #include "esphome/core/component.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/i2c/i2c.h"
+#pragme GCC diagnostic pop
 
 namespace esphome {
 namespace _m5stack_4relay_esphome {

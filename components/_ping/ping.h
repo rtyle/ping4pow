@@ -1,17 +1,25 @@
 #pragma once
 
 #include <functional>
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
 #include <ping/ping_sock.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wc++11-compat"
 #include "esphome/core/log.h"
 #include "esphome/core/component.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/network/ip_address.h"
+#pragma GCC diagnostic pop
 
 #include "esphome/components/_since/since.h"
 
