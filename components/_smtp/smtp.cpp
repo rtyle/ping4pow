@@ -399,36 +399,24 @@ class SmtpReply {
   bool is_negative_permanent_completion() const { return 500 <= code && code < 600; }
 };
 
-// put SMTP line terminated input from captured istream into captured line
-class Getline {
- private:
-  std::istream &istream;
-  std::string &line;
-
-  // recursively append LF terminated segments until eof/error or CRLF
-  void append() {
-    std::string segment;
-    if (!std::getline(istream, segment, CRLF[1]))
-      return;  // eof/error
-    if (!segment.empty() && segment.back() == CRLF[0]) {
+// like std::getline but with an SMTP line terminator
+static std::istream &getline(std::istream &istream, std::string &line) {
+  constexpr auto CR = CRLF[0];
+  constexpr auto LF = CRLF[1];
+  line.clear();
+  std::string segment;
+  for (;;) {
+    if (!std::getline(istream, segment, LF))
+      return istream;
+    if (!segment.empty() && CR == segment.back()) {
       segment.pop_back();
       line += segment;
-      return;  // CRLF
+      return istream;
     }
     line += segment;
-    line += CRLF[1];
-    append();  // recurse
+    line.push_back(LF);
   }
-
- public:
-  Getline(std::istream &istream_, std::string &line_) : istream{istream_}, line{line_} {}
-
-  std::istream &operator()() {
-    line.clear();
-    append();
-    return istream;
-  }
-};
+}
 
 // perform an SMTP command by sending the request and compiling the reply over a transport
 static SmtpReply command(Transport &transport, std::string_view request, std::string_view log = {}) {
@@ -438,8 +426,7 @@ static SmtpReply command(Transport &transport, std::string_view request, std::st
 
   std::string line;
   std::string text;
-  Getline getline{transport.stream, line};
-  while (getline()) {
+  while (getline(transport.stream, line)) {
     ESP_LOGI(TAG, "< %s", line.c_str());
     // parse line with a 3 digit code, character separator and text
     constexpr size_t size{3};
