@@ -139,7 +139,7 @@ void Component::dump_config() {
 }
 
 void Component::enqueue(const std::string &subject, const std::string &body, const std::string &to) {
-  Message *message{new Message{subject, body, to.empty() ? this->to_ : to}};
+  auto *message{new Message{subject, body, to.empty() ? this->to_ : to}};
   ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
   if (pdPASS_ != xQueueGenericSend(this->queue_, &message, 0, queueSEND_TO_BACK_)) {
     ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
@@ -154,7 +154,7 @@ void Component::run_() {
   while (true) {
     Message *message;
     // block until there is a message to send
-    if (xQueuePeek(this->queue_, &message, portMAX_DELAY_) == pdTRUE_) {
+    if (pdTRUE_ == xQueuePeek(this->queue_, &message, portMAX_DELAY_)) {
       ESP_LOGD(TAG, "send message: %s", message->subject.c_str());
 
       // call send_ with a lambda
@@ -168,10 +168,10 @@ void Component::run_() {
         // dequeue the next message without blocking
         // and transfer ownwership to caller
         Message *message_;
-        if (xQueueReceive(this->queue_, &message_, 0) == pdTRUE_) {
+        if (pdTRUE_ == xQueueReceive(this->queue_, &message_, 0)) {
           ESP_LOGD(TAG, "dequeue %s", message_->subject.c_str());
           context = std::string("message: ") + message_->subject;
-          return std::unique_ptr<Message>(message_);
+          return std::unique_ptr<Message>{message_};
         }
         // queue is empty
         return nullptr;
@@ -200,8 +200,8 @@ static MbedTlsResult ssl_send(mbedtls_ssl_context *ssl, std::string_view request
     if (!log.data())
       log = request;
     ESP_LOGI(TAG, "> %.*s", log.size(), log.data());
-    unsigned char const *next{reinterpret_cast<unsigned char const *>(request.data())};
-    size_t left{request.size()};
+    auto *next{reinterpret_cast<unsigned char const *>(request.data())};
+    auto left{request.size()};
     while (0 < left) {
       MbedTlsResult result{mbedtls_ssl_write(ssl, next, left)};
       if (result.is_error()) {
@@ -340,8 +340,8 @@ static MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
     }
   }
   {
-    auto verified{static_cast<int>(mbedtls_ssl_get_verify_result(ssl))};
-    switch (verified) {
+    auto verified{(mbedtls_ssl_get_verify_result(ssl))};
+    switch (static_cast<int>(verified)) {
       case 0:
         ESP_LOGD(TAG, "ssl certificate verified");
         break;
@@ -350,13 +350,12 @@ static MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
         break;
       default: {
         char info[64];
-        info[mbedtls_x509_crt_verify_info(info, sizeof info - 1, "", static_cast<size_t>(verified))] = 0;
+        info[mbedtls_x509_crt_verify_info(info, sizeof info - 1, "", verified)] = 0;
         ESP_LOGD(TAG, "ssl cerfificate verify info: %s", info);
       }
     }
   }
-  char const *ciphersuite{mbedtls_ssl_get_ciphersuite(ssl)};
-  if (ciphersuite) {
+  if (auto ciphersuite{mbedtls_ssl_get_ciphersuite(ssl)}) {
     ESP_LOGD(TAG, "ssl cipher suite: %s", ciphersuite);
   }
   return result;
@@ -364,14 +363,14 @@ static MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
 
 // return size needed to base64_encode a value
 static constexpr size_t base64_encoded_size(size_t decoded_size) {
-  size_t const decoded{3};
-  size_t const encoded{4};
+  constexpr size_t decoded{3};
+  constexpr size_t encoded{4};
   return ((decoded_size + (decoded - 1)) / decoded) * encoded;
 }
 
 // base64_encode in to out with SMTP line terminator appended
 static MbedTlsResult base64_encode(std::string_view in, std::string &out) {
-  size_t const encoded_size_in{base64_encoded_size(in.size()) + 1};
+  const auto encoded_size_in{base64_encoded_size(in.size()) + 1};
   auto encoded{std::make_unique<char[]>(encoded_size_in)};
   size_t encoded_size_out;
   MbedTlsResult result{mbedtls_base64_encode(reinterpret_cast<unsigned char *>(encoded.get()), encoded_size_in,
@@ -400,7 +399,7 @@ class SmtpReply {
   bool is_negative_permanent_completion() const { return 500 <= code && code < 600; }
 };
 
-// put CRLF terminated input from captured istream into captured line
+// put SMTP line terminated input from captured istream into captured line
 class Getline {
  private:
   std::istream &istream;
@@ -567,7 +566,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     MbedTlsResult result{base64_encode(this->password_, request)};
     if (result.is_error())
       return std::format("base64_encode: {}", result.to_string());
-    static const char log[]{"<redacted>"};
+    static constexpr char log[]{"<redacted>"};
     SmtpReply reply{command(transport, request, log)};
     if (!reply.is_positive_completion())
       return std::format("command AUTH LOGIN password: {}", reply.text);
