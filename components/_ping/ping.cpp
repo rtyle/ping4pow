@@ -18,7 +18,9 @@
 namespace esphome {
 namespace _ping {
 
-static constexpr char const TAG[]{"_ping"};
+namespace {
+
+constexpr char const TAG[]{"_ping"};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -28,6 +30,8 @@ inline constexpr auto portMAX_DELAY_{portMAX_DELAY};
 inline constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
 inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
 #pragma GCC diagnostic pop
+
+}   // namespace /* unnamed */
 
 Target::Target() {}
 

@@ -18,11 +18,15 @@
 namespace esphome {
 namespace _m5stack_4relay_esphome {
 
-static constexpr char const TAG[]{"_m5stack_4relay_esphome"};
+namespace {
+
+constexpr char const TAG[]{"_m5stack_4relay_esphome"};
 
 inline constexpr uint8_t REGISTER{0x10};
 inline constexpr uint8_t COUNT{4};
 inline constexpr uint8_t MASK{(1 << COUNT) - 1};
+
+}   // namespace /* unnamed */
 
 void Relay::set_interface(Interface *interface) {
   this->interface_ = interface;

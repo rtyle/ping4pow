@@ -20,7 +20,11 @@
 namespace esphome {
 namespace _since {
 
-static constexpr char const TAG[]{"_since"};
+namespace {
+
+constexpr char const TAG[]{"_since"};
+
+}   // namespace /* unnamed */
 
 void Since::update() {
   // publish state in units of seconds.

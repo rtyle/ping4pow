@@ -26,11 +26,13 @@
 namespace esphome {
 namespace _smtp {
 
+namespace {
+
 #include "concat.hpp"
 
-static constexpr char const TAG[]{"_smtp"};
+constexpr char const TAG[]{"_smtp"};
 
-static constexpr char CRLF[]{"\r\n"};  // SMTP protocol line terminator
+constexpr char CRLF[]{"\r\n"};  // SMTP protocol line terminator
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -66,136 +68,8 @@ class MbedTlsResult {
   }
 };
 
-void Component::setup() {
-  ESP_LOGCONFIG(TAG, "setup");
-
-  {
-    ESP_LOGD(TAG, "seed random number generator");
-    MbedTlsResult result{mbedtls_ctr_drbg_seed(&this->ctr_drbg_, mbedtls_entropy_func, &this->entropy_, nullptr, 0)};
-    if (result.is_error()) {
-      ESP_LOGW(TAG, "mbedtls_ctr_drbg_seed: %s", result.to_string().c_str());
-      this->mark_failed();
-      return;
-    }
-  }
-
-  {
-    ESP_LOGD(TAG, "ssl config defaults");
-    MbedTlsResult result{mbedtls_ssl_config_defaults(&this->ssl_config_, MBEDTLS_SSL_IS_CLIENT,
-                                                     MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT)};
-    if (result.is_error()) {
-      ESP_LOGW(TAG, "mbedtls_ssl_config_defaults: %s", result.to_string().c_str());
-      this->mark_failed();
-      return;
-    }
-  }
-
-  mbedtls_ssl_conf_rng(&this->ssl_config_, mbedtls_ctr_drbg_random, &this->ctr_drbg_);
-
-  if (this->cas_.empty()) {
-    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_NONE);
-  } else {
-    ESP_LOGD(TAG, "parse CA certificates");
-    MbedTlsResult result{mbedtls_x509_crt_parse(
-        &this->x509_crt_, reinterpret_cast<const unsigned char *>(this->cas_.c_str()), this->cas_.size() + 1)};
-    if (result.is_error()) {
-      ESP_LOGW(TAG, "mbedtls_x509_crt_parse: %s", result.to_string().c_str());
-      this->mark_failed();
-      return;
-    }
-    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_REQUIRED);
-    mbedtls_ssl_conf_ca_chain(&this->ssl_config_, &this->x509_crt_, nullptr);
-  }
-
-  ESP_LOGD(TAG, "create queue");
-  this->queue_ = xQueueGenericCreate(8, sizeof(Message *), queueQUEUE_TYPE_BASE_);
-  if (!this->queue_) {
-    ESP_LOGW(TAG, "xQueueCreate failed");
-    this->mark_failed();
-    return;
-  }
-
-  ESP_LOGD(TAG, "create task");
-  BaseType_t result{xTaskCreate(Component::run_that_, "smtp",
-                                8192,  // stack size tuned from logged headroom reports during run_
-                                this,
-                                5,  // priority
-                                &this->task_handle_)};
-
-  if (result != pdPASS_ || this->task_handle_ == nullptr) {
-    ESP_LOGW(TAG, "xTaskCreate: %d", result);
-    this->mark_failed();
-    return;
-  }
-}
-
-void Component::dump_config() {
-  ESP_LOGCONFIG(TAG, "SMTP Client:");
-  ESP_LOGCONFIG(TAG, "  server: %s", this->server_.c_str());
-  ESP_LOGCONFIG(TAG, "  port: %d", this->port_);
-  ESP_LOGCONFIG(TAG, "  from: %s", this->from_.c_str());
-  ESP_LOGCONFIG(TAG, "  to: %s", this->to_.c_str());
-  ESP_LOGCONFIG(TAG, "  starttls: %s", this->starttls_ ? "true" : "false");
-}
-
-void Component::enqueue(const std::string &subject, const std::string &body, const std::string &to) {
-  auto *message{new Message{subject, body, to.empty() ? this->to_ : to}};
-  ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
-  if (pdPASS_ != xQueueGenericSend(this->queue_, &message, 0, queueSEND_TO_BACK_)) {
-    ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
-    delete message;
-  }
-}
-
-void Component::run_that_(void *that) { static_cast<Component *>(that)->run_(); }
-
-void Component::run_() {
-  ESP_LOGD(TAG, "run");
-  while (true) {
-    Message *message;
-    // block until there is a message to send
-    if (pdTRUE_ == xQueuePeek(this->queue_, &message, portMAX_DELAY_)) {
-      ESP_LOGD(TAG, "send message: %s", message->subject.c_str());
-
-      // call send_ with a lambda
-      // that it will use to dequeue and send each immediately available message
-      // once a session context is established.
-      // send_ will abort and return an error if there was a problem
-      // establishing a session or sending a message.
-      // as long as a message was not dequeued, we will try again.
-      std::string context{"session"};
-      auto error{this->send_([this, &context]() -> std::unique_ptr<Message> {
-        // dequeue the next message without blocking
-        // and transfer ownwership to caller
-        Message *message_;
-        if (pdTRUE_ == xQueueReceive(this->queue_, &message_, 0)) {
-          ESP_LOGD(TAG, "dequeue %s", message_->subject.c_str());
-          context = std::string("message: ") + message_->subject;
-          return std::unique_ptr<Message>{message_};
-        }
-        // queue is empty
-        return nullptr;
-      })};
-
-      if (error.has_value()) {
-        // send_ aborted with an error message. log it in context
-        ESP_LOGW(TAG, "send %s: %s", context.c_str(), error->c_str());
-      }
-
-      {
-        // used for tuning our task's stack size
-        auto headroom{uxTaskGetStackHighWaterMark(nullptr)};
-        ESP_LOGD(TAG, "stack headroom %u", static_cast<unsigned>(headroom));
-      }
-
-      // pause before trying again
-      vTaskDelay(DELAY);
-    }
-  }
-}
-
 // send an encrypted request
-static MbedTlsResult ssl_send(mbedtls_ssl_context *ssl, std::string_view request, std::string_view log = {}) {
+MbedTlsResult ssl_send(mbedtls_ssl_context *ssl, std::string_view request, std::string_view log = {}) {
   if (!request.empty()) {
     if (!log.data())
       log = request;
@@ -325,7 +199,7 @@ class SslTransport : public Transport {
 };
 
 // perform an ssl handshake with certificate validation
-static MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
+MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
   MbedTlsResult result;
   {
     ESP_LOGD(TAG, "ssl handshake");
@@ -362,14 +236,14 @@ static MbedTlsResult ssl_handshake(mbedtls_ssl_context *ssl) {
 }
 
 // return size needed to base64_encode a value
-static constexpr size_t base64_encoded_size(size_t decoded_size) {
+constexpr size_t base64_encoded_size(size_t decoded_size) {
   constexpr size_t decoded{3};
   constexpr size_t encoded{4};
   return ((decoded_size + (decoded - 1)) / decoded) * encoded;
 }
 
 // base64_encode in to out with SMTP line terminator appended
-static MbedTlsResult base64_encode(std::string_view in, std::string &out) {
+MbedTlsResult base64_encode(std::string_view in, std::string &out) {
   const auto encoded_size_in{base64_encoded_size(in.size()) + 1};
   auto encoded{std::make_unique<char[]>(encoded_size_in)};
   size_t encoded_size_out;
@@ -400,7 +274,7 @@ class SmtpReply {
 };
 
 // like std::getline but with an SMTP line terminator
-static std::istream &getline(std::istream &istream, std::string &line) {
+std::istream &getline(std::istream &istream, std::string &line) {
   constexpr auto CR = CRLF[0];
   constexpr auto LF = CRLF[1];
   line.clear();
@@ -419,7 +293,7 @@ static std::istream &getline(std::istream &istream, std::string &line) {
 }
 
 // perform an SMTP command by sending the request and compiling the reply over a transport
-static SmtpReply command(Transport &transport, std::string_view request, std::string_view log = {}) {
+SmtpReply command(Transport &transport, std::string_view request, std::string_view log = {}) {
   MbedTlsResult result{transport.send(request, log)};
   if (result.is_error())
     return {result};
@@ -460,7 +334,7 @@ template<std::size_t size> static SmtpReply command(Transport &transport, const 
 }
 
 // gather/evaluate the SMTP server greeting and initiate a session (EHLO)
-static SmtpReply greeting_and_ehlo(Transport &transport) {
+SmtpReply greeting_and_ehlo(Transport &transport) {
   {
     ESP_LOGD(TAG, "server greeting");
     SmtpReply reply{command(transport, {nullptr, 0})};
@@ -471,6 +345,136 @@ static SmtpReply greeting_and_ehlo(Transport &transport) {
     static constexpr auto request{concat::array("EHLO esphome", CRLF)};
     SmtpReply reply{command(transport, request)};
     return reply;
+  }
+}
+
+} // namespace /* unnamed */
+
+void Component::setup() {
+  ESP_LOGCONFIG(TAG, "setup");
+
+  {
+    ESP_LOGD(TAG, "seed random number generator");
+    MbedTlsResult result{mbedtls_ctr_drbg_seed(&this->ctr_drbg_, mbedtls_entropy_func, &this->entropy_, nullptr, 0)};
+    if (result.is_error()) {
+      ESP_LOGW(TAG, "mbedtls_ctr_drbg_seed: %s", result.to_string().c_str());
+      this->mark_failed();
+      return;
+    }
+  }
+
+  {
+    ESP_LOGD(TAG, "ssl config defaults");
+    MbedTlsResult result{mbedtls_ssl_config_defaults(&this->ssl_config_, MBEDTLS_SSL_IS_CLIENT,
+                                                     MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT)};
+    if (result.is_error()) {
+      ESP_LOGW(TAG, "mbedtls_ssl_config_defaults: %s", result.to_string().c_str());
+      this->mark_failed();
+      return;
+    }
+  }
+
+  mbedtls_ssl_conf_rng(&this->ssl_config_, mbedtls_ctr_drbg_random, &this->ctr_drbg_);
+
+  if (this->cas_.empty()) {
+    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_NONE);
+  } else {
+    ESP_LOGD(TAG, "parse CA certificates");
+    MbedTlsResult result{mbedtls_x509_crt_parse(
+        &this->x509_crt_, reinterpret_cast<const unsigned char *>(this->cas_.c_str()), this->cas_.size() + 1)};
+    if (result.is_error()) {
+      ESP_LOGW(TAG, "mbedtls_x509_crt_parse: %s", result.to_string().c_str());
+      this->mark_failed();
+      return;
+    }
+    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_ca_chain(&this->ssl_config_, &this->x509_crt_, nullptr);
+  }
+
+  ESP_LOGD(TAG, "create queue");
+  this->queue_ = xQueueGenericCreate(8, sizeof(Message *), queueQUEUE_TYPE_BASE_);
+  if (!this->queue_) {
+    ESP_LOGW(TAG, "xQueueCreate failed");
+    this->mark_failed();
+    return;
+  }
+
+  ESP_LOGD(TAG, "create task");
+  BaseType_t result{xTaskCreate(Component::run_that_, "smtp",
+                                8192,  // stack size tuned from logged headroom reports during run_
+                                this,
+                                5,  // priority
+                                &this->task_handle_)};
+
+  if (result != pdPASS_ || this->task_handle_ == nullptr) {
+    ESP_LOGW(TAG, "xTaskCreate: %d", result);
+    this->mark_failed();
+    return;
+  }
+}
+
+void Component::dump_config() {
+  ESP_LOGCONFIG(TAG, "SMTP Client:");
+  ESP_LOGCONFIG(TAG, "  server: %s", this->server_.c_str());
+  ESP_LOGCONFIG(TAG, "  port: %d", this->port_);
+  ESP_LOGCONFIG(TAG, "  from: %s", this->from_.c_str());
+  ESP_LOGCONFIG(TAG, "  to: %s", this->to_.c_str());
+  ESP_LOGCONFIG(TAG, "  starttls: %s", this->starttls_ ? "true" : "false");
+}
+
+void Component::enqueue(const std::string &subject, const std::string &body, const std::string &to) {
+  auto *message{new Message{subject, body, to.empty() ? this->to_ : to}};
+  ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
+  if (pdPASS_ != xQueueGenericSend(this->queue_, &message, 0, queueSEND_TO_BACK_)) {
+    ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
+    delete message;
+  }
+}
+
+void Component::run_that_(void *that) { static_cast<Component *>(that)->run_(); }
+
+void Component::run_() {
+  ESP_LOGD(TAG, "run");
+  while (true) {
+    Message *message;
+    // block until there is a message to send
+    if (pdTRUE_ == xQueuePeek(this->queue_, &message, portMAX_DELAY_)) {
+      ESP_LOGD(TAG, "send message: %s", message->subject.c_str());
+
+      // call send_ with a lambda
+      // that it will use to dequeue and send each immediately available message
+      // once a session context is established.
+      // send_ will abort and return an error if there was a problem
+      // establishing a session or sending a message.
+      // as long as a message was not dequeued, we will try again.
+      std::string context{"session"};
+      auto error{this->send_([this, &context]() -> std::unique_ptr<Message> {
+        // dequeue the next message without blocking
+        // and transfer ownwership to caller
+        Message *message_;
+        if (pdTRUE_ == xQueueReceive(this->queue_, &message_, 0)) {
+          ESP_LOGD(TAG, "dequeue %s", message_->subject.c_str());
+          context = std::string("message: ") + message_->subject;
+          return std::unique_ptr<Message>{message_};
+        }
+        // queue is empty
+        return nullptr;
+      })};
+
+      if (error.has_value()) {
+        // send_ aborted with an error message. log it in context
+        ESP_LOGW(TAG, "send %s: %s", context.c_str(), error->c_str());
+      }
+
+      {
+        // used for tuning our task's stack size
+        auto headroom{uxTaskGetStackHighWaterMark(nullptr)};
+        ESP_LOGD(TAG, "stack headroom %u", static_cast<unsigned>(headroom));
+      }
+
+      // pause before trying again
+      vTaskDelay(DELAY);
+    }
   }
 }
 
