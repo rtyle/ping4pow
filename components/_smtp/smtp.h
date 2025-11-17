@@ -13,6 +13,13 @@
 #pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored -Wpedantic
+// should squelch impending
+//  warning: #include_next is a GCC extension
+// messages, but does not.
+// these are squelched if -Wpedantic was never turned on.
+// this is a bug!
+#pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"

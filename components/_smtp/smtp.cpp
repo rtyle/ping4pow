@@ -34,12 +34,12 @@ static constexpr char CRLF[]{"\r\n"};  // SMTP protocol line terminator
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-static constexpr auto DELAY{pdMS_TO_TICKS(60'000)};
-static constexpr auto pdPASS_{pdPASS};
-static constexpr auto pdTRUE_{pdTRUE};
-static constexpr auto portMAX_DELAY_{portMAX_DELAY};
-static constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
-static constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
+inline constexpr auto DELAY{pdMS_TO_TICKS(60'000)};
+inline constexpr auto pdPASS_{pdPASS};
+inline constexpr auto pdTRUE_{pdTRUE};
+inline constexpr auto portMAX_DELAY_{portMAX_DELAY};
+inline constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
+inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
 #pragma GCC diagnostic pop
 
 // wrap mbedtls function result value with methods to interpret success or error
@@ -141,7 +141,7 @@ void Component::dump_config() {
 void Component::enqueue(const std::string &subject, const std::string &body, const std::string &to) {
   Message *message{new Message{subject, body, to.empty() ? this->to_ : to}};
   ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
-  if (pdTRUE_ != xQueueGenericSend(this->queue_, &message, 0, queueSEND_TO_BACK_)) {
+  if (pdPASS_ != xQueueGenericSend(this->queue_, &message, 0, queueSEND_TO_BACK_)) {
     ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
     delete message;
   }
@@ -307,7 +307,9 @@ class SslTransport : public Transport {
 
  public:
   SslTransport(mbedtls_ssl_context *context) : context_{context} {}
-  MbedTlsResult send(std::string_view request, std::string_view log) override { return ssl_send(this->context_, request, log); }
+  MbedTlsResult send(std::string_view request, std::string_view log) override {
+    return ssl_send(this->context_, request, log);
+  }
   MbedTlsResult recv(char *buffer, size_t length) override {
     while (true) {
       MbedTlsResult result{mbedtls_ssl_read(this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
@@ -441,8 +443,8 @@ static SmtpReply command(Transport &transport, std::string_view request, std::st
   while (getline()) {
     ESP_LOGI(TAG, "< %s", line.c_str());
     // parse line with a 3 digit code, character separator and text
-    static constexpr size_t size{3};
-    static constexpr auto isdigit{[](char c) { return std::isdigit(static_cast<unsigned char>(c)); }};
+    constexpr size_t size{3};
+    constexpr auto isdigit{[](char c) { return std::isdigit(static_cast<unsigned char>(c)); }};
     if (size < line.size() && std::ranges::all_of(line | std::views::take(size), isdigit)) {
       int code{std::stoi(line.substr(0, size))};
       if (!text.empty())

@@ -11,7 +11,6 @@
 #include "esphome/components/switch/switch.h"
 #pragma GCC diagnostic pop
 
-
 namespace esphome {
 namespace _m5stack_4relay_lgfx {
 

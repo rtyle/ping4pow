@@ -27,9 +27,9 @@ std::string duration(float seconds) {
   }
 
   auto [d, h, m, s] = [](uint32_t remainder) -> std::array<uint32_t, 4> {
-    static constexpr uint32_t SPM{60};
-    static constexpr uint32_t SPH{60 * SPM};
-    static constexpr uint32_t SPD{24 * SPH};
+    constexpr uint32_t SPM{60};
+    constexpr uint32_t SPH{60 * SPM};
+    constexpr uint32_t SPD{24 * SPH};
 
     std::array<uint32_t, 4> result;
     auto it{result.begin()};

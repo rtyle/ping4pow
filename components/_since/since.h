@@ -11,7 +11,6 @@
 #include "esphome/components/text_sensor/text_sensor.h"
 #pragma GCC diagnostic pop
 
-
 #ifdef USE_LVGL
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"

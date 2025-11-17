@@ -22,11 +22,11 @@ static constexpr char const TAG[]{"_ping"};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-static constexpr auto pdPASS_{pdPASS};
-static constexpr auto pdTRUE_{pdTRUE};
-static constexpr auto portMAX_DELAY_{portMAX_DELAY};
-static constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
-static constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
+inline constexpr auto pdPASS_{pdPASS};
+inline constexpr auto pdTRUE_{pdTRUE};
+inline constexpr auto portMAX_DELAY_{portMAX_DELAY};
+inline constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
+inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
 #pragma GCC diagnostic pop
 
 Target::Target() {}

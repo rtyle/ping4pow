@@ -20,9 +20,9 @@ namespace _m5stack_4relay_esphome {
 
 static constexpr char const TAG[]{"_m5stack_4relay_esphome"};
 
-static constexpr uint8_t REGISTER{0x10};
-static constexpr uint8_t COUNT{4};
-static constexpr uint8_t MASK{(1 << COUNT) - 1};
+inline constexpr uint8_t REGISTER{0x10};
+inline constexpr uint8_t COUNT{4};
+inline constexpr uint8_t MASK{(1 << COUNT) - 1};
 
 void Relay::set_interface(Interface *interface) {
   this->interface_ = interface;

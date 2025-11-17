@@ -31,12 +31,12 @@ namespace _m5stack_4relay_lgfx {
 
 static constexpr char const TAG[]{"_m5stack_4relay_lgfx"};
 
-static constexpr int PORT{I2C_NUM_1};
-static constexpr int ADDRESS{0x26};
+inline constexpr int PORT{I2C_NUM_1};
+inline constexpr int ADDRESS{0x26};
 
-static constexpr uint8_t REGISTER{0x10};
-static constexpr uint8_t COUNT{4};
-static constexpr uint8_t MASK{(1 << COUNT) - 1};
+inline constexpr uint8_t REGISTER{0x10};
+inline constexpr uint8_t COUNT{4};
+inline constexpr uint8_t MASK{(1 << COUNT) - 1};
 
 void Relay::set_interface(Interface *interface) {
   this->interface_ = interface;
