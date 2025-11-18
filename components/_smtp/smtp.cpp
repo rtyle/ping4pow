@@ -329,7 +329,7 @@ SmtpReply command(Transport &transport, std::string_view request, std::string_vi
 }
 
 // ^ delegate command from null terminated std::array<char, size>
-template<std::size_t size> static SmtpReply command(Transport &transport, const std::array<char, size> &request) {
+template<std::size_t size> SmtpReply command(Transport &transport, const std::array<char, size> &request) {
   return command(transport, std::string_view{request.data(), size - 1});
 }
 
