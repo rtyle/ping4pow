@@ -348,7 +348,7 @@ SmtpReply greeting_and_ehlo(Transport &transport) {
   }
 }
 
-} // namespace /* unnamed */
+}  // namespace
 
 void Component::setup() {
   ESP_LOGCONFIG(TAG, "setup");
