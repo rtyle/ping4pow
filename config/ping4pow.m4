@@ -79,19 +79,19 @@ api:
 web_server:
   version: 3
   sorting_groups:
-    - id: _state_group
+    - id: state_group_
       name: State
       sorting_weight: 0.0
-    - id: _ping_summary_group
+    - id: ping_summary_group_
       name: Ping Summary
       sorting_weight: 0.1
-    - id: _ping_target_group
+    - id: ping_target_group_
       name: Ping Targets
       sorting_weight: 0.2
-    - id: _power_group
+    - id: power_group_
       name: Power
       sorting_weight: 0.3
-    - id: _uptime_group
+    - id: uptime_group_
       name: Uptime
       sorting_weight: 0.4
 
@@ -130,15 +130,15 @@ undefine(`_smtp_define')dnl
 dnl
 ifdef(`GPIO_RELAY', `', `dnl
 _m5stack_4relay_lgfx:
-  - id: _relays
+  - id: relays_
     relays:
-      - id: _power
+      - id: power_
         index: 0
         name: power
         inverted: true
         icon: mdi:power
         web_server:
-          sorting_group_id: _power_group
+          sorting_group_id: power_group_
           sorting_weight: 0
         on_state:
           lvgl.widget.update:
@@ -147,25 +147,25 @@ _m5stack_4relay_lgfx:
               checked: !lambda return x;'
 )dnl
 globals:
-  - id: _0_off_count
+  - id: state_0_off_count_
     type: int
     initial_value: "0"
 
 script:
-  # each switch in our state machine executes _enter for their state on_turn_on.
+  # each switch in our state machine executes enter_ for their state on_turn_on.
   # all other states are exited.
-  - id: _enter
+  - id: enter_
     parameters:
       state: int
     then:
       - lambda: |-
           static std::array switch_button{
-            std::make_tuple(id(_state_0), id(state_0_widget_), false),
-            std::make_tuple(id(_state_1), id(state_1_widget_), false),
-            std::make_tuple(id(_state_2), id(state_2_widget_), true),
-            std::make_tuple(id(_state_3), id(state_3_widget_), false),
-            std::make_tuple(id(_state_4), id(state_4_widget_), true),
-            std::make_tuple(id(_state_5), id(state_5_widget_), false),
+            std::make_tuple(id(state_0_), id(state_0_widget_), false),
+            std::make_tuple(id(state_1_), id(state_1_widget_), false),
+            std::make_tuple(id(state_2_), id(state_2_widget_), true),
+            std::make_tuple(id(state_3_), id(state_3_widget_), false),
+            std::make_tuple(id(state_4_), id(state_4_widget_), true),
+            std::make_tuple(id(state_5_), id(state_5_widget_), false),
           };
           size_t index{0};
           for (auto [_switch, button, hidden]: switch_button) {
@@ -185,7 +185,7 @@ script:
 
 switch:
 ifdef(`GPIO_RELAY', `dnl
-  - id: _power
+  - id: power_
     name: power
     platform: gpio
     pin:
@@ -194,7 +194,7 @@ ifdef(`GPIO_RELAY', `dnl
     restore_mode: ALWAYS_ON
     icon: mdi:power
     web_server:
-      sorting_group_id: _power_group
+      sorting_group_id: power_group_
       sorting_weight: 0
     on_state:
       lvgl.widget.update:
@@ -209,190 +209,190 @@ ifdef(`GPIO_RELAY', `dnl
   # and when 5 is done we enter state 1 again.
   # for testing, these states may be entered through a UI.
   # entering state 0 will stop the machine until state 0 is exited.
-  - id: _state_0
+  - id: state_0_
     platform: lvgl
     widget: state_0_widget_
     name: stop
     restore_mode: ALWAYS_OFF
     icon: mdi:cog
     web_server:
-      sorting_group_id: _state_group
+      sorting_group_id: state_group_
       sorting_weight: 0
     on_turn_on:
       - script.execute:
-          id: _enter
+          id: enter_
           state: 0
     on_turn_off:
       # regardless of the restored state of switch 1,
       # if we try to turn it on now, its on_turn_on will not be invoked!
       if:
         condition:
-          lambda: return id(_0_off_count)++;
+          lambda: return id(state_0_off_count_)++;
         then:
-          - switch.turn_on: _state_1
-  - id: _state_1
+          - switch.turn_on: state_1_
+  - id: state_1_
     platform: lvgl
     widget: state_1_widget_
     name: wait for ping none
     restore_mode: ALWAYS_ON
     icon: mdi:network-off
     web_server:
-      sorting_group_id: _state_group
+      sorting_group_id: state_group_
       sorting_weight: 1
     on_turn_on:
       - script.execute:
-          id: _enter
+          id: enter_
           state: 1
       - wait_until:
           condition:
             or:
-              - switch.is_off: _state_1
-              - binary_sensor.is_on: _ping_none
+              - switch.is_off: state_1_
+              - binary_sensor.is_on: ping_none_
       - if:
           condition:
-            switch.is_on: _state_1
+            switch.is_on: state_1_
           then:
-            - switch.turn_on: _state_2
-  - id: _state_2
+            - switch.turn_on: state_2_
+  - id: state_2_
     platform: lvgl
     widget: state_2_widget_
     name: wait while ping none
     restore_mode: ALWAYS_OFF
     icon: mdi:dots-horizontal
     web_server:
-      sorting_group_id: _state_group
+      sorting_group_id: state_group_
       sorting_weight: 2
     on_turn_on:
       - script.execute:
-          id: _enter
+          id: enter_
           state: 2
       - wait_until:
           condition:
             or:
-              - switch.is_off: _state_2
-              - binary_sensor.is_off: _ping_none
+              - switch.is_off: state_2_
+              - binary_sensor.is_off: ping_none_
           timeout: 10s
       - if:
           condition:
-            switch.is_on: _state_2
+            switch.is_on: state_2_
           then:
             - if:
                 condition:
-                  binary_sensor.is_off: _ping_none
+                  binary_sensor.is_off: ping_none_
                 then:
-                  - switch.turn_on: _state_1
+                  - switch.turn_on: state_1_
                 else:
-                  - switch.turn_on: _state_3
-  - id: _state_3
+                  - switch.turn_on: state_3_
+  - id: state_3_
     platform: lvgl
     widget: state_3_widget_
     name: wait for ping all
     restore_mode: ALWAYS_OFF
     icon: mdi:network
     web_server:
-      sorting_group_id: _state_group
+      sorting_group_id: state_group_
       sorting_weight: 3
     on_turn_on:
       - script.execute:
-          id: _enter
+          id: enter_
           state: 3
       - wait_until:
           condition:
             or:
-              - switch.is_off: _state_3
-              - binary_sensor.is_on: _ping_all
+              - switch.is_off: state_3_
+              - binary_sensor.is_on: ping_all_
       - if:
           condition:
-            switch.is_on: _state_3
+            switch.is_on: state_3_
           then:
-            - switch.turn_on: _state_4
-  - id: _state_4
+            - switch.turn_on: state_4_
+  - id: state_4_
     platform: lvgl
     widget: state_4_widget_
     name: wait while ping all
     restore_mode: ALWAYS_OFF
     icon: mdi:dots-horizontal
     web_server:
-      sorting_group_id: _state_group
+      sorting_group_id: state_group_
       sorting_weight: 4
     on_turn_on:
       - script.execute:
-          id: _enter
+          id: enter_
           state: 4
       - wait_until:
           condition:
             or:
-              - switch.is_off: _state_4
-              - binary_sensor.is_off: _ping_all
+              - switch.is_off: state_4_
+              - binary_sensor.is_off: ping_all_
           timeout: 60s
       - if:
           condition:
-            switch.is_on: _state_4
+            switch.is_on: state_4_
           then:
             - if:
                 condition:
-                  binary_sensor.is_off: _ping_all
+                  binary_sensor.is_off: ping_all_
                 then:
-                  - switch.turn_on: _state_3
+                  - switch.turn_on: state_3_
                 else:
-                  - switch.turn_on: _state_5
-  - id: _state_5
+                  - switch.turn_on: state_5_
+  - id: state_5_
     platform: lvgl
     widget: state_5_widget_
     name: power cycle
     restore_mode: ALWAYS_OFF
     icon: mdi:power-cycle
     web_server:
-      sorting_group_id: _state_group
+      sorting_group_id: state_group_
       sorting_weight: 5
     on_turn_on:
       - script.execute:
-          id: _enter
+          id: enter_
           state: 5
-      - switch.turn_off: _power
-      - lambda: !lambda id(_power_since)->set_when();
+      - switch.turn_off: power_
+      - lambda: !lambda id(power_since_)->set_when();
 _smtp_send(3, power cycle)
       - wait_until:
           condition:
-            switch.is_off: _state_5
+            switch.is_off: state_5_
           timeout: 10s
       - if:
           condition:
-            switch.is_on: _state_5
+            switch.is_on: state_5_
           then:
-            - switch.turn_on: _power
-            - lambda: !lambda id(_power_since)->set_when();
-            - switch.turn_on: _state_1
+            - switch.turn_on: power_
+            - lambda: !lambda id(power_since_)->set_when();
+            - switch.turn_on: state_1_
 
 display:
   - <<: *m5stack_cores3_display
-    id: _display
+    id: display_
     auto_clear_enabled: false
     update_interval: 1ms
 
 touchscreen:
-  - id: _touchscreen
+  - id: touchscreen_
     platform: _m5cores3_touchscreen
     update_interval: 50ms
     left:
-      id: _brightness_decrement
+      id: brightness_decrement_
       on_press:
         number.decrement:
-          id: _brightness
+          id: brightness_
           cycle: false
     center:
-      id: _home
+      id: home_
       on_press:
         lambda: |-
-          auto tileview{id(_tileview)};
+          auto tileview{id(tileview_)};
           lv_obj_set_tile(tileview, id(state_tile_widget_), LV_ANIM_OFF);
           lv_event_send(tileview, LV_EVENT_VALUE_CHANGED, nullptr);
-          id(_tile_iterator).reset();
+          id(tile_iterator_).reset();
     right:
-      id: _brightness_increment
+      id: brightness_increment_
       on_press:
         number.increment:
-          id: _brightness
+          id: brightness_
           cycle: false
 
 define(mdi_arrow_left_bold, \U000F0731)dnl
@@ -412,7 +412,7 @@ define(mdi_power, \U000F0425)dnl
 define(mdi_power_cycle, \U000F0901)dnl
 define(mdi_tag, \U000F04F9)dnl
 font:
-  - id: _font
+  - id: font_
     file: "gfonts://Roboto"
     size: 32
     bpp: 4
@@ -440,7 +440,7 @@ font:
           - "mdi_power"
           - "mdi_power_cycle"
           - "mdi_tag"
-  - id: _font_small
+  - id: font_small_
     file: "gfonts://Roboto"
     size: 18
     bpp: 4
@@ -473,42 +473,42 @@ dnl
 _format:
 
 _since:
-  - id: _boot_since
+  - id: boot_since_
     name: since boot
     when: 0ns
     icon: mdi:arrow-up-bold-circle
     web_server:
-      sorting_group_id: _uptime_group
+      sorting_group_id: uptime_group_
       sorting_weight: 0
     label: boot_since_widget_
     text:
       name: since boot (D HH:MM:SS)
       icon: mdi:arrow-up-bold-circle
       web_server:
-        sorting_group_id: _uptime_group
+        sorting_group_id: uptime_group_
         sorting_weight: 1
-  - id: _power_since
+  - id: power_since_
     name: since power cycle
     icon: mdi:power-cycle
     web_server:
-      sorting_group_id: _power_group
+      sorting_group_id: power_group_
       sorting_weight: 1
     label: power_since_widget_
     text:
       name: since power cycle (D HH:MM:SS)
       icon: mdi:power-cycle
       web_server:
-        sorting_group_id: _power_group
+        sorting_group_id: power_group_
         sorting_weight: 2
 
 define(`__increment', `define(`$1', incr($1))')dnl
 _ping:
   - none:
-      id: _ping_none
+      id: ping_none_
       name: ping none
       icon: mdi:network-off
       web_server:
-        sorting_group_id: _ping_summary_group
+        sorting_group_id: ping_summary_group_
         sorting_weight: 0
       on_state:
         lvgl.widget.update:
@@ -516,11 +516,11 @@ _ping:
           state:
             checked: !lambda return x;
     some:
-      id: _ping_some
+      id: ping_some_
       name: ping some
       icon: mdi:circle-half-full
       web_server:
-        sorting_group_id: _ping_summary_group
+        sorting_group_id: ping_summary_group_
         sorting_weight: 1
       on_state:
         lvgl.widget.update:
@@ -528,11 +528,11 @@ _ping:
           state:
             checked: !lambda return x;
     all:
-      id: _ping_all
+      id: ping_all_
       name: ping all
       icon: mdi:network
       web_server:
-        sorting_group_id: _ping_summary_group
+        sorting_group_id: ping_summary_group_
         sorting_weight: 2
       on_state:
         lvgl.widget.update:
@@ -540,41 +540,41 @@ _ping:
           state:
             checked: !lambda return x;
     count:
-      id: _ping_count
+      id: ping_count_
       name: ping count
       icon: mdi:pound
       web_server:
-        sorting_group_id: _ping_summary_group
+        sorting_group_id: ping_summary_group_
         sorting_weight: 3
       on_value:
         lvgl.label.update:
           id: ping_some_label_widget_
           text: !lambda return to_string(static_cast<int>(x));
     since:
-      id: _ping_since_change
+      id: ping_since_change_
       name: ping since change
       icon: mdi:check-network
       web_server:
-        sorting_group_id: _ping_summary_group
+        sorting_group_id: ping_summary_group_
         sorting_weight: 4
       label: ping_since_change_widget_
       text:
         name: ping since change (D HH:MM:SS)
         icon: mdi:check-network
         web_server:
-          sorting_group_id: _ping_summary_group
+          sorting_group_id: ping_summary_group_
           sorting_weight: 5
     targets:
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
-      - id: _ping_`'__count
+      - id: ping_`'__count`'_
         name: ping __count ($1 $2)
         address: $1
         interval: 10s
         timeout: 2s
         icon: mdi:cog
         web_server:
-          sorting_group_id: _ping_target_group
+          sorting_group_id: ping_target_group_
           sorting_weight: __count
         on_state:
           - lvgl.widget.update:
@@ -587,11 +587,11 @@ define(host, `__increment(`__count')dnl
                 return std::string{
                   x ? "mdi_cog" : "mdi_cog_stop"};
         able:
-          id: _ping_`'__count`'_able
+          id: ping_`'__count`'_able_
           name: ping __count able
           icon: mdi:network
           web_server:
-            sorting_group_id: _ping_target_group
+            sorting_group_id: ping_target_group_
             sorting_weight: __count
           on_state:
             - lvgl.widget.update:
@@ -604,18 +604,18 @@ define(host, `__increment(`__count')dnl
                   return std::string{
                     x ? "mdi_network" : "mdi_network_off"};
         since:
-          id: _ping_`'__count`'_since_change
+          id: ping_`'__count`'_since_change_
           name: ping __count since change
           icon: mdi:check-network
           web_server:
-            sorting_group_id: _ping_target_group
+            sorting_group_id: ping_target_group_
             sorting_weight: __count
           label: ping_`'__count`'_since_change_widget_
           text:
             name: ping __count since change (D HH:MM:SS)
             icon: mdi:check-network
             web_server:
-              sorting_group_id: _ping_target_group
+              sorting_group_id: ping_target_group_
               sorting_weight: __count')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
@@ -630,16 +630,16 @@ define(_fg_on_power, 0x4D0D0D)dnl
 define(_bg_off_power, 0x802F2F)dnl
 define(_fg_off_power, 0xFFCBCB)dnl
 lvgl:
-  displays: [_display]
+  displays: [display_]
   touchscreens:
-    - _touchscreen
+    - touchscreen_
   theme:
     obj:
       bg_color: _bg_off
       border_width: 0
       radius: 0
       pad_all: 0
-      text_font: _font
+      text_font: font_
     button:
       border_width: 2
       text_color: _fg_off
@@ -675,7 +675,7 @@ lvgl:
                   width: 100%
                   widgets:
                     - tileview:
-                        id: _tileview
+                        id: tileview_
                         width: 100%
                         height: 100%
                         bg_color: _bg_off
@@ -765,9 +765,9 @@ lvgl:
                                       condition:
                                         lambda: return x;
                                       then:
-                                        - switch.turn_on: _power
+                                        - switch.turn_on: power_
                                       else:
-                                        - switch.turn_off: _power
+                                        - switch.turn_off: power_
                               - button:
                                   id: state_5_widget_
                                   grid_cell_column_pos: 4
@@ -885,7 +885,7 @@ define(host, `__increment(`__count')dnl
                                         text: "mdi_cog_stop"
                                   on_value:
                                     switch.control:
-                                      id: _ping_`'__count
+                                      id: ping_`'__count`'_
                                       state: !lambda return x;
                               - button:
                                   id: ping_`'__count`'_able_widget_
@@ -953,12 +953,12 @@ undefine(`__count')dnl
                         height: 100%
                         widgets:
                           - label:
-                              text_font: _font_small
+                              text_font: font_small_
                               text: "mdi_arrow_left_bold"
                         on_click:
                           lambda: |-
-                            auto tileview{id(_tileview)};
-                            auto it{id(_tile_iterator)};
+                            auto tileview{id(tileview_)};
+                            auto it{id(tile_iterator_)};
                             auto tile{reinterpret_cast<lv_obj_t *>(*--(*it))};
                             lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
                             lv_event_send(
@@ -970,7 +970,7 @@ undefine(`__count')dnl
                         widgets:
                           - label:
                               id: unlock_label_widget_
-                              text_font: _font_small
+                              text_font: font_small_
                               text: "mdi_lock"
                         on_value:
                           - lvgl.widget.update:
@@ -986,19 +986,19 @@ undefine(`__count')dnl
                         height: 100%
                         widgets:
                           - label:
-                              text_font: _font_small
+                              text_font: font_small_
                               text: "mdi_arrow_right_bold"
                         on_click:
                           lambda: |-
-                            auto tileview{id(_tileview)};
-                            auto it{id(_tile_iterator)};
+                            auto tileview{id(tileview_)};
+                            auto it{id(tile_iterator_)};
                             auto tile{reinterpret_cast<lv_obj_t *>(*++(*it))};
                             lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
                             lv_event_send(
                               tileview, LV_EVENT_VALUE_CHANGED, nullptr);
 
 _rotation:
-  - id: _tile_rotation
+  - id: tile_rotation_
     items:
       - state_tile_widget_
       - since_tile_widget_
@@ -1009,11 +1009,11 @@ include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
     iterators:
-      - id: _tile_iterator
+      - id: tile_iterator_
 
 number:
   - platform: template
-    id: _brightness
+    id: brightness_
     min_value: 0
     max_value: 255
     step: 32
