@@ -3,6 +3,8 @@
 
 namespace raii {
 
+namespace detail {
+
 // ---- generic unary callable argument type deduction
 
 // primary template for specializations (the base for SFINAE)
@@ -37,12 +39,14 @@ concept Steward = std::is_invocable_v<Callable, T *>;
 template<typename T, typename Acquirer, typename Releaser>
 concept Stewardship = std::default_initializable<T> && Steward<Acquirer, T> && Steward<Releaser, T>;
 
+}  // namespace detail
+
 // raii:Resource is a thin wrapper around a type T
 // whose T, Acquirer and Releaser meet Stewardship requirements.
 // The Acquirer is invoked upon construction and, if successful, the Releaser
 // will be invoked upon destruction.
 template<typename T, typename Acquirer = void (*)(T *), typename Releaser = void (*)(T *)>
-  requires Stewardship<T, Acquirer, Releaser>
+  requires detail::Stewardship<T, Acquirer, Releaser>
 class Resource : public T, protected std::unique_ptr<T, Releaser> {
  public:
   Resource(Acquirer &&acquirer, Releaser &&releaser)
@@ -61,7 +65,7 @@ class Resource : public T, protected std::unique_ptr<T, Releaser> {
 
 // factory
 template<typename Acquirer, typename Releaser> auto make(Acquirer &&acquirer, Releaser &&releaser) {
-  using T = typename deduced_argument<std::decay_t<Acquirer>>::type;
+  using T = typename detail::deduced_argument<std::decay_t<Acquirer>>::type;
   return Resource<T, std::decay_t<Acquirer>, std::decay_t<Releaser>>{std::forward<Acquirer>(acquirer),
                                                                      std::forward<Releaser>(releaser)};
 }

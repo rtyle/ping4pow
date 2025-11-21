@@ -6,6 +6,8 @@
 
 namespace concat {
 
+namespace detail {
+
 // return size of null terminated string_view input
 constexpr std::size_t size(std::string_view input) {
   auto size_{input.size()};
@@ -44,14 +46,16 @@ template<std::size_t size> constexpr void copy(char *&output, const std::array<c
   copy(output, std::string_view(input.data(), size));
 }
 
+}  // namespace detail
+
 // return a compile-time std::array concatenation of all inputs
 // (null terminated char(&)[size] or std::array<char, size>)
 template<typename... Inputs> consteval auto array(const Inputs &...inputs) {
   // output size is the sum of each null terminated input string plus 1
-  std::array<char, (concat::size(inputs) + ...) + 1> output;
+  std::array<char, (detail::size(inputs) + ...) + 1> output;
   // for each of the inputs, copy to the next part in output
   char *next{output.data()};
-  (..., copy(next, inputs));
+  (..., detail::copy(next, inputs));
   return output;
 }
 

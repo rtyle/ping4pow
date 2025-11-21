@@ -31,7 +31,7 @@ inline constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
 inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
 #pragma GCC diagnostic pop
 
-}   // namespace /* unnamed */
+}  // namespace
 
 Target::Target() = default;
 

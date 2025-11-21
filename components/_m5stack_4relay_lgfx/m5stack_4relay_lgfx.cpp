@@ -40,7 +40,7 @@ inline constexpr uint8_t REGISTER{0x10};
 inline constexpr uint8_t COUNT{4};
 inline constexpr uint8_t MASK{(1 << COUNT) - 1};
 
-}   // namespace /* unnamed */
+}  // namespace
 
 void Relay::set_interface(Interface *interface) {
   this->interface_ = interface;

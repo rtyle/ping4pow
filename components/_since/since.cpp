@@ -26,7 +26,7 @@ namespace {
 
 constexpr char const TAG[]{"_since"};
 
-}   // namespace /* unnamed */
+}  // namespace
 
 void Since::update() {
   // publish state in units of seconds.

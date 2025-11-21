@@ -32,7 +32,7 @@ namespace {
 
 constexpr char const TAG[]{"m5cores3.touchscreen"};
 
-}   // namespace /* unnamed */
+}  // namespace
 
 void M5CoreS3Touchscreen::setup() {
   esph_log_config(TAG, "Setting up M5CoreS3 Touchscreen...");
