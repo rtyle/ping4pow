@@ -400,11 +400,13 @@ void Component::setup() {
   }
 
   ESP_LOGD(TAG, "create task");
-  BaseType_t result{xTaskCreate(Component::run_that_, "smtp",
+  auto task_priority = std::min(this->task_priority_, static_cast<unsigned>(configMAX_PRIORITIES) - 1);
+  if (this->task_priority_ != task_priority) {
+    ESP_LOGW(TAG, "task_priority %u capped to maxiumum %u", this->task_priority_, task_priority);
+  }
+  BaseType_t result{xTaskCreate(Component::run_that_, this->task_name_.c_str(),
                                 8192,  // stack size tuned from logged headroom reports during run_
-                                this,
-                                5,  // priority
-                                &this->task_handle_)};
+                                this, task_priority, &this->task_handle_)};
 
   if (result != pdPASS_ || this->task_handle_ == nullptr) {
     ESP_LOGW(TAG, "xTaskCreate: %d", result);
@@ -420,6 +422,8 @@ void Component::dump_config() {
   ESP_LOGCONFIG(TAG, "  from: %s", this->from_.c_str());
   ESP_LOGCONFIG(TAG, "  to: %s", this->to_.c_str());
   ESP_LOGCONFIG(TAG, "  starttls: %s", this->starttls_ ? "true" : "false");
+  ESP_LOGCONFIG(TAG, "  task_name: %s", this->task_name_);
+  ESP_LOGCONFIG(TAG, "  task_priority: %s", this->task_priority_);
 }
 
 void Component::enqueue(const std::string &subject, const std::string &body, const std::string &to) {

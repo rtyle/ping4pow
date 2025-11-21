@@ -16,6 +16,8 @@ CONF_STARTTLS = "starttls"
 CONF_CAS = "cas"
 CONF_SUBJECT = "subject"
 CONF_BODY = "body"
+CONF_TASK_NAME = "task_name"
+CONF_TASK_PRIORITY = "task_priority"
 
 _smtp_ns = cg.esphome_ns.namespace("_smtp")
 Component = _smtp_ns.class_("Component", cg.Component)
@@ -56,6 +58,8 @@ CONFIG_SCHEMA = cv.All(
             cv.Required(CONF_TO): cv.string,
             cv.Optional(CONF_STARTTLS, default=True): cv.boolean,
             cv.Optional(CONF_CAS): string_from_file_or_value,
+            cv.Optional(CONF_TASK_NAME, default="smtp"): cv.string,
+            cv.Optional(CONF_TASK_PRIORITY, default=5): cv.int_range(min=0),
         }
     ).extend(cv.COMPONENT_SCHEMA),
 )
@@ -72,6 +76,8 @@ async def to_code(config):
     cg.add(var.set_from(config[CONF_FROM]))
     cg.add(var.set_to(config[CONF_TO]))
     cg.add(var.set_starttls(config[CONF_STARTTLS]))
+    cg.add(var.set_task_name(config[CONF_TASK_NAME]))
+    cg.add(var.set_task_priority(config[CONF_TASK_PRIORITY]))
 
     if CONF_CAS in config:
         cg.add(var.set_cas(config[CONF_CAS]))

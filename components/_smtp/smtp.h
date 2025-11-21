@@ -53,6 +53,8 @@ class Component : public esphome::Component {
   void set_to(const std::string &value) { this->to_ = value; }
   void set_starttls(bool value) { this->starttls_ = value; }
   void set_cas(const std::string &value) { this->cas_ = value; }
+  void set_task_name(const std::string &value) { this->task_name_ = value; }
+  void set_task_priority(unsigned value) { this->task_priority_ = value; }
 
   void enqueue(const std::string &subject, const std::string &body, const std::string &to = "");
 
@@ -77,8 +79,10 @@ class Component : public esphome::Component {
   std::string password_;
   std::string from_;
   std::string to_;
-  std::string cas_;
   bool starttls_{true};
+  std::string cas_;
+  std::string task_name_{"smtp"};
+  unsigned task_priority_{5};
 };
 
 // Action for sending emails
