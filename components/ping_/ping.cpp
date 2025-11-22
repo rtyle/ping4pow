@@ -20,7 +20,7 @@ namespace ping_ {
 
 namespace {
 
-constexpr char const TAG[]{"ping_"};
+constexpr auto TAG{"ping_"};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"

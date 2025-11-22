@@ -30,9 +30,9 @@ namespace {
 
 #include "concat.hpp"
 
-constexpr char const TAG[]{"_smtp"};
+constexpr auto TAG{"_smtp"};
 
-constexpr char CRLF[]{"\r\n"};  // SMTP protocol line terminator
+constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -561,7 +561,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     MbedTlsResult result{base64_encode(this->password_, request)};
     if (result.is_error())
       return std::format("base64_encode: {}", result.to_string());
-    static constexpr char log[]{"<redacted>"};
+    static constexpr auto log{"<redacted>"};
     SmtpReply reply{command(transport, request, log)};
     if (!reply.is_positive_completion())
       return std::format("command AUTH LOGIN password: {}", reply.text);

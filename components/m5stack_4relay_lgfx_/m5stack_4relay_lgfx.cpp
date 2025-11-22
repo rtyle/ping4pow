@@ -31,7 +31,7 @@ namespace m5stack_4relay_lgfx_ {
 
 namespace {
 
-constexpr char const TAG[]{"m5stack_4relay_lgfx_"};
+constexpr auto TAG{"m5stack_4relay_lgfx_"};
 
 inline constexpr int PORT{I2C_NUM_1};
 inline constexpr int ADDRESS{0x26};

@@ -20,7 +20,7 @@ namespace m5stack_4relay_esphome_ {
 
 namespace {
 
-constexpr char const TAG[]{"m5stack_4relay_esphome_"};
+constexpr auto TAG{"m5stack_4relay_esphome_"};
 
 inline constexpr uint8_t REGISTER{0x10};
 inline constexpr uint8_t COUNT{4};

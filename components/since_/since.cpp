@@ -24,7 +24,7 @@ namespace since_ {
 
 namespace {
 
-constexpr char const TAG[]{"_since"};
+constexpr auto TAG{"_since"};
 
 }  // namespace
 
