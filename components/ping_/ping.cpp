@@ -213,9 +213,9 @@ void Ping::set_since(since_::Since *since) {
 }
 
 void Ping::publish() {
-  bool unpublished{false};  // until an enabled target is unpublished
-  bool none{true};          // until an enabled target is successful
-  bool all{true};           // until an enabled target is not successful
+  auto unpublished{false};  // until an enabled target is unpublished
+  auto none{true};          // until an enabled target is successful
+  auto all{true};           // until an enabled target is not successful
   size_t count{0};          // count of enabled successful targets
   int64_t latest{-1};       // latest on target
   for (auto *target : this->targets_) {
@@ -236,7 +236,7 @@ void Ping::publish() {
   }
   if (all || unpublished)
     none = false;
-  bool some{!all && !none};
+  auto some{!all && !none};
 
   if (this->none_)
     this->none_->publish_state(none);

@@ -58,7 +58,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     }
 
     Iterator operator++(int) {
-      Iterator tmp{*this};
+      auto tmp{*this};
       ++(*this);
       return tmp;
     }
@@ -75,7 +75,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     }
 
     Iterator operator--(int) {
-      Iterator tmp{*this};
+      auto tmp{*this};
       --(*this);
       return tmp;
     }
