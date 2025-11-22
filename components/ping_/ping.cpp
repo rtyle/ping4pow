@@ -11,7 +11,7 @@
 #pragma GCC diagnostic warning "-Wsuggest-override"
 #pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
 
-#include "ping.h"
+#include "ping.hpp"
 
 #include <esp_timer.h>
 

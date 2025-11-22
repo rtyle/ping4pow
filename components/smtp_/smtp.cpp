@@ -11,7 +11,7 @@
 #pragma GCC diagnostic warning "-Wsuggest-override"
 #pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
 
-#include "smtp.h"
+#include "smtp.hpp"
 
 #include <format>
 #include <iostream>

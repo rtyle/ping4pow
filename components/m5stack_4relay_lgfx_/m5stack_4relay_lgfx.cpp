@@ -11,7 +11,7 @@
 #pragma GCC diagnostic warning "-Wsuggest-override"
 #pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
 
-#include "m5stack_4relay_lgfx.h"
+#include "m5stack_4relay_lgfx.hpp"
 
 #include "esphome/core/log.h"
 

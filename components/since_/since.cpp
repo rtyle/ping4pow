@@ -11,13 +11,13 @@
 #pragma GCC diagnostic warning "-Wsuggest-override"
 #pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
 
-#include "since.h"
+#include "since.hpp"
 
 #include <limits>
 
-#include <esphome/core/log.h>
+#include "esphome/core/log.h"
 
-#include <esphome/components/format_/format.h>
+#include "esphome/components/format_/format.hpp"
 
 namespace esphome {
 namespace since_ {

@@ -21,7 +21,7 @@
 #include "esphome/components/network/ip_address.h"
 #pragma GCC diagnostic pop
 
-#include "esphome/components/since_/since.h"
+#include "esphome/components/since_/since.hpp"
 
 namespace esphome {
 namespace ping_ {

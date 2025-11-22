@@ -11,7 +11,7 @@
 #pragma GCC diagnostic warning "-Wsuggest-override"
 #pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
 
-#include "m5cores3_touchscreen.h"
+#include "m5cores3_touchscreen.hpp"
 
 #include "esphome/core/hal.h"
 #include "esphome/core/log.h"
