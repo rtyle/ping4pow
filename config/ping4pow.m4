@@ -122,9 +122,11 @@ binary_sensor:
 
 define(`_repeat', `ifelse(0, `$1', `', `$2`'_repeat(decr(`$1'), `$2')')')dnl
 define(`_indent', `_repeat(`$1', `  ')')dnl
-define(`_smtp_send')dnl
-define(`_smtp_define', $1define(`_smtp_send', `_indent($1)- smtp_.send:
-_indent(eval(2+$1))subject: NAME $2'))dnl
+define(`_smtp_send_', `_indent($1)- smtp_.send:
+_indent(eval(2+$1))subject: NAME $2
+')dnl
+define(`_smtp_send', `')dnl
+define(`_smtp_define', `$1`'define(`_smtp_send', defn(`_smtp_send_'))')dnl
 sinclude(SMTP)dnl
 undefine(`_smtp_define')dnl
 dnl
@@ -145,6 +147,7 @@ m5stack_4relay_lgfx_:
             id: power_widget_
             state:
               checked: !lambda return x;'
+
 )dnl
 globals:
   - id: state_0_off_count_
@@ -351,7 +354,7 @@ ifdef(`GPIO_RELAY', `dnl
           state: 5
       - switch.turn_off: power_
       - lambda: !lambda id(power_since_)->set_when();
-_smtp_send(3, power cycle)
+_smtp_send(3, power cycle)`'dnl
       - wait_until:
           condition:
             switch.is_off: state_5_
@@ -468,7 +471,6 @@ font:
           - "mdi_power"
           - "mdi_power_cycle"
           - "mdi_tag"
-dnl
 
 format_:
 
@@ -501,7 +503,6 @@ since_:
         sorting_group_id: power_group_
         sorting_weight: 2
 
-define(`__increment', `define(`$1', incr($1))')dnl
 ping_:
   - none:
       id: ping_none_
@@ -565,6 +566,7 @@ ping_:
           sorting_group_id: ping_summary_group_
           sorting_weight: 5
     targets:
+define(`__increment', `define(`$1', incr($1))')dnl
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
       - id: ping_`'__count`'_
