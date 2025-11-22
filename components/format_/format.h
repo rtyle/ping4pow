@@ -3,9 +3,9 @@
 #include <string>
 
 namespace esphome {
-namespace _format {
+namespace format_ {
 
 std::string duration(float seconds);
 
-}  // namespace _format
+}  // namespace format_
 }  // namespace esphome

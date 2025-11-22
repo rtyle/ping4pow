@@ -27,11 +27,11 @@
 #include <lgfx/v1/platforms/common.hpp>
 
 namespace esphome {
-namespace _m5stack_4relay_lgfx {
+namespace m5stack_4relay_lgfx_ {
 
 namespace {
 
-constexpr char const TAG[]{"_m5stack_4relay_lgfx"};
+constexpr char const TAG[]{"m5stack_4relay_lgfx_"};
 
 inline constexpr int PORT{I2C_NUM_1};
 inline constexpr int ADDRESS{0x26};
@@ -164,7 +164,7 @@ bool Interface::write_states(uint8_t write_states) {
   return true;
 }
 
-}  // namespace _m5stack_4relay_lgfx
+}  // namespace m5stack_4relay_lgfx_
 }  // namespace esphome
 
 #pragma GCC diagnostic pop

@@ -32,7 +32,7 @@ dnl     Control the loads NC relay through a GPIO pin
 dnl     as opposed to an M5Stack 4Relay module.
 dnl
 dnl   -DSMTP=smtp
-dnl     Value is the name of the file that declares the _smtp component
+dnl     Value is the name of the file that declares the smtp_ component
 ifdef(`SMTP', `', `define(`SMTP', `smtp.m4')')dnl
 ---
 
@@ -46,7 +46,7 @@ external_components:
       type: local
       path: ../components
     components: [
-      _format, _m5cores3_touchscreen, _ping, _rotation, _since, _smtp]
+      format_, m5cores3_touchscreen_, ping_, rotation_, since_, smtp_]
 
 esphome:
   <<: *m5stack_cores3_esphome
@@ -123,13 +123,13 @@ binary_sensor:
 define(`_repeat', `ifelse(0, `$1', `', `$2`'_repeat(decr(`$1'), `$2')')')dnl
 define(`_indent', `_repeat(`$1', `  ')')dnl
 define(`_smtp_send')dnl
-define(`_smtp_define', $1define(`_smtp_send', `_indent($1)- _smtp.send:
+define(`_smtp_define', $1define(`_smtp_send', `_indent($1)- smtp_.send:
 _indent(eval(2+$1))subject: NAME $2'))dnl
 sinclude(SMTP)dnl
 undefine(`_smtp_define')dnl
 dnl
 ifdef(`GPIO_RELAY', `', `dnl
-_m5stack_4relay_lgfx:
+m5stack_4relay_lgfx_:
   - id: relays_
     relays:
       - id: power_
@@ -372,7 +372,7 @@ display:
 
 touchscreen:
   - id: touchscreen_
-    platform: _m5cores3_touchscreen
+    platform: m5cores3_touchscreen_
     update_interval: 50ms
     left:
       id: brightness_decrement_
@@ -470,9 +470,9 @@ font:
           - "mdi_tag"
 dnl
 
-_format:
+format_:
 
-_since:
+since_:
   - id: boot_since_
     name: since boot
     when: 0ns
@@ -502,7 +502,7 @@ _since:
         sorting_weight: 2
 
 define(`__increment', `define(`$1', incr($1))')dnl
-_ping:
+ping_:
   - none:
       id: ping_none_
       name: ping none
@@ -997,7 +997,7 @@ undefine(`__count')dnl
                             lv_event_send(
                               tileview, LV_EVENT_VALUE_CHANGED, nullptr);
 
-_rotation:
+rotation_:
   - id: tile_rotation_
     items:
       - state_tile_widget_

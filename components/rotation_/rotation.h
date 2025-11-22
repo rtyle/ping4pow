@@ -20,7 +20,7 @@
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace _rotation {
+namespace rotation_ {
 
 template<typename T, typename Allocator = std::allocator<T>> class Rotation : public Component {
  public:
@@ -90,7 +90,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
   std::list<T, Allocator> list_;
 };
 
-}  // namespace _rotation
+}  // namespace rotation_
 }  // namespace esphome
 
 #pragma GCC diagnostic pop

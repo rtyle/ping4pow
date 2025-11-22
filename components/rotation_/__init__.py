@@ -6,7 +6,7 @@ from esphome.const import CONF_ID
 DEPENDENCIES = []
 CODEOWNERS = ["@rtyle"]
 
-rotation_ns = cg.esphome_ns.namespace("_rotation")
+rotation_ns = cg.esphome_ns.namespace("rotation_")
 Rotation = rotation_ns.class_("Rotation<void *>", cg.Component)
 RotationIterator = rotation_ns.class_("Rotation<void *>::Iterator")
 

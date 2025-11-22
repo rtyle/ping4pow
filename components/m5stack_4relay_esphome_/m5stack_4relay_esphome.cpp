@@ -16,11 +16,11 @@
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace _m5stack_4relay_esphome {
+namespace m5stack_4relay_esphome_ {
 
 namespace {
 
-constexpr char const TAG[]{"_m5stack_4relay_esphome"};
+constexpr char const TAG[]{"m5stack_4relay_esphome_"};
 
 inline constexpr uint8_t REGISTER{0x10};
 inline constexpr uint8_t COUNT{4};
@@ -148,7 +148,7 @@ bool Interface::write_states(uint8_t write_states) {
   return true;
 }
 
-}  // namespace _m5stack_4relay_esphome
+}  // namespace m5stack_4relay_esphome_
 }  // namespace esphome
 
 #pragma GCC diagnostic pop

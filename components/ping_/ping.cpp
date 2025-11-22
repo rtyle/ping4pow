@@ -16,11 +16,11 @@
 #include <esp_timer.h>
 
 namespace esphome {
-namespace _ping {
+namespace ping_ {
 
 namespace {
 
-constexpr char const TAG[]{"_ping"};
+constexpr char const TAG[]{"ping_"};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -50,7 +50,7 @@ void Target::set_able(binary_sensor::BinarySensor *able) {
   this->able_->publish_state(false);
 }
 
-void Target::set_since(_since::Since *since) {
+void Target::set_since(since_::Since *since) {
   this->since_ = since;
   this->since_->update();
 }
@@ -207,7 +207,7 @@ void Ping::set_count(sensor::Sensor *count) {
   this->count_ = count;
   this->count_->publish_state(0);
 }
-void Ping::set_since(_since::Since *since) {
+void Ping::set_since(since_::Since *since) {
   this->since_ = since;
   this->since_->update();
 }
@@ -250,7 +250,7 @@ void Ping::publish() {
     this->since_->set_when(latest);
 }
 
-}  // namespace _ping
+}  // namespace ping_
 }  // namespace esphome
 
 #pragma GCC diagnostic pop

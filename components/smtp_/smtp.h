@@ -28,7 +28,7 @@
 #pragma GCC diagnostic pop
 
 namespace esphome {
-namespace _smtp {
+namespace smtp_ {
 
 #include "raii.hpp"
 
@@ -105,5 +105,5 @@ template<typename... Ts> class Action : public esphome::Action<Ts...> {
   Component *parent_;
 };
 
-}  // namespace _smtp
+}  // namespace smtp_
 }  // namespace esphome

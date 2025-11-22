@@ -21,6 +21,6 @@ dnl
     source:
       type: local
       path: ../components
-    components: [_m5stack_4relay_lgfx, _m5stack_4relay_esphome]
+    components: [m5stack_4relay_lgfx_, m5stack_4relay_esphome_]
 
 undefine(`NAMESPACE')dnl

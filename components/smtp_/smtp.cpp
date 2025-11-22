@@ -24,7 +24,7 @@
 #include "mbedtls/base64.h"
 
 namespace esphome {
-namespace _smtp {
+namespace smtp_ {
 
 namespace {
 
@@ -619,7 +619,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
   return {};
 }
 
-}  // namespace _smtp
+}  // namespace smtp_
 }  // namespace esphome
 
 #pragma GCC diagnostic pop

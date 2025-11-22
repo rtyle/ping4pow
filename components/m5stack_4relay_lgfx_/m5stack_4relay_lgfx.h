@@ -9,11 +9,10 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 #include "esphome/core/component.h"
 #include "esphome/components/switch/switch.h"
-#include "esphome/components/i2c/i2c.h"
-#pragme GCC diagnostic pop
+#pragma GCC diagnostic pop
 
 namespace esphome {
-namespace _m5stack_4relay_esphome {
+namespace m5stack_4relay_lgfx_ {
 
 class Interface;
 
@@ -33,9 +32,12 @@ class Relay : public switch_::Switch {
   uint8_t index_{0};
 };
 
-class Interface : public Component, public i2c::I2CDevice {
+class Interface : public Component {
  public:
-  Interface() = default;
+  Interface();
+
+  void set_port(int port) { this->port_ = port; }
+  void set_address(int address) { this->address_ = address; }
 
   void add(Relay *relay) { this->relays_.push_back(relay); }
 
@@ -47,11 +49,13 @@ class Interface : public Component, public i2c::I2CDevice {
   bool write_state(uint8_t index, bool state);
 
  protected:
+  int port_;
+  int address_;
   std::vector<Relay *> relays_;
 
   std::optional<uint8_t> read_states();
   bool write_states(uint8_t states);
 };
 
-}  // namespace _m5stack_4relay_esphome
+}  // namespace m5stack_4relay_lgfx_
 }  // namespace esphome

@@ -19,9 +19,9 @@ CONF_BODY = "body"
 CONF_TASK_NAME = "task_name"
 CONF_TASK_PRIORITY = "task_priority"
 
-_smtp_ns = cg.esphome_ns.namespace("_smtp")
-Component = _smtp_ns.class_("Component", cg.Component)
-Action = _smtp_ns.class_("Action", automation.Action)
+smtp_ns = cg.esphome_ns.namespace("smtp_")
+Component = smtp_ns.class_("Component", cg.Component)
+Action = smtp_ns.class_("Action", automation.Action)
 
 
 def requires_esp_idf(value):
@@ -84,7 +84,7 @@ async def to_code(config):
 
 
 @automation.register_action(
-    "_smtp.send",
+    "smtp_.send",
     Action,
     cv.Schema(
         {

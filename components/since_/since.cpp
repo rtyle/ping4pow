@@ -17,10 +17,10 @@
 
 #include <esphome/core/log.h>
 
-#include <esphome/components/_format/format.h>
+#include <esphome/components/format_/format.h>
 
 namespace esphome {
-namespace _since {
+namespace since_ {
 
 namespace {
 
@@ -45,7 +45,7 @@ void Since::update() {
 #endif
   ) {
     // ... format our state and forward it
-    auto s{_format::duration(state_)};
+    auto s{format_::duration(state_)};
     if (this->text_) {
       this->text_->publish_state(s);
     }
@@ -63,7 +63,7 @@ void Since::set_when(int64_t when) {
   this->update();
 }
 
-}  // namespace _since
+}  // namespace since_
 }  // namespace esphome
 
 #pragma GCC diagnostic pop

@@ -30,7 +30,7 @@ namespace m5cores3 {
 
 namespace {
 
-constexpr char const TAG[]{"m5cores3.touchscreen"};
+constexpr char const TAG[]{"m5cores3_touchscreen_"};
 
 }  // namespace
 

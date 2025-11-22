@@ -8,7 +8,7 @@ CODEOWNERS = ["@rtyle"]
 
 DEPENDENCIES = ["i2c"]
 
-m5stack_4relay_esphome_ns = cg.esphome_ns.namespace("_m5stack_4relay_esphome")
+m5stack_4relay_esphome_ns = cg.esphome_ns.namespace("m5stack_4relay_esphome_")
 
 Interface = m5stack_4relay_esphome_ns.class_("Interface", cg.Component, i2c.I2CDevice)
 Relay = m5stack_4relay_esphome_ns.class_("Relay", switch.Switch)

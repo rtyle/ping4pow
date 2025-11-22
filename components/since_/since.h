@@ -24,7 +24,7 @@
 #endif
 
 namespace esphome {
-namespace _since {
+namespace since_ {
 
 // a sensor that remembers when an event occurred
 // but publishes how long it has been since that occurance
@@ -47,5 +47,5 @@ class Since : public PollingComponent, public sensor::Sensor {
 #endif
 };
 
-}  // namespace _since
+}  // namespace since_
 }  // namespace esphome

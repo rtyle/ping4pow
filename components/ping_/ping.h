@@ -21,10 +21,10 @@
 #include "esphome/components/network/ip_address.h"
 #pragma GCC diagnostic pop
 
-#include "esphome/components/_since/since.h"
+#include "esphome/components/since_/since.h"
 
 namespace esphome {
-namespace _ping {
+namespace ping_ {
 
 class Ping;
 
@@ -40,7 +40,7 @@ class Target : public switch_::Switch {
   void set_timeout(uint32_t timeout) { this->timeout_ = timeout; }
 
   void set_able(binary_sensor::BinarySensor *able);
-  void set_since(_since::Since *since);
+  void set_since(since_::Since *since);
 
   void setup();
 
@@ -59,7 +59,7 @@ class Target : public switch_::Switch {
   int64_t when_{-1};
 
   binary_sensor::BinarySensor *able_{nullptr};
-  _since::Since *since_{nullptr};
+  since_::Since *since_{nullptr};
 
   void publish(bool success);
 
@@ -74,7 +74,7 @@ class Ping : public Component {
   void set_some(binary_sensor::BinarySensor *some);
   void set_all(binary_sensor::BinarySensor *all);
   void set_count(sensor::Sensor *count);
-  void set_since(_since::Since *since);
+  void set_since(since_::Since *since);
 
   void add(Target *target);
 
@@ -92,12 +92,12 @@ class Ping : public Component {
   binary_sensor::BinarySensor *some_{nullptr};
   binary_sensor::BinarySensor *all_{nullptr};
   sensor::Sensor *count_{nullptr};
-  _since::Since *since_{nullptr};
+  since_::Since *since_{nullptr};
 
   std::vector<Target *> targets_{};
 
   QueueHandle_t const queue_;
 };
 
-}  // namespace _ping
+}  // namespace ping_
 }  // namespace esphome

@@ -1,4 +1,4 @@
-_smtp_define(_smtp:
+_smtp_define(smtp_:
   server: smtp.gmail.com
   username: <user>@gmail.com
   password: <password>

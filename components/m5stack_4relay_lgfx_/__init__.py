@@ -7,7 +7,7 @@ CODEOWNERS = ["@rtyle"]
 
 DEPENDENCIES = ["switch"]
 
-m5stack_4relay_lgfx_ns = cg.esphome_ns.namespace("_m5stack_4relay_lgfx")
+m5stack_4relay_lgfx_ns = cg.esphome_ns.namespace("m5stack_4relay_lgfx_")
 
 Interface = m5stack_4relay_lgfx_ns.class_("Interface", cg.Component)
 Relay = m5stack_4relay_lgfx_ns.class_("Relay", switch.Switch)

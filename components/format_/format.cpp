@@ -19,7 +19,7 @@
 #include <format>
 
 namespace esphome {
-namespace _format {
+namespace format_ {
 
 std::string duration(float seconds) {
   if (std::isnan(seconds)) {
@@ -51,7 +51,7 @@ std::string duration(float seconds) {
   return std::format("{} {:02d}:{:02d}:{:02d}", d, h, m, s);
 }
 
-}  // namespace _format
+}  // namespace format_
 }  // namespace esphome
 
 #pragma GCC diagnostic pop
