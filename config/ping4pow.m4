@@ -835,7 +835,7 @@ lvgl:
                                   id: ping_since_change_widget_
                                   grid_cell_column_pos: 1
                                   grid_cell_row_pos: 0
-                                  text: "N/A"
+                                  text: "NA"
                               - label:
                                   styles: label_style_widget_
                                   grid_cell_column_pos: 0
@@ -846,7 +846,7 @@ lvgl:
                                   id: power_since_widget_
                                   grid_cell_column_pos: 1
                                   grid_cell_row_pos: 1
-                                  text: "N/A"
+                                  text: "NA"
                               - label:
                                   styles: label_style_widget_
                                   grid_cell_column_pos: 0
@@ -857,7 +857,7 @@ lvgl:
                                   id: boot_since_widget_
                                   grid_cell_column_pos: 1
                                   grid_cell_row_pos: 2
-                                  text: "N/A"
+                                  text: "NA"
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
                           - id: ping_`'__count`'_tile_widget_
