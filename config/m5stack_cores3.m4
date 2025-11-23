@@ -71,7 +71,7 @@ define(M5STACK_CORE_M5_BUS_1_12, GPIO14)dnl
   board_m5cores3: &NAMESPACE`'_board_m5cores3 {}
 
   spi: &NAMESPACE`'_spi
-    id: spi_id
+    id: spi_
     interface: spi3   # spi2 is implicitly used by m5cores3_display
     clk_pin: GPIO36
     mosi_pin: GPIO37
@@ -85,25 +85,25 @@ define(M5STACK_CORE_M5_BUS_1_12, GPIO14)dnl
     scl: GPIO11
     sda: GPIO12
     scan: true
-    id: i2c_id
+    id: i2c_
     frequency: 400kHz
 
   touchscreen: &NAMESPACE`'_touchscreen
     platform: m5cores3_touchscreen
 
   m5cores3_audio: &NAMESPACE`'_m5cores3_audio
-    id: m5cores3_audio
+    id: m5cores3_audio_
 
   microphone: &NAMESPACE`'_microphone
     platform: m5cores3_audio
-    m5cores3_audio_id: m5cores3_audio
+    m5cores3_audio_id: m5cores3_audio_
     adc_type: external
     i2s_din_pin: 14
     pdm: false
 
   speaker: &NAMESPACE`'_speaker
     platform: m5cores3_audio
-    m5cores3_audio_id: m5cores3_audio
+    m5cores3_audio_id: m5cores3_audio_
     dac_type: external
     i2s_dout_pin: 13
     mode: mono
