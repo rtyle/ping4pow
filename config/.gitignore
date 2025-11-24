@@ -4,4 +4,5 @@
 /ping4pow.yaml
 /ping4pow-*.yaml
 /ping4pow-*.sh
+/secrets.yaml
 /smtp.m4
