@@ -75,6 +75,8 @@ ota:
 
 api:
   reboot_timeout: 0s
+  encryption:
+    key: !secret NAME-api-key
 
 web_server:
   version: 3
