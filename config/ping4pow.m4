@@ -71,7 +71,8 @@ logger:
 ethernet: *m5stack_lan_poe_v12_ethernet_m5cores3_display
 
 ota:
-  platform: esphome
+  - platform: esphome
+    password: !secret NAME-ota-password
 
 api:
   reboot_timeout: 0s
