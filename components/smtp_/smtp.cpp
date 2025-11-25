@@ -400,7 +400,7 @@ void Component::setup() {
   }
 
   ESP_LOGD(TAG, "create task");
-  auto task_priority = std::min(this->task_priority_, static_cast<unsigned>(configMAX_PRIORITIES) - 1);
+  auto task_priority{std::min(this->task_priority_, static_cast<unsigned>(configMAX_PRIORITIES) - 1)};
   if (this->task_priority_ != task_priority) {
     ESP_LOGW(TAG, "task_priority %u capped to maxiumum %u", this->task_priority_, task_priority);
   }
