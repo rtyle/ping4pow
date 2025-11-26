@@ -21,12 +21,12 @@
 namespace esphome {
 namespace format_ {
 
-std::string duration(float seconds) {
+std::string duration(float const seconds) {
   if (std::isnan(seconds)) {
     return "NA";
   }
 
-  auto [d, h, m, s] = [](uint32_t remainder) -> std::array<uint32_t, 4> {
+  auto const [d, h, m, s] = [](uint32_t remainder) -> std::array<uint32_t, 4> {
     constexpr uint32_t SPM{60};
     constexpr uint32_t SPH{60 * SPM};
     constexpr uint32_t SPD{24 * SPH};

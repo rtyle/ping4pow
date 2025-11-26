@@ -23,7 +23,7 @@ class Relay : public switch_::Switch {
   Relay() = default;
 
   void set_interface(Interface *interface);
-  void set_index(uint8_t index) { this->index_ = index; }
+  void set_index(uint8_t const index) { this->index_ = index; }
 
   void write_state(bool state) override;
 
@@ -36,10 +36,10 @@ class Interface : public Component {
  public:
   Interface();
 
-  void set_port(int port) { this->port_ = port; }
-  void set_address(int address) { this->address_ = address; }
+  void set_port(int const port) { this->port_ = port; }
+  void set_address(int const address) { this->address_ = address; }
 
-  void add(Relay *relay) { this->relays_.push_back(relay); }
+  void add(Relay *const relay) { this->relays_.push_back(relay); }
 
   void setup() override;
   void dump_config() override;

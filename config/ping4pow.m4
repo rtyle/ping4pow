@@ -165,7 +165,7 @@ script:
       state: int
     then:
       - lambda: |-
-          static std::array switch_button{
+          static std::array const switch_button{
             std::make_tuple(id(state_0_), id(state_0_widget_), false),
             std::make_tuple(id(state_1_), id(state_1_widget_), false),
             std::make_tuple(id(state_2_), id(state_2_widget_), true),
@@ -174,7 +174,7 @@ script:
             std::make_tuple(id(state_5_), id(state_5_widget_), false),
           };
           size_t index{0};
-          for (auto [_switch, button, hidden]: switch_button) {
+          for (auto const [_switch, button, hidden]: switch_button) {
             if (index == state) {
               if (hidden) {
                 lv_obj_clear_flag(button, LV_OBJ_FLAG_HIDDEN);
@@ -390,7 +390,7 @@ touchscreen:
       id: home_
       on_press:
         lambda: |-
-          auto tileview{id(tileview_)};
+          auto const tileview{id(tileview_)};
           lv_obj_set_tile(tileview, id(state_tile_widget_), LV_ANIM_OFF);
           lv_event_send(tileview, LV_EVENT_VALUE_CHANGED, nullptr);
           id(tile_iterator_).reset();
@@ -962,9 +962,10 @@ undefine(`__count')dnl
                               text: "mdi_arrow_left_bold"
                         on_click:
                           lambda: |-
-                            auto tileview{id(tileview_)};
+                            auto const tileview{id(tileview_)};
                             auto it{id(tile_iterator_)};
-                            auto tile{reinterpret_cast<lv_obj_t *>(*--(*it))};
+                            auto const tile{
+                              reinterpret_cast<lv_obj_t *>(*--(*it))};
                             lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
                             lv_event_send(
                               tileview, LV_EVENT_VALUE_CHANGED, nullptr);
@@ -995,9 +996,10 @@ undefine(`__count')dnl
                               text: "mdi_arrow_right_bold"
                         on_click:
                           lambda: |-
-                            auto tileview{id(tileview_)};
+                            auto const tileview{id(tileview_)};
                             auto it{id(tile_iterator_)};
-                            auto tile{reinterpret_cast<lv_obj_t *>(*++(*it))};
+                            auto const tile{
+                              reinterpret_cast<lv_obj_t *>(*++(*it))};
                             lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
                             lv_event_send(
                               tileview, LV_EVENT_VALUE_CHANGED, nullptr);

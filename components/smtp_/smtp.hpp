@@ -45,18 +45,18 @@ class Component : public esphome::Component {
   float get_setup_priority() const override { return setup_priority::ETHERNET; }
 
   // configuration setters
-  void set_server(const std::string &value) { this->server_ = value; }
-  void set_port(uint16_t value) { this->port_ = value; }
-  void set_username(const std::string &value) { this->username_ = value; }
-  void set_password(const std::string &value) { this->password_ = value; }
-  void set_from(const std::string &value) { this->from_ = value; }
-  void set_to(const std::string &value) { this->to_ = value; }
-  void set_starttls(bool value) { this->starttls_ = value; }
-  void set_cas(const std::string &value) { this->cas_ = value; }
-  void set_task_name(const std::string &value) { this->task_name_ = value; }
-  void set_task_priority(unsigned value) { this->task_priority_ = value; }
+  void set_server(std::string const &value) { this->server_ = value; }
+  void set_port(uint16_t const value) { this->port_ = value; }
+  void set_username(std::string const &value) { this->username_ = value; }
+  void set_password(std::string const &value) { this->password_ = value; }
+  void set_from(std::string const &value) { this->from_ = value; }
+  void set_to(std::string const &value) { this->to_ = value; }
+  void set_starttls(bool const value) { this->starttls_ = value; }
+  void set_cas(std::string const &value) { this->cas_ = value; }
+  void set_task_name(std::string const &value) { this->task_name_ = value; }
+  void set_task_priority(unsigned const value) { this->task_priority_ = value; }
 
-  void enqueue(const std::string &subject, const std::string &body, const std::string &to = "");
+  void enqueue(std::string const &subject, std::string const &body, std::string const &to = "");
 
  protected:
   // use RAII to manage mbedtls resources for our lifetime
@@ -88,16 +88,16 @@ class Component : public esphome::Component {
 // Action for sending emails
 template<typename... Ts> class Action : public esphome::Action<Ts...> {
  public:
-  explicit Action(Component *parent) : parent_{parent} {}
+  explicit Action(Component *const parent) : parent_{parent} {}
 
   TEMPLATABLE_VALUE(std::string, subject)
   TEMPLATABLE_VALUE(std::string, body)
   TEMPLATABLE_VALUE(std::string, to)
 
   void play(Ts... x) override {
-    auto subject{this->subject_.value(x...)};
-    auto body{this->body_.optional_value(x...).value_or("")};
-    auto to{this->to_.optional_value(x...).value_or("")};
+    auto const subject{this->subject_.value(x...)};
+    auto const body{this->body_.optional_value(x...).value_or("")};
+    auto const to{this->to_.optional_value(x...).value_or("")};
     this->parent_->enqueue(subject, body, to);
   }
 

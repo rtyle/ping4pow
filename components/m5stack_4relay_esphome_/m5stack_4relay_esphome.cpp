@@ -28,12 +28,12 @@ inline constexpr uint8_t MASK{(1 << COUNT) - 1};
 
 }  // namespace
 
-void Relay::set_interface(Interface *interface) {
+void Relay::set_interface(Interface *const interface) {
   this->interface_ = interface;
   this->interface_->add(this);
 }
 
-void Relay::write_state(bool state_) {
+void Relay::write_state(bool const state_) {
   if (!this->interface_->write_state(this->index_, state_)) {
     ESP_LOGE(TAG, "relay %d write state %s failed", this->index_, state_ ? "ON" : "OFF");
   } else {
@@ -57,7 +57,7 @@ void Interface::setup() {
   }
 
   for (auto relay : this->relays_) {
-    if (auto state{this->read_state(relay->index_)}) {
+    if (auto const state{this->read_state(relay->index_)}) {
       ESP_LOGD(TAG, "relay %d publish state %s", relay->index_, *state ? "ON" : "OFF");
       relay->publish_state(*state);
     } else {
@@ -66,14 +66,14 @@ void Interface::setup() {
   }
 }
 
-void Interface::dump_config() {
+void Interface::dump_config() const {
   ESP_LOGCONFIG(TAG, "config");
   if (this->is_failed()) {
     ESP_LOGCONFIG(TAG, "\tfailed");
     return;
   }
 
-  for (auto relay : this->relays_) {
+  for (auto const relay : this->relays_) {
     ESP_LOGCONFIG(TAG, "\trelay: %d", relay->index_);
     switch_::log_switch(TAG, " ", "Switch", relay);
   }
@@ -81,13 +81,13 @@ void Interface::dump_config() {
 
 float Interface::get_setup_priority() const { return setup_priority::HARDWARE; }
 
-std::optional<bool> Interface::read_state(uint8_t index) {
+std::optional<bool> Interface::read_state(uint8_t const index) {
   if (!(index < COUNT)) {
     ESP_LOGW(TAG, "invalid relay %d", index);
     return {};
   }
 
-  auto states{this->read_states()};
+  auto const states{this->read_states()};
   if (!states) {
     return {};
   }
@@ -95,19 +95,19 @@ std::optional<bool> Interface::read_state(uint8_t index) {
   return 0 != (*states & (1 << index));
 }
 
-bool Interface::write_state(uint8_t index, bool state) {
+bool Interface::write_state(uint8_t const index, bool const state) {
   if (!(index < COUNT)) {
     ESP_LOGW(TAG, "invalid relay %d", index);
     return false;
   }
 
-  auto read_states{this->read_states()};
+  auto const read_states{this->read_states()};
   if (!read_states) {
     return false;
   }
 
   uint8_t write_states{*read_states};
-  uint8_t bit{static_cast<uint8_t>(1 << index)};
+  uint8_t const bit{static_cast<uint8_t>(1 << index)};
   if (state) {
     write_states |= bit;
   } else {
@@ -118,7 +118,7 @@ bool Interface::write_state(uint8_t index, bool state) {
 }
 
 std::optional<uint8_t> Interface::read_states() {
-  auto states{this->read_byte(REGISTER)};
+  auto const states{this->read_byte(REGISTER)};
   if (!states) {
     ESP_LOGW(TAG, "read failed");
     return {};
@@ -134,7 +134,7 @@ bool Interface::write_states(uint8_t write_states) {
     return false;
   }
 
-  auto read_states{this->read_states()};
+  auto const read_states{this->read_states()};
   if (!read_states) {
     return false;
   }

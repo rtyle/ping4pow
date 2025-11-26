@@ -35,27 +35,27 @@ inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
 
 Target::Target() = default;
 
-void Target::set_ping(Ping *ping) {
+void Target::set_ping(Ping *const ping) {
   this->ping_ = ping;
   ping->add(this);
 }
 
-void Target::set_address(esphome::network::IPAddress address) {
+void Target::set_address(esphome::network::IPAddress const address) {
   this->address_ = address;
   this->tag_ = std::string(this->get_name()) + ' ' + this->address_.str();
 }
 
-void Target::set_able(binary_sensor::BinarySensor *able) {
+void Target::set_able(binary_sensor::BinarySensor *const able) {
   this->able_ = able;
   this->able_->publish_state(false);
 }
 
-void Target::set_since(since_::Since *since) {
+void Target::set_since(since_::Since *const since) {
   this->since_ = since;
   this->since_->update();
 }
 
-void Target::publish(bool success) {
+void Target::publish(bool const success) {
   this->unpublished_ = false;
   if (success) {
     ESP_LOGD(TAG, "%s ping success", this->tag_.c_str());
@@ -111,7 +111,7 @@ void Target::setup() {
            "priority=%d, interface=%d}",
            this->tag_.c_str(), config.count, config.interval_ms, config.timeout_ms, config.data_size, config.tos,
            config.ttl, this->address_.str().c_str(), config.task_stack_size, config.task_prio, config.interface);
-  auto result{esp_ping_new_session(&config, &callbacks, &this->session_)};
+  auto const result{esp_ping_new_session(&config, &callbacks, &this->session_)};
   if (ESP_OK != result) {
     ESP_LOGE(TAG, "%s ping session failed: %s", this->tag_.c_str(), esp_err_to_name(result));
   } else {
@@ -119,11 +119,11 @@ void Target::setup() {
   }
 }
 
-void Target::write_state(bool state_) {
+void Target::write_state(bool const state_) {
   if (this->session_) {
     if (state_) {
       ESP_LOGD(TAG, "%s ping start", this->tag_.c_str());
-      auto result{esp_ping_start(this->session_)};
+      auto const result{esp_ping_start(this->session_)};
       if (ESP_OK == result) {
         this->publish_state(true);
       } else {
@@ -133,7 +133,7 @@ void Target::write_state(bool state_) {
       this->ping_->publish();
     } else {
       ESP_LOGD(TAG, "%s ping stop", this->tag_.c_str());
-      auto result{esp_ping_stop(this->session_)};
+      auto const result{esp_ping_stop(this->session_)};
       if (ESP_OK != result) {
         ESP_LOGE(TAG, "%s ping stop failed: %s", this->tag_.c_str(), esp_err_to_name(result));
       }
@@ -144,7 +144,7 @@ void Target::write_state(bool state_) {
 
 Ping::Ping() : queue_{xQueueGenericCreate(32, sizeof(std::function<void()> *), queueQUEUE_TYPE_BASE_)} {}
 
-void Ping::add(Target *target) { this->targets_.push_back(target); }
+void Ping::add(Target *const target) { this->targets_.push_back(target); }
 
 float Ping::get_setup_priority() const { return esphome::setup_priority::AFTER_CONNECTION; }
 
@@ -155,8 +155,8 @@ void Ping::setup() {
   }
 }
 
-bool Ping::enqueue(std::function<void()> f) {
-  auto *copy{new std::function<void()>(std::move(f))};
+bool Ping::enqueue(std::function<void()> const f) {
+  auto const *copy{new std::function<void()>(std::move(f))};
   if (pdPASS_ == xQueueGenericSend(this->queue_, &copy, portMAX_DELAY_, queueSEND_TO_BACK_)) {
     return true;
   }
@@ -168,7 +168,7 @@ bool Ping::enqueue(std::function<void()> f) {
 void Ping::loop() {
   // all esphome code should run in its (this) thread.
   // run such deferred code now.
-  std::function<void()> *f;
+  std::function<void()> const *f;
   while (pdTRUE_ == xQueueReceive(queue_, &f, 0)) {
     (*f)();
     delete f;
@@ -179,7 +179,7 @@ void Ping::dump_config() {
   ESP_LOGCONFIG(TAG, "ping:");
   LOG_BINARY_SENSOR(TAG, "all", this->all_);
   LOG_BINARY_SENSOR(TAG, "none", this->none_);
-  for (auto *target : this->targets_) {
+  for (auto const *const target : this->targets_) {
     ESP_LOGCONFIG(TAG, "target '%s':", target->get_name());
     ESP_LOGCONFIG(TAG, "address: %s", target->address_.str().c_str());
     ESP_LOGCONFIG(TAG, "timeout: %d ms", target->timeout_);
@@ -191,23 +191,23 @@ void Ping::dump_config() {
   }
 }
 
-void Ping::set_none(binary_sensor::BinarySensor *none) {
+void Ping::set_none(binary_sensor::BinarySensor *const none) {
   this->none_ = none;
   this->none_->publish_state(false);
 }
-void Ping::set_some(binary_sensor::BinarySensor *some) {
+void Ping::set_some(binary_sensor::BinarySensor *const some) {
   this->some_ = some;
   this->some_->publish_state(false);
 }
-void Ping::set_all(binary_sensor::BinarySensor *all) {
+void Ping::set_all(binary_sensor::BinarySensor *const all) {
   this->all_ = all;
   this->all_->publish_state(false);
 }
-void Ping::set_count(sensor::Sensor *count) {
+void Ping::set_count(sensor::Sensor *const count) {
   this->count_ = count;
   this->count_->publish_state(0);
 }
-void Ping::set_since(since_::Since *since) {
+void Ping::set_since(since_::Since *const since) {
   this->since_ = since;
   this->since_->update();
 }
@@ -218,7 +218,7 @@ void Ping::publish() {
   auto all{true};           // until an enabled target is not successful
   size_t count{0};          // count of enabled successful targets
   int64_t latest{-1};       // latest on target
-  for (auto *target : this->targets_) {
+  for (auto const *const target : this->targets_) {
     if (target->state) {  // on
       if (target->unpublished_) {
         unpublished = true;
@@ -236,7 +236,7 @@ void Ping::publish() {
   }
   if (all || unpublished)
     none = false;
-  auto some{!all && !none};
+  auto const some{!all && !none};
 
   if (this->none_)
     this->none_->publish_state(none);

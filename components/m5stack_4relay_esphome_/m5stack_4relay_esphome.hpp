@@ -10,7 +10,7 @@
 #include "esphome/core/component.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/i2c/i2c.h"
-#pragme GCC diagnostic pop
+#pragma GCC diagnostic pop
 
 namespace esphome {
 namespace m5stack_4relay_esphome_ {
@@ -24,7 +24,7 @@ class Relay : public switch_::Switch {
   Relay() = default;
 
   void set_interface(Interface *interface);
-  void set_index(uint8_t index) { this->index_ = index; }
+  void set_index(uint8_t const index) { this->index_ = index; }
 
   void write_state(bool state) override;
 
@@ -37,7 +37,7 @@ class Interface : public Component, public i2c::I2CDevice {
  public:
   Interface() = default;
 
-  void add(Relay *relay) { this->relays_.push_back(relay); }
+  void add(Relay *const relay) { this->relays_.push_back(relay); }
 
   void setup() override;
   void dump_config() override;

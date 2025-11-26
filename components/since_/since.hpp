@@ -34,9 +34,9 @@ class Since : public PollingComponent, public sensor::Sensor {
   Since() = default;
   void update() override;
   void set_when(int64_t when = esp_timer_get_time());
-  void set_text(text_sensor::TextSensor *text) { this->text_ = text; }
+  void set_text(text_sensor::TextSensor *const text) { this->text_ = text; }
 #ifdef USE_LVGL
-  void set_label(lv_obj_t *label) { this->label_ = label; }
+  void set_label(lv_obj_t *const label) { this->label_ = label; }
 #endif
 
  private:

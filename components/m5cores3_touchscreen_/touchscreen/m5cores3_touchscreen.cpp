@@ -46,7 +46,7 @@ void M5CoreS3Touchscreen::dump_config() { esph_log_config(TAG, "M5CoreS3 Touchsc
 void M5CoreS3Touchscreen::update_touches() {
   M5.update();
 
-  auto t{M5.Touch.getDetail()};
+  auto const t{M5.Touch.getDetail()};
 
   if ((t.state & m5::touch_state_t::mask_touch) && (t.state & m5::touch_state_t::mask_change)) {
     // this is the beginning of a new gesture.
@@ -91,9 +91,9 @@ void M5CoreS3Touchscreen::update_touches() {
   }
 }
 
-void M5CoreS3Touchscreen::set_left(binary_sensor::BinarySensor *left) { this->left_ = left; }
-void M5CoreS3Touchscreen::set_center(binary_sensor::BinarySensor *center) { this->center_ = center; }
-void M5CoreS3Touchscreen::set_right(binary_sensor::BinarySensor *right) { this->right_ = right; }
+void M5CoreS3Touchscreen::set_left(binary_sensor::BinarySensor *const left) { this->left_ = left; }
+void M5CoreS3Touchscreen::set_center(binary_sensor::BinarySensor *const center) { this->center_ = center; }
+void M5CoreS3Touchscreen::set_right(binary_sensor::BinarySensor *const right) { this->right_ = right; }
 
 }  // namespace m5cores3
 }  // namespace esphome

@@ -36,8 +36,8 @@ class Target : public switch_::Switch {
 
   void set_ping(Ping *ping);
   void set_address(esphome::network::IPAddress address);
-  void set_interval(uint32_t interval) { this->interval_ = interval; }
-  void set_timeout(uint32_t timeout) { this->timeout_ = timeout; }
+  void set_interval(uint32_t const interval) { this->interval_ = interval; }
+  void set_timeout(uint32_t const timeout) { this->timeout_ = timeout; }
 
   void set_able(binary_sensor::BinarySensor *able);
   void set_since(since_::Since *since);

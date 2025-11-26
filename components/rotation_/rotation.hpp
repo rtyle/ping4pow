@@ -36,7 +36,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     using pointer = T *;
     using reference = T &;
 
-    Iterator(Rotation *rotation) : list_{&rotation->list_}, it_{rotation->list_.begin()} {}
+    Iterator(Rotation *const rotation) : list_{&rotation->list_}, it_{rotation->list_.begin()} {}
 
     Iterator &reset() {
       this->it_ = this->list_->begin();
@@ -58,7 +58,7 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     }
 
     Iterator operator++(int) {
-      auto tmp{*this};
+      auto const tmp{*this};
       ++(*this);
       return tmp;
     }
@@ -75,17 +75,17 @@ template<typename T, typename Allocator = std::allocator<T>> class Rotation : pu
     }
 
     Iterator operator--(int) {
-      auto tmp{*this};
+      auto const tmp{*this};
       --(*this);
       return tmp;
     }
 
-    bool operator==(const Iterator &that) const { return this->it_ == that.it_ && this->list_ == that.list_; }
+    bool operator==(Iterator const &that) const { return this->it_ == that.it_ && this->list_ == that.list_; }
 
-    bool operator!=(const Iterator &that) const { return !(*this == that); }
+    bool operator!=(Iterator const &that) const { return !(*this == that); }
   };
 
-  void add(T item) { this->list_.push_back(item); }
+  void add(T const item) { this->list_.push_back(item); }
 
   std::list<T, Allocator> list_;
 };

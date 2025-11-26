@@ -9,8 +9,8 @@ namespace concat {
 namespace detail {
 
 // return size of null terminated string_view input
-constexpr std::size_t size(std::string_view input) {
-  auto size_{input.size()};
+constexpr std::size_t size(std::string_view const input) {
+  auto const size_{input.size()};
 #if defined(__cpp_exceptions)
   if (!size_)
     throw std::invalid_argument("input must be null terminated");
@@ -19,17 +19,17 @@ constexpr std::size_t size(std::string_view input) {
 }
 
 // ^ delegate size from char(&)[size] or std::array<char, size>
-template<std::size_t size_> constexpr std::size_t size(const char (&input)[size_]) {
+template<std::size_t size_> constexpr std::size_t size(char const (&input)[size_]) {
   return size(std::string_view{input, size_});
 }
-template<std::size_t size_> constexpr std::size_t size(const std::array<char, size_> &input) {
+template<std::size_t size_> constexpr std::size_t size(std::array<char, size_> const &input) {
   return size(std::string_view{input.data(), size_});
 }
 
 // copy null terminated input to next part in output
-constexpr void copy(char *&output, std::string_view input) {
+constexpr void copy(char *&output, std::string_view const input) {
   char last{1};  // not null
-  for (char next : input)
+  for (char const next : input)
     *output++ = last = next;  // copy including last (terminator)
 #if defined(__cpp_exceptions)
   if (last)
@@ -39,10 +39,10 @@ constexpr void copy(char *&output, std::string_view input) {
 }
 
 // ^ delegate copy from char(&)[size] or std::array<char, size>
-template<std::size_t size> constexpr void copy(char *&output, const char (&input)[size]) {
+template<std::size_t size> constexpr void copy(char *&output, char const (&input)[size]) {
   copy(output, std::string_view(input, size));
 }
-template<std::size_t size> constexpr void copy(char *&output, const std::array<char, size> &input) {
+template<std::size_t size> constexpr void copy(char *&output, std::array<char, size> const &input) {
   copy(output, std::string_view(input.data(), size));
 }
 
@@ -50,7 +50,7 @@ template<std::size_t size> constexpr void copy(char *&output, const std::array<c
 
 // return a compile-time std::array concatenation of all inputs
 // (null terminated char(&)[size] or std::array<char, size>)
-template<typename... Inputs> consteval auto array(const Inputs &...inputs) {
+template<typename... Inputs> consteval auto array(Inputs const &...inputs) {
   // output size is the sum of each null terminated input string plus 1
   std::array<char, (detail::size(inputs) + ...) + 1> output;
   // for each of the inputs, copy to the next part in output
@@ -65,7 +65,7 @@ template<typename... Inputs> consteval auto array(const Inputs &...inputs) {
 // A string_view to that temporary would dangle.
 // The array must persist for the lifetime of its string_view.
 // One (the best?) way to do that is by making it a static constexpr object.
-template<std::size_t size> constexpr std::string_view view(const std::array<char, size> &array) {
+template<std::size_t size> constexpr std::string_view view(std::array<char, size> const &array) {
   return {array.data(), size - 1};
 }
 
