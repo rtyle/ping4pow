@@ -32,12 +32,6 @@ namespace smtp_ {
 
 #include "raii.hpp"
 
-struct Message {
-  std::string subject;
-  std::string body;
-  std::string to;
-};
-
 class Component : public esphome::Component {
  public:
   void setup() override;
@@ -58,14 +52,19 @@ class Component : public esphome::Component {
 
   void enqueue(std::string const &subject, std::string const &body, std::string const &to = "");
 
- protected:
+ private:
+  struct Message {
+    std::string subject;
+    std::string body;
+    std::string to;
+  };
+
   // use RAII to manage mbedtls resources for our lifetime
   raii::Resource<mbedtls_entropy_context> entropy_{raii::make(mbedtls_entropy_init, mbedtls_entropy_free)};
   raii::Resource<mbedtls_ctr_drbg_context> ctr_drbg_{raii::make(mbedtls_ctr_drbg_init, mbedtls_ctr_drbg_free)};
   raii::Resource<mbedtls_x509_crt> x509_crt_{raii::make(mbedtls_x509_crt_init, mbedtls_x509_crt_free)};
   raii::Resource<mbedtls_ssl_config> ssl_config_{raii::make(mbedtls_ssl_config_init, mbedtls_ssl_config_free)};
 
-  static void run_that_(void *);
   void run_();
   std::optional<std::string> send_(std::function<std::unique_ptr<Message>()>);
 

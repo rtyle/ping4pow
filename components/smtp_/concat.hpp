@@ -10,12 +10,12 @@ namespace detail {
 
 // return size of null terminated string_view input
 constexpr std::size_t size(std::string_view const input) {
-  auto const size_{input.size()};
+  auto const input_size{input.size()};
 #if defined(__cpp_exceptions)
-  if (!size_)
+  if (!input_size)
     throw std::invalid_argument("input must be null terminated");
 #endif
-  return size_ - 1;
+  return input_size - 1;
 }
 
 // ^ delegate size from char(&)[size] or std::array<char, size>

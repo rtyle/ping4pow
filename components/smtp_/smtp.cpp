@@ -1,15 +1,15 @@
 #pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-Wall"
-#pragma GCC diagnostic warning "-Wextra"
-#pragma GCC diagnostic warning "-Wpedantic"
-#pragma GCC diagnostic warning "-Wconversion"
-#pragma GCC diagnostic warning "-Wsign-conversion"
-#pragma GCC diagnostic warning "-Wold-style-cast"
-#pragma GCC diagnostic warning "-Wshadow"
-#pragma GCC diagnostic warning "-Wnull-dereference"
-#pragma GCC diagnostic warning "-Wformat=2"
-#pragma GCC diagnostic warning "-Wsuggest-override"
-#pragma GCC diagnostic warning "-Wzero-as-null-pointer-constant"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wpedantic"
+#pragma GCC diagnostic error "-Wconversion"
+#pragma GCC diagnostic error "-Wsign-conversion"
+#pragma GCC diagnostic error "-Wold-style-cast"
+#pragma GCC diagnostic error "-Wshadow"
+#pragma GCC diagnostic error "-Wnull-dereference"
+#pragma GCC diagnostic error "-Wformat=2"
+#pragma GCC diagnostic error "-Wsuggest-override"
+#pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
 
 #include "smtp.hpp"
 
@@ -69,7 +69,7 @@ class MbedTlsResult {
 };
 
 // send an encrypted request
-MbedTlsResult ssl_send(mbedtls_ssl_context *const ssl, std::string_view const request, std::string_view log = {}) {
+MbedTlsResult ssl_send(mbedtls_ssl_context &ssl, std::string_view const request, std::string_view log = {}) {
   if (!request.empty()) {
     if (!log.data())
       log = request;
@@ -77,7 +77,7 @@ MbedTlsResult ssl_send(mbedtls_ssl_context *const ssl, std::string_view const re
     auto *next{reinterpret_cast<unsigned char const *>(request.data())};
     auto left{request.size()};
     while (0 < left) {
-      MbedTlsResult const result{mbedtls_ssl_write(ssl, next, left)};
+      MbedTlsResult const result{mbedtls_ssl_write(&ssl, next, left)};
       if (result.is_error()) {
         if (result.is_ssl_want())
           continue;
@@ -122,10 +122,10 @@ template<size_t N> class StreamBuffer : public std::basic_streambuf<char> {
 // InputStream uses StreamBuffer for Recv'd line-oriented input
 template<size_t N> class InputStream : public std::basic_istream<char> {
  private:
-  StreamBuffer<N> buffer;
+  StreamBuffer<N> stream_buffer_;
 
  public:
-  InputStream(Recv const recv) : std::basic_istream<char>{&buffer}, buffer{std::move(recv)} {}
+  InputStream(Recv const recv) : std::basic_istream<char>{&stream_buffer_}, stream_buffer_{std::move(recv)} {}
   // non-copyable
   InputStream(InputStream const &) = delete;
   InputStream &operator=(InputStream const &) = delete;
@@ -147,17 +147,17 @@ class Transport {
 // NetTransport provides an un-encrypted network transport
 class NetTransport : public Transport {
  private:
-  mbedtls_net_context *const context_;
+  mbedtls_net_context &context_;
 
  public:
-  NetTransport(mbedtls_net_context *context) : context_{context} {}
+  NetTransport(mbedtls_net_context &context) : context_{context} {}
   MbedTlsResult send(std::string_view const request, std::string_view log) override {
     if (!request.empty()) {
       if (!log.data())
         log = request;
       ESP_LOGI(TAG, "> %.*s", log.size(), log.data());
       MbedTlsResult const result{
-          mbedtls_net_send(this->context_, reinterpret_cast<unsigned char const *>(request.data()), request.size())};
+          mbedtls_net_send(&this->context_, reinterpret_cast<unsigned char const *>(request.data()), request.size())};
       if (result.is_error()) {
         ESP_LOGW(TAG, "mbedtls_net_send: %s", result.to_string().c_str());
         return result;
@@ -166,7 +166,7 @@ class NetTransport : public Transport {
     return {static_cast<int>(request.size())};
   }
   MbedTlsResult recv(char *const buffer, size_t const length) override {
-    MbedTlsResult const result{mbedtls_net_recv(this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
+    MbedTlsResult const result{mbedtls_net_recv(&this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
     if (result.is_error()) {
       ESP_LOGW(TAG, "mbedtls_net_recv: %s", result.to_string().c_str());
     }
@@ -177,16 +177,16 @@ class NetTransport : public Transport {
 // SslTransport provides an encrypted network transport
 class SslTransport : public Transport {
  private:
-  mbedtls_ssl_context *const context_;
+  mbedtls_ssl_context &context_;
 
  public:
-  SslTransport(mbedtls_ssl_context *const context) : context_{context} {}
+  SslTransport(mbedtls_ssl_context &context) : context_{context} {}
   MbedTlsResult send(std::string_view const request, std::string_view const log) override {
     return ssl_send(this->context_, request, log);
   }
   MbedTlsResult recv(char *const buffer, size_t const length) override {
     while (true) {
-      MbedTlsResult const result{mbedtls_ssl_read(this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
+      MbedTlsResult const result{mbedtls_ssl_read(&this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
       if (result.is_error()) {
         if (result.is_ssl_want())
           continue;
@@ -199,12 +199,12 @@ class SslTransport : public Transport {
 };
 
 // perform an ssl handshake with certificate validation
-MbedTlsResult ssl_handshake(mbedtls_ssl_context *const ssl) {
+MbedTlsResult ssl_handshake(mbedtls_ssl_context &ssl) {
   MbedTlsResult result;
   {
     ESP_LOGD(TAG, "ssl handshake");
     while (true) {
-      result = MbedTlsResult{mbedtls_ssl_handshake(ssl)};
+      result = MbedTlsResult{mbedtls_ssl_handshake(&ssl)};
       if (result.is_success())
         break;
       if (!result.is_ssl_want()) {
@@ -214,7 +214,7 @@ MbedTlsResult ssl_handshake(mbedtls_ssl_context *const ssl) {
     }
   }
   {
-    auto const verified{(mbedtls_ssl_get_verify_result(ssl))};
+    auto const verified{(mbedtls_ssl_get_verify_result(&ssl))};
     switch (static_cast<int>(verified)) {
       case 0:
         ESP_LOGD(TAG, "ssl certificate verified");
@@ -229,7 +229,7 @@ MbedTlsResult ssl_handshake(mbedtls_ssl_context *const ssl) {
       }
     }
   }
-  if (auto const ciphersuite{mbedtls_ssl_get_ciphersuite(ssl)}) {
+  if (auto const ciphersuite{mbedtls_ssl_get_ciphersuite(&ssl)}) {
     ESP_LOGD(TAG, "ssl cipher suite: %s", ciphersuite);
   }
   return result;
@@ -258,36 +258,40 @@ MbedTlsResult base64_encode(std::string_view in, std::string &out) {
 
 // wrap SMTP reply code and text with methods to interpret success or error
 class SmtpReply {
+ private:
+  int const code_;
+  std::string text_;
+
  public:
-  int const code;
-  std::string text;
+  SmtpReply(int const code) : code_{code} {}
+  SmtpReply(int const code, std::string_view const text) : code_{code}, text_{text} {}
+  SmtpReply(MbedTlsResult const result) : code_{result}, text_{result.to_string()} {}
 
-  SmtpReply(int const code_) : code{code_} {}
-  SmtpReply(int const code_, std::string_view const text_) : code{code_}, text{text_} {}
-  SmtpReply(MbedTlsResult const result) : code{result}, text{result.to_string()} {}
+  int get_code() const { return this->code_; }
+  std::string_view get_text() const { return this->text_; }
 
-  bool is_positive_completion() const { return 200 <= code && code < 300; }
-  bool is_positive_intermediate() const { return 300 <= code && code < 400; }
-  bool is_negative_transient_completion() const { return 400 <= code && code < 500; }
-  bool is_negative_permanent_completion() const { return 500 <= code && code < 600; }
+  bool is_positive_completion() const { return 200 <= this->code_ && this->code_ < 300; }
+  bool is_positive_intermediate() const { return 300 <= this->code_ && this->code_ < 400; }
+  bool is_negative_transient_completion() const { return 400 <= this->code_ && this->code_ < 500; }
+  bool is_negative_permanent_completion() const { return 500 <= this->code_ && this->code_ < 600; }
 };
 
 // like std::getline but with an SMTP line terminator
 std::istream &getline(std::istream &istream, std::string &line) {
-  constexpr auto CR = CRLF[0];
-  constexpr auto LF = CRLF[1];
+  constexpr auto cr = CRLF[0];
+  constexpr auto lf = CRLF[1];
   line.clear();
   std::string segment;
   for (;;) {
-    if (!std::getline(istream, segment, LF))
+    if (!std::getline(istream, segment, lf))
       return istream;
-    if (!segment.empty() && CR == segment.back()) {
+    if (!segment.empty() && cr == segment.back()) {
       segment.pop_back();
       line += segment;
       return istream;
     }
     line += segment;
-    line.push_back(LF);
+    line.push_back(lf);
   }
 }
 
@@ -404,7 +408,8 @@ void Component::setup() {
   if (this->task_priority_ != task_priority) {
     ESP_LOGW(TAG, "task_priority %u capped to maxiumum %u", this->task_priority_, task_priority);
   }
-  BaseType_t const result{xTaskCreate(Component::run_that_, this->task_name_.c_str(),
+  BaseType_t const result{xTaskCreate([](void *that) { static_cast<Component *>(that)->run_(); },
+                                      this->task_name_.c_str(),
                                       8192,  // stack size tuned from logged headroom reports during run_
                                       this, task_priority, &this->task_handle_)};
 
@@ -434,8 +439,6 @@ void Component::enqueue(std::string const &subject, std::string const &body, std
     delete message;
   }
 }
-
-void Component::run_that_(void *that) { static_cast<Component *>(that)->run_(); }
 
 void Component::run_() {
   ESP_LOGD(TAG, "run");
@@ -512,32 +515,32 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
   }
   mbedtls_ssl_set_bio(&ssl, &net, mbedtls_net_send, mbedtls_net_recv, nullptr /* non-blocking I/O */);
 
-  SslTransport transport{&ssl};
+  SslTransport transport{ssl};
 
   // negotiate an encrypted session
   if (this->starttls_) {
-    NetTransport net_transport{&net};
+    NetTransport net_transport{net};
     {
       auto const reply{greeting_and_ehlo(net_transport)};
       if (!reply.is_positive_completion())
-        return std::format("greeting and ehlo: {}", reply.text);
+        return std::format("greeting and ehlo: {}", reply.get_text());
     }
     {
       static constexpr auto request{concat::array("STARTTLS", CRLF)};
       auto const reply{command(net_transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command STARTTLS: {}", reply.text);
+        return std::format("command STARTTLS: {}", reply.get_text());
     }
   }
   {
-    MbedTlsResult const result{ssl_handshake(&ssl)};
+    MbedTlsResult const result{ssl_handshake(ssl)};
     if (result.is_error())
       return std::format("ssl handshake: {}", result.to_string());
   }
   if (!this->starttls_) {
     auto const reply{greeting_and_ehlo(transport)};
     if (!reply.is_positive_completion())
-      return std::format("greeting and ehlo: {}", reply.text);
+      return std::format("greeting and ehlo: {}", reply.get_text());
   }
 
   // login
@@ -545,7 +548,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     static constexpr auto request{concat::array("AUTH LOGIN", CRLF)};
     auto const reply{command(transport, request)};
     if (!reply.is_positive_intermediate())
-      return std::format("command AUTH LOGIN: {}", reply.text);
+      return std::format("command AUTH LOGIN: {}", reply.get_text());
   }
   {
     std::string request;
@@ -554,7 +557,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
       return std::format("base64_encode: {}", result.to_string());
     auto const reply{command(transport, request)};
     if (!reply.is_positive_intermediate())
-      return std::format("command AUTH LOGIN username: {}", reply.text);
+      return std::format("command AUTH LOGIN username: {}", reply.get_text());
   }
   {
     std::string request;
@@ -564,7 +567,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     static constexpr auto log{"<redacted>"};
     auto const reply{command(transport, request, log)};
     if (!reply.is_positive_completion())
-      return std::format("command AUTH LOGIN password: {}", reply.text);
+      return std::format("command AUTH LOGIN password: {}", reply.get_text());
   }
 
   // send each message in the queue
@@ -573,29 +576,29 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
       std::string const request{std::format("MAIL FROM:<{}>{}", this->from_, CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command MAIL FROM: {}", reply.text);
+        return std::format("command MAIL FROM: {}", reply.get_text());
     }
     {
       std::string const request{std::format("RCPT TO:<{}>{}", message->to, CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command RCPT TO: {}", reply.text);
+        return std::format("command RCPT TO: {}", reply.get_text());
     }
     {
       static constexpr auto request{concat::array("DATA", CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_intermediate())
-        return std::format("command DATA: {}", reply.text);
+        return std::format("command DATA: {}", reply.get_text());
     }
     {
       static constexpr auto format{concat::array("From: {}", CRLF, "To: {}", CRLF, "Subject: {}", CRLF, CRLF)};
       std::string const request{std::format(format.data(), this->from_, message->to, message->subject)};
-      MbedTlsResult const result{ssl_send(&ssl, request)};
+      MbedTlsResult const result{ssl_send(ssl, request)};
       if (result.is_error())
         return std::format("command DATA From, To, Subject: {}", result.to_string());
     }
     {
-      MbedTlsResult const result{ssl_send(&ssl, message->body)};
+      MbedTlsResult const result{ssl_send(ssl, message->body)};
       if (result.is_error())
         return std::format("command DATA body: {}", result.to_string());
     }
@@ -603,7 +606,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
       static constexpr auto request{concat::array(CRLF, ".", CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command DATA end: {}", reply.text);
+        return std::format("command DATA end: {}", reply.get_text());
     }
   }
 
@@ -612,7 +615,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     static constexpr auto request{concat::array("QUIT", CRLF)};
     auto const reply{command(transport, request)};
     if (!reply.is_positive_completion())
-      return std::format("command QUIT: {}", reply.text);
+      return std::format("command QUIT: {}", reply.get_text());
   }
 
   // success

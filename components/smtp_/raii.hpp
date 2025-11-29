@@ -8,26 +8,26 @@ namespace detail {
 // ---- generic unary callable argument type deduction
 
 // primary template for specializations (the base for SFINAE)
-template<typename Callable> struct deduced_argument;
+template<typename Callable> struct DeducedArgument;
 
 // mutable lambda or non-const (default) function object
-template<typename R, typename C, typename T> struct deduced_argument<R (C::*)(T *)> {
+template<typename R, typename C, typename T> struct DeducedArgument<R (C::*)(T *)> {
   using type = T;
 };
 
 // immutable (default) lambda or const function object
-template<typename R, typename C, typename T> struct deduced_argument<R (C::*)(T *) const> {
+template<typename R, typename C, typename T> struct DeducedArgument<R (C::*)(T *) const> {
   using type = T;
 };
 
 // function pointer (function references decay to this)
-template<typename R, typename T> struct deduced_argument<R (*)(T *)> {
+template<typename R, typename T> struct DeducedArgument<R (*)(T *)> {
   using type = T;
 };
 
-// Callable lambda or function object, deduced_argument from what it decays to
-template<typename Callable> struct deduced_argument {
-  using type = typename deduced_argument<decltype(&std::decay_t<Callable>::operator())>::type;
+// Callable lambda or function object, DeducedArgument from what it decays to
+template<typename Callable> struct DeducedArgument {
+  using type = typename DeducedArgument<decltype(&std::decay_t<Callable>::operator())>::type;
 };
 
 // a Steward is a unary Callable that takes a resource type pointer
@@ -65,7 +65,7 @@ class Resource : public T, protected std::unique_ptr<T, Releaser> {
 
 // factory
 template<typename Acquirer, typename Releaser> auto make(Acquirer &&acquirer, Releaser &&releaser) {
-  using T = typename detail::deduced_argument<std::decay_t<Acquirer>>::type;
+  using T = typename detail::DeducedArgument<std::decay_t<Acquirer>>::type;
   return Resource<T, std::decay_t<Acquirer>, std::decay_t<Releaser>>{std::forward<Acquirer>(acquirer),
                                                                      std::forward<Releaser>(releaser)};
 }
