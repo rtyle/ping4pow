@@ -13,9 +13,11 @@
 
 #include "smtp.hpp"
 
+#include <chrono>
 #include <format>
 #include <iostream>
 #include <ranges>
+#include <thread>
 
 #include "esphome/core/log.h"
 
@@ -36,12 +38,11 @@ constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-inline constexpr auto DELAY{pdMS_TO_TICKS(60'000)};
-inline constexpr auto pdPASS_{pdPASS};
-inline constexpr auto pdTRUE_{pdTRUE};
-inline constexpr auto portMAX_DELAY_{portMAX_DELAY};
-inline constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
-inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
+inline constexpr auto PD_PASS{pdPASS};
+inline constexpr auto PD_TRUE{pdTRUE};
+inline constexpr auto PORT_MAX_DELAY{portMAX_DELAY};
+inline constexpr auto QUEUE_QUEUE_TYPE_BASE{queueQUEUE_TYPE_BASE};
+inline constexpr auto QUEUE_SEND_TO_BACK{queueSEND_TO_BACK};
 #pragma GCC diagnostic pop
 
 // wrap mbedtls function result value with methods to interpret success or error
@@ -260,15 +261,13 @@ MbedTlsResult base64_encode(std::string_view in, std::string &out) {
 class SmtpReply {
  private:
   int const code_;
-  std::string text_;
+  std::string const text_;
 
  public:
-  SmtpReply(int const code) : code_{code} {}
   SmtpReply(int const code, std::string_view const text) : code_{code}, text_{text} {}
   SmtpReply(MbedTlsResult const result) : code_{result}, text_{result.to_string()} {}
 
-  int get_code() const { return this->code_; }
-  std::string_view get_text() const { return this->text_; }
+  std::string_view text() const { return this->text_; }
 
   bool is_positive_completion() const { return 200 <= this->code_ && this->code_ < 300; }
   bool is_positive_intermediate() const { return 300 <= this->code_ && this->code_ < 400; }
@@ -396,7 +395,7 @@ void Component::setup() {
   }
 
   ESP_LOGD(TAG, "create queue");
-  this->queue_ = xQueueGenericCreate(8, sizeof(Message *), queueQUEUE_TYPE_BASE_);
+  this->queue_ = xQueueGenericCreate(8, sizeof(Message *), QUEUE_QUEUE_TYPE_BASE);
   if (!this->queue_) {
     ESP_LOGW(TAG, "xQueueCreate failed");
     this->mark_failed();
@@ -413,7 +412,7 @@ void Component::setup() {
                                       8192,  // stack size tuned from logged headroom reports during run_
                                       this, task_priority, &this->task_handle_)};
 
-  if (result != pdPASS_ || this->task_handle_ == nullptr) {
+  if (result != PD_PASS || this->task_handle_ == nullptr) {
     ESP_LOGW(TAG, "xTaskCreate: %d", result);
     this->mark_failed();
     return;
@@ -434,7 +433,7 @@ void Component::dump_config() {
 void Component::enqueue(std::string const &subject, std::string const &body, std::string const &to) {
   auto const *message{new Message{subject, body, to.empty() ? this->to_ : to}};
   ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
-  if (pdPASS_ != xQueueGenericSend(this->queue_, &message, 0, queueSEND_TO_BACK_)) {
+  if (PD_PASS != xQueueGenericSend(this->queue_, &message, 0, QUEUE_SEND_TO_BACK)) {
     ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
     delete message;
   }
@@ -445,7 +444,7 @@ void Component::run_() {
   while (true) {
     Message *peek;
     // block until there is a message to send
-    if (pdTRUE_ == xQueuePeek(this->queue_, &peek, portMAX_DELAY_)) {
+    if (PD_TRUE == xQueuePeek(this->queue_, &peek, PORT_MAX_DELAY)) {
       ESP_LOGD(TAG, "send message: %s", message->subject.c_str());
 
       // call send_ with a lambda
@@ -459,7 +458,7 @@ void Component::run_() {
         // dequeue the next message without blocking
         // and transfer ownwership to caller
         Message *message;
-        if (pdTRUE_ == xQueueReceive(this->queue_, &message, 0)) {
+        if (PD_TRUE == xQueueReceive(this->queue_, &message, 0)) {
           ESP_LOGD(TAG, "dequeue %s", message->subject.c_str());
           context = std::string("message: ") + message->subject;
           return std::unique_ptr<Message>{message};
@@ -480,7 +479,7 @@ void Component::run_() {
       }
 
       // pause before trying again
-      vTaskDelay(DELAY);
+      std::this_thread::sleep_for(std::chrono::minutes(1));
     }
   }
 }
@@ -523,13 +522,13 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     {
       auto const reply{greeting_and_ehlo(net_transport)};
       if (!reply.is_positive_completion())
-        return std::format("greeting and ehlo: {}", reply.get_text());
+        return std::format("greeting and ehlo: {}", reply.text());
     }
     {
       static constexpr auto request{concat::array("STARTTLS", CRLF)};
       auto const reply{command(net_transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command STARTTLS: {}", reply.get_text());
+        return std::format("command STARTTLS: {}", reply.text());
     }
   }
   {
@@ -540,7 +539,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
   if (!this->starttls_) {
     auto const reply{greeting_and_ehlo(transport)};
     if (!reply.is_positive_completion())
-      return std::format("greeting and ehlo: {}", reply.get_text());
+      return std::format("greeting and ehlo: {}", reply.text());
   }
 
   // login
@@ -548,7 +547,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     static constexpr auto request{concat::array("AUTH LOGIN", CRLF)};
     auto const reply{command(transport, request)};
     if (!reply.is_positive_intermediate())
-      return std::format("command AUTH LOGIN: {}", reply.get_text());
+      return std::format("command AUTH LOGIN: {}", reply.text());
   }
   {
     std::string request;
@@ -557,7 +556,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
       return std::format("base64_encode: {}", result.to_string());
     auto const reply{command(transport, request)};
     if (!reply.is_positive_intermediate())
-      return std::format("command AUTH LOGIN username: {}", reply.get_text());
+      return std::format("command AUTH LOGIN username: {}", reply.text());
   }
   {
     std::string request;
@@ -567,7 +566,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     static constexpr auto log{"<redacted>"};
     auto const reply{command(transport, request, log)};
     if (!reply.is_positive_completion())
-      return std::format("command AUTH LOGIN password: {}", reply.get_text());
+      return std::format("command AUTH LOGIN password: {}", reply.text());
   }
 
   // send each message in the queue
@@ -576,19 +575,19 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
       std::string const request{std::format("MAIL FROM:<{}>{}", this->from_, CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command MAIL FROM: {}", reply.get_text());
+        return std::format("command MAIL FROM: {}", reply.text());
     }
     {
       std::string const request{std::format("RCPT TO:<{}>{}", message->to, CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command RCPT TO: {}", reply.get_text());
+        return std::format("command RCPT TO: {}", reply.text());
     }
     {
       static constexpr auto request{concat::array("DATA", CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_intermediate())
-        return std::format("command DATA: {}", reply.get_text());
+        return std::format("command DATA: {}", reply.text());
     }
     {
       static constexpr auto format{concat::array("From: {}", CRLF, "To: {}", CRLF, "Subject: {}", CRLF, CRLF)};
@@ -606,7 +605,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
       static constexpr auto request{concat::array(CRLF, ".", CRLF)};
       auto const reply{command(transport, request)};
       if (!reply.is_positive_completion())
-        return std::format("command DATA end: {}", reply.get_text());
+        return std::format("command DATA end: {}", reply.text());
     }
   }
 
@@ -615,7 +614,7 @@ std::optional<std::string> Component::send_(std::function<std::unique_ptr<Messag
     static constexpr auto request{concat::array("QUIT", CRLF)};
     auto const reply{command(transport, request)};
     if (!reply.is_positive_completion())
-      return std::format("command QUIT: {}", reply.get_text());
+      return std::format("command QUIT: {}", reply.text());
   }
 
   // success
