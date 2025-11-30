@@ -31,6 +31,8 @@ inline constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
 inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
 #pragma GCC diagnostic pop
 
+using Function = std::function<void()> const;
+
 }  // namespace
 
 Target::Target() = default;
@@ -155,23 +157,24 @@ void Ping::setup() {
   }
 }
 
-bool Ping::enqueue(std::function<void()> const f) {
-  auto const *copy{new std::function<void()>(std::move(f))};
-  if (pdPASS_ == xQueueGenericSend(this->queue_, &copy, portMAX_DELAY_, queueSEND_TO_BACK_)) {
+bool Ping::enqueue(Function function) {
+  auto message{std::make_unique<Function>(std::move(function))};
+  auto element{message.get()};
+  if (pdPASS_ == xQueueGenericSend(this->queue_, &element, portMAX_DELAY_, queueSEND_TO_BACK_)) {
+    message.release();  // ownership to be acquired by dequeue
     return true;
   }
   ESP_LOGE(TAG, "enqueue failed");
-  delete copy;
   return false;
 }
 
 void Ping::loop() {
   // all esphome code should run in its (this) thread.
   // run such deferred code now.
-  std::function<void()> const *f;
-  while (pdTRUE_ == xQueueReceive(queue_, &f, 0)) {
-    (*f)();
-    delete f;
+  Function *function;
+  while (pdTRUE_ == xQueueReceive(queue_, &function, 0)) {
+    auto message{std::unique_ptr<Function>(function)};
+    (*function)();
   }
 }
 

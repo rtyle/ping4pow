@@ -431,12 +431,13 @@ void Component::dump_config() {
 }
 
 void Component::enqueue(std::string const &subject, std::string const &body, std::string const &to) {
-  auto const *message{new Message{subject, body, to.empty() ? this->to_ : to}};
-  ESP_LOGD(TAG, "enqueue %s", message->subject.c_str());
-  if (PD_PASS != xQueueGenericSend(this->queue_, &message, 0, QUEUE_SEND_TO_BACK)) {
-    ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", message->subject.c_str());
-    delete message;
-  }
+  ESP_LOGD(TAG, "enqueue %s", subject.c_str());
+  auto message{std::make_unique<Message>(subject, body, to.empty() ? this->to_ : to)};
+  auto element{message.get()};
+  if (PD_PASS == xQueueGenericSend(this->queue_, &element, 0, QUEUE_SEND_TO_BACK))
+    message.release();  // ownership to be acquired by dequeue
+  else
+    ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", subject.c_str());
 }
 
 void Component::run_() {
