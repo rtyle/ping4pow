@@ -41,11 +41,9 @@ constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
 inline constexpr auto PD_PASS{pdPASS};
 inline constexpr auto PD_TRUE{pdTRUE};
 inline constexpr auto PORT_MAX_DELAY{portMAX_DELAY};
-inline auto xQueueCreate_(UBaseType_t uxQueueLength, UBaseType_t uxItemSize) {
-  return xQueueCreate(uxQueueLength, uxItemSize);
-}
-inline auto xQueueSend_(QueueHandle_t xQueue, const void * pvItemToQueue, TickType_t xTicksToWait) {
-  return xQueueSend(xQueue, pvItemToQueue, xTicksToWait);
+inline auto x_queue_create(UBaseType_t length, UBaseType_t item_size) { return xQueueCreate(length, item_size); }
+inline auto x_queue_send(QueueHandle_t queue, const void *item, TickType_t wait) {
+  return xQueueSend(queue, item, wait);
 }
 #pragma GCC diagnostic pop
 
@@ -399,7 +397,7 @@ void Component::setup() {
   }
 
   ESP_LOGD(TAG, "create queue");
-  this->queue_ = xQueueCreate_(8, sizeof(Message *));
+  this->queue_ = x_queue_create(8, sizeof(Message *));
   if (!this->queue_) {
     ESP_LOGW(TAG, "xQueueCreate failed");
     this->mark_failed();
@@ -438,10 +436,11 @@ void Component::enqueue(std::string const &subject, std::string const &body, std
   ESP_LOGD(TAG, "enqueue %s", subject.c_str());
   auto resource{std::make_unique<Message>(subject, body, to.empty() ? this->to_ : to)};
   auto message{resource.get()};
-  if (PD_PASS == xQueueSend_(this->queue_, &message, 0))
+  if (PD_PASS == x_queue_send(this->queue_, &message, 0)) {
     resource.release();  // ownership to be acquired by dequeue
-  else
+  } else {
     ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", subject.c_str());
+  }
 }
 
 void Component::run_() {
