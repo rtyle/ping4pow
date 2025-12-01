@@ -41,8 +41,12 @@ constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
 inline constexpr auto PD_PASS{pdPASS};
 inline constexpr auto PD_TRUE{pdTRUE};
 inline constexpr auto PORT_MAX_DELAY{portMAX_DELAY};
-inline constexpr auto QUEUE_QUEUE_TYPE_BASE{queueQUEUE_TYPE_BASE};
-inline constexpr auto QUEUE_SEND_TO_BACK{queueSEND_TO_BACK};
+inline auto xQueueCreate_(UBaseType_t uxQueueLength, UBaseType_t uxItemSize) {
+  return xQueueCreate(uxQueueLength, uxItemSize);
+}
+inline auto xQueueSend_(QueueHandle_t xQueue, const void * pvItemToQueue, TickType_t xTicksToWait) {
+  return xQueueSend(xQueue, pvItemToQueue, xTicksToWait);
+}
 #pragma GCC diagnostic pop
 
 // wrap mbedtls function result value with methods to interpret success or error
@@ -395,7 +399,7 @@ void Component::setup() {
   }
 
   ESP_LOGD(TAG, "create queue");
-  this->queue_ = xQueueGenericCreate(8, sizeof(Message *), QUEUE_QUEUE_TYPE_BASE);
+  this->queue_ = xQueueCreate_(8, sizeof(Message *));
   if (!this->queue_) {
     ESP_LOGW(TAG, "xQueueCreate failed");
     this->mark_failed();
@@ -432,10 +436,10 @@ void Component::dump_config() {
 
 void Component::enqueue(std::string const &subject, std::string const &body, std::string const &to) {
   ESP_LOGD(TAG, "enqueue %s", subject.c_str());
-  auto message{std::make_unique<Message>(subject, body, to.empty() ? this->to_ : to)};
-  auto element{message.get()};
-  if (PD_PASS == xQueueGenericSend(this->queue_, &element, 0, QUEUE_SEND_TO_BACK))
-    message.release();  // ownership to be acquired by dequeue
+  auto resource{std::make_unique<Message>(subject, body, to.empty() ? this->to_ : to)};
+  auto message{resource.get()};
+  if (PD_PASS == xQueueSend_(this->queue_, &message, 0))
+    resource.release();  // ownership to be acquired by dequeue
   else
     ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", subject.c_str());
 }

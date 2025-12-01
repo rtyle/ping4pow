@@ -27,8 +27,12 @@ constexpr auto TAG{"ping_"};
 inline constexpr auto pdPASS_{pdPASS};
 inline constexpr auto pdTRUE_{pdTRUE};
 inline constexpr auto portMAX_DELAY_{portMAX_DELAY};
-inline constexpr auto queueQUEUE_TYPE_BASE_{queueQUEUE_TYPE_BASE};
-inline constexpr auto queueSEND_TO_BACK_{queueSEND_TO_BACK};
+inline auto xQueueCreate_(UBaseType_t uxQueueLength, UBaseType_t uxItemSize) {
+  return xQueueCreate(uxQueueLength, uxItemSize);
+}
+inline auto xQueueSend_(QueueHandle_t xQueue, const void * pvItemToQueue, TickType_t xTicksToWait) {
+  return xQueueSend(xQueue, pvItemToQueue, xTicksToWait);
+}
 #pragma GCC diagnostic pop
 
 using Function = std::function<void()> const;
@@ -144,7 +148,7 @@ void Target::write_state(bool const state_) {
   }
 }
 
-Ping::Ping() : queue_{xQueueGenericCreate(32, sizeof(std::function<void()> *), queueQUEUE_TYPE_BASE_)} {}
+Ping::Ping() : queue_{xQueueCreate_(32, sizeof(Function *))} {}
 
 void Ping::add(Target *const target) { this->targets_.push_back(target); }
 
@@ -157,11 +161,11 @@ void Ping::setup() {
   }
 }
 
-bool Ping::enqueue(Function function) {
-  auto message{std::make_unique<Function>(std::move(function))};
-  auto element{message.get()};
-  if (pdPASS_ == xQueueGenericSend(this->queue_, &element, portMAX_DELAY_, queueSEND_TO_BACK_)) {
-    message.release();  // ownership to be acquired by dequeue
+bool Ping::enqueue(Function function_) {
+  auto resource{std::make_unique<Function>(std::move(function_))};
+  auto function{resource.get()};
+  if (pdPASS_ == xQueueSend_(this->queue_, &function, portMAX_DELAY_)) {
+    resource.release();  // ownership to be acquired by dequeue
     return true;
   }
   ESP_LOGE(TAG, "enqueue failed");
@@ -173,7 +177,7 @@ void Ping::loop() {
   // run such deferred code now.
   Function *function;
   while (pdTRUE_ == xQueueReceive(queue_, &function, 0)) {
-    auto message{std::unique_ptr<Function>(function)};
+    auto resource{std::unique_ptr<Function>(function)};
     (*function)();
   }
 }
