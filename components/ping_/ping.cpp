@@ -94,21 +94,21 @@ void Target::setup() {
   esp_ping_callbacks_t callbacks{
       .cb_args = this,
       .on_ping_success =
-          [](esp_ping_handle_t, void *target) {
-            Target *target_{reinterpret_cast<Target *>(target)};
-            target_->ping_->enqueue([target_]() { target_->publish(true); });
+          [](esp_ping_handle_t, void *cb_args) {
+            auto &self{*reinterpret_cast<Target *>(cb_args)};
+            self.ping_->enqueue([&self] { self.publish(true); });
           },
       .on_ping_timeout =
-          [](esp_ping_handle_t, void *target) {
-            Target *target_{reinterpret_cast<Target *>(target)};
-            target_->ping_->enqueue([target_]() { target_->publish(false); });
+          [](esp_ping_handle_t, void *cb_args) {
+            auto &self{*reinterpret_cast<Target *>(cb_args)};
+            self.ping_->enqueue([&self] { self.publish(false); });
           },
       .on_ping_end =
-          [](esp_ping_handle_t, void *target) {
-            Target *target_{reinterpret_cast<Target *>(target)};
-            target_->ping_->enqueue([target_]() {
-              target_->publish_state(false);
-              target_->ping_->publish();
+          [](esp_ping_handle_t, void *cb_args) {
+            auto &self{*reinterpret_cast<Target *>(cb_args)};
+            self.ping_->enqueue([&self] {
+              self.publish_state(false);
+              self.ping_->publish();
             });
           },
   };
