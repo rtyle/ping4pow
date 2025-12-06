@@ -22,21 +22,6 @@ namespace {
 
 constexpr auto TAG{"ping_"};
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-inline constexpr auto pdPASS_{pdPASS};
-inline constexpr auto pdTRUE_{pdTRUE};
-inline constexpr auto portMAX_DELAY_{portMAX_DELAY};
-inline auto xQueueCreate_(UBaseType_t uxQueueLength, UBaseType_t uxItemSize) {
-  return xQueueCreate(uxQueueLength, uxItemSize);
-}
-inline auto xQueueSend_(QueueHandle_t xQueue, const void * pvItemToQueue, TickType_t xTicksToWait) {
-  return xQueueSend(xQueue, pvItemToQueue, xTicksToWait);
-}
-#pragma GCC diagnostic pop
-
-using Function = std::function<void()> const;
-
 }  // namespace
 
 Target::Target() = default;
@@ -88,7 +73,7 @@ void Target::setup() {
   config.target_addr = this->address_;
   // all callbacks occur in the context of the ping session task/thread.
   // esphome responses should be done in the esphome task/thread.
-  // all call backs simply defer these responses
+  // all callbacks simply io.post these responses
   // so there is no need to enlarge the ping task's stack
   // and the responses are done in thread safe manner.
   esp_ping_callbacks_t callbacks{
@@ -96,17 +81,17 @@ void Target::setup() {
       .on_ping_success =
           [](esp_ping_handle_t, void *cb_args) {
             auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->enqueue([&self] { self.publish(true); });
+            self.ping_->io.post([&self] { self.publish(true); });
           },
       .on_ping_timeout =
           [](esp_ping_handle_t, void *cb_args) {
             auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->enqueue([&self] { self.publish(false); });
+            self.ping_->io.post([&self] { self.publish(false); });
           },
       .on_ping_end =
           [](esp_ping_handle_t, void *cb_args) {
             auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->enqueue([&self] {
+            self.ping_->io.post([&self] {
               self.publish_state(false);
               self.ping_->publish();
             });
@@ -148,7 +133,7 @@ void Target::write_state(bool const state_) {
   }
 }
 
-Ping::Ping() : queue_{xQueueCreate_(32, sizeof(Function *))} {}
+Ping::Ping() {}
 
 void Ping::add(Target *const target) { this->targets_.push_back(target); }
 
@@ -161,25 +146,10 @@ void Ping::setup() {
   }
 }
 
-bool Ping::enqueue(Function function_) {
-  auto resource{std::make_unique<Function>(std::move(function_))};
-  auto function{resource.get()};
-  if (pdPASS_ == xQueueSend_(this->queue_, &function, portMAX_DELAY_)) {
-    resource.release();  // ownership to be acquired by dequeue
-    return true;
-  }
-  ESP_LOGE(TAG, "enqueue failed");
-  return false;
-}
-
 void Ping::loop() {
   // all esphome code should run in its (this) thread.
   // run such deferred code now.
-  Function *function;
-  while (pdTRUE_ == xQueueReceive(queue_, &function, 0)) {
-    auto resource{std::unique_ptr<Function>(function)};
-    (*function)();
-  }
+  this->io.poll();
 }
 
 void Ping::dump_config() {

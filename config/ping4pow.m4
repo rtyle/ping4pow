@@ -52,13 +52,16 @@ esphome:
   <<: *m5stack_cores3_esphome
   name: NAME
 
-define(`target_count', 16)dnl
 esp32:
   board: m5stack-cores3
   cpu_frequency: 240Mhz
   framework:
     type: esp-idf
     sdkconfig_options:
+      CONFIG_COMPILER_CXX_EXCEPTIONS: y
+      CONFIG_LWIP_IPV6: y
+      CONFIG_ASIO_IS_ENABLED: y
+define(`target_count', 16)dnl
       CONFIG_LWIP_MAX_SOCKETS: "eval(10 + 8 + target_count)"
       CONFIG_LWIP_MAX_RAW_PCBS: "eval(16 + target_count)"
 undefine(`target_count')dnl

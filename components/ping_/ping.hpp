@@ -8,6 +8,15 @@
 #include <ping/ping_sock.h>
 
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wc++11-compat"
+#include "asio.hpp"
+#pragma GCC diagnostic pop
+
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -67,6 +76,8 @@ class Target : public switch_::Switch {
 };
 
 class Ping : public Component {
+  friend class Target;
+
  public:
   Ping();
 
@@ -87,7 +98,7 @@ class Ping : public Component {
 
   void publish();
 
- protected:
+ private:
   binary_sensor::BinarySensor *none_{nullptr};
   binary_sensor::BinarySensor *some_{nullptr};
   binary_sensor::BinarySensor *all_{nullptr};
@@ -96,7 +107,7 @@ class Ping : public Component {
 
   std::vector<Target *> targets_{};
 
-  QueueHandle_t const queue_;
+  asio::io_context io;
 };
 
 }  // namespace ping_

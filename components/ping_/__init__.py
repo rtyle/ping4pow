@@ -2,7 +2,8 @@ import socket
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import since_, binary_sensor, sensor, switch
+from esphome.components import binary_sensor, sensor, since_, switch
+from esphome.components.esp32 import add_idf_component
 from esphome.const import CONF_ADDRESS, CONF_ID, CONF_INTERVAL, CONF_NAME, CONF_TIMEOUT
 from esphome.core import CORE
 
@@ -73,6 +74,8 @@ CONFIG_SCHEMA = cv.All(
 
 
 async def to_code(config):
+    add_idf_component(name="espressif/asio", ref=">=1.32.0", submodules=["asio/asio"])
+
     ping = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(ping, config)
     if CONF_NONE in config:
