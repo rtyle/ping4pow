@@ -73,7 +73,7 @@ void Target::setup() {
   config.target_addr = this->address_;
   // all callbacks occur in the context of the ping session task/thread.
   // esphome responses should be done in the esphome task/thread.
-  // all callbacks simply io.post these responses
+  // all callbacks simply io_.post these responses
   // so there is no need to enlarge the ping task's stack
   // and the responses are done in thread safe manner.
   esp_ping_callbacks_t callbacks{
@@ -81,17 +81,17 @@ void Target::setup() {
       .on_ping_success =
           [](esp_ping_handle_t, void *cb_args) {
             auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->io.post([&self] { self.publish(true); });
+            self.ping_->io_.post([&self] { self.publish(true); });
           },
       .on_ping_timeout =
           [](esp_ping_handle_t, void *cb_args) {
             auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->io.post([&self] { self.publish(false); });
+            self.ping_->io_.post([&self] { self.publish(false); });
           },
       .on_ping_end =
           [](esp_ping_handle_t, void *cb_args) {
             auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->io.post([&self] {
+            self.ping_->io_.post([&self] {
               self.publish_state(false);
               self.ping_->publish();
             });
@@ -149,7 +149,7 @@ void Ping::setup() {
 void Ping::loop() {
   // all esphome code should run in its (this) thread.
   // run such deferred code now.
-  this->io.poll();
+  this->io_.poll();
 }
 
 void Ping::dump_config() {

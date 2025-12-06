@@ -94,8 +94,6 @@ class Ping : public Component {
   void loop() override;
   void dump_config() override;
 
-  bool enqueue(std::function<void()>);
-
   void publish();
 
  private:
@@ -107,7 +105,7 @@ class Ping : public Component {
 
   std::vector<Target *> targets_{};
 
-  asio::io_context io;
+  asio::io_context io_;
 };
 
 }  // namespace ping_
