@@ -59,10 +59,10 @@ CONFIG_SCHEMA = cv.All(
                         cv.Required(CONF_ADDRESS): resolvable,
                         cv.Optional(
                             CONF_INTERVAL, default="16s"
-                        ): cv.positive_time_period_milliseconds,
+                        ): cv.positive_time_period_nanoseconds,
                         cv.Optional(
                             CONF_TIMEOUT, default="4s"
-                        ): cv.positive_time_period_milliseconds,
+                        ): cv.positive_time_period_nanoseconds,
                         cv.Optional(CONF_ABLE): binary_sensor.binary_sensor_schema(),
                         cv.Optional(CONF_SINCE): since_.since_schema(),
                     }

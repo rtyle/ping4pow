@@ -1,19 +1,15 @@
 #pragma once
 
-#include <functional>
-
-#include <freertos/FreeRTOS.h>
-#include <freertos/queue.h>
-
-#include <ping/ping_sock.h>
-
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #pragma GCC diagnostic ignored "-Wc++11-compat"
-#include "asio.hpp"
+#include <asio/io_context.hpp>
+#include <asio/ip/icmp.hpp>
+#include <asio/steady_timer.hpp>
 #pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
@@ -45,34 +41,41 @@ class Target : public switch_::Switch {
 
   void set_ping(Ping *ping);
   void set_address(esphome::network::IPAddress address);
-  void set_interval(uint32_t const interval) { this->interval_ = interval; }
-  void set_timeout(uint32_t const timeout) { this->timeout_ = timeout; }
+  void set_interval(int64_t const interval) {
+    this->interval_ = asio::steady_timer::duration(std::chrono::nanoseconds(interval));
+  }
+  void set_timeout(int64_t const timeout) {
+    this->timeout_ = asio::steady_timer::duration(std::chrono::nanoseconds(timeout));
+  }
 
   void set_able(binary_sensor::BinarySensor *able);
   void set_since(since_::Since *since);
 
-  void setup();
+  void setup(std::size_t index, std::size_t size);
 
   void write_state(bool state) override;
 
- protected:
+ private:
   Ping *ping_{nullptr};
-  esphome::network::IPAddress address_{};
-  uint32_t interval_{~0u};
-  uint32_t timeout_{~0u};
+  asio::ip::icmp::endpoint endpoint_{};
+  asio::steady_timer::duration interval_{};
+  asio::steady_timer::duration timeout_{};
 
   std::string tag_{};
 
   bool unpublished_{true};
   bool success_{false};
-  int64_t when_{-1};
+  asio::steady_timer::time_point reply_timepoint_{asio::steady_timer::time_point::min()};
+  asio::steady_timer::time_point change_timepoint_{asio::steady_timer::time_point::min()};
+  std::unique_ptr<asio::steady_timer> timer_{};
 
   binary_sensor::BinarySensor *able_{nullptr};
   since_::Since *since_{nullptr};
 
-  void publish(bool success);
+  void publish(bool success, asio::steady_timer::time_point const &timepoint);
 
-  esp_ping_handle_t session_{nullptr};
+  void reply(asio::ip::icmp::endpoint const &endpoint, uint16_t sequence,
+             asio::steady_timer::time_point const &timepoint);
 };
 
 class Ping : public Component {
@@ -91,6 +94,7 @@ class Ping : public Component {
 
   float get_setup_priority() const override;
   void setup() override;
+  bool teardown() override;
   void loop() override;
   void dump_config() override;
 
@@ -105,7 +109,8 @@ class Ping : public Component {
 
   std::vector<Target *> targets_{};
 
-  asio::io_context io_;
+  asio::io_context io_{};
+  std::unique_ptr<asio::ip::icmp::socket> socket_{};
 };
 
 }  // namespace ping_

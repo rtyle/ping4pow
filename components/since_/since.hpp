@@ -1,6 +1,6 @@
 #pragma once
 
-#include <esp_timer.h>
+#include <chrono>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
@@ -33,14 +33,15 @@ class Since : public PollingComponent, public sensor::Sensor {
  public:
   Since() = default;
   void update() override;
-  void set_when(int64_t when = esp_timer_get_time());
+  void set_when(std::chrono::steady_clock::time_point when = std::chrono::steady_clock::now());
+  void set_when(int when) { this->set_when(std::chrono::steady_clock::time_point(std::chrono::seconds(when))); }
   void set_text(text_sensor::TextSensor *const text) { this->text_ = text; }
 #ifdef USE_LVGL
   void set_label(lv_obj_t *const label) { this->label_ = label; }
 #endif
 
  private:
-  int64_t when_{-1};
+  std::chrono::steady_clock::time_point when_{std::chrono::steady_clock::time_point::min()};
   text_sensor::TextSensor *text_{nullptr};
 #ifdef USE_LVGL
   lv_obj_t *label_{nullptr};

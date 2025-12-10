@@ -355,7 +355,7 @@ SmtpReply greeting_and_ehlo(Transport &transport) {
 }  // namespace
 
 void Component::setup() {
-  ESP_LOGCONFIG(TAG, "setup");
+  ESP_LOGD(TAG, "setup");
 
   {
     ESP_LOGD(TAG, "seed random number generator");

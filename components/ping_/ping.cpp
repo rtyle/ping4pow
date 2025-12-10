@@ -13,7 +13,24 @@
 
 #include "ping.hpp"
 
-#include <esp_timer.h>
+#include <ranges>
+#include <span>
+
+// provide code generated from asio includes that follow below
+// visibility to our ASIO_NO_EXCEPTIONS asio::detail::throw_exception definition,
+// if called for, so that they can implicitly instantiate what they need.
+#include "asio_throw_exception.hpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wc++11-compat"
+#include <asio/buffer.hpp>
+#include <asio/co_spawn.hpp>
+#include <asio/detached.hpp>
+#include <asio/redirect_error.hpp>
+#include <asio/this_coro.hpp>
+#pragma GCC diagnostic pop
 
 namespace esphome {
 namespace ping_ {
@@ -21,6 +38,91 @@ namespace ping_ {
 namespace {
 
 constexpr auto TAG{"ping_"};
+
+#pragma pack(push, 1)
+
+class Timestamp {
+ private:
+  std::int64_t as_nanoseconds_{};
+
+ public:
+  Timestamp() = default;
+  Timestamp(asio::steady_timer::time_point const timepoint)
+      : as_nanoseconds_{std::chrono::time_point_cast<std::chrono::nanoseconds>(timepoint).time_since_epoch().count()} {}
+  operator std::int64_t() const { return this->as_nanoseconds_; }
+  operator asio::steady_timer::time_point() const {
+    return asio::steady_timer::time_point(std::chrono::nanoseconds(this->as_nanoseconds_));
+  }
+};
+
+constexpr auto IP_HEADER_SIZE_MIN{20};
+constexpr auto IP_HEADER_SIZE_MAX{60};
+constexpr auto PADDING_SIZE{48};
+constexpr auto PACKET_SIZE{16 + PADDING_SIZE};
+
+constexpr auto PADDING{[]() consteval {
+  std::array<std::byte, PADDING_SIZE> pattern{};
+  pattern.fill(std::byte{0x5A});
+  return pattern;
+}()};
+
+class Packet {
+ private:
+  std::byte type_;
+  std::byte code_;
+  std::uint16_t checksum_;
+  std::uint16_t id_;
+  std::uint16_t sequence_;
+  Timestamp timestamp_;
+  std::array<std::byte, PADDING_SIZE> padding_;
+
+  std::uint16_t checksum_compute() const {
+    std::uint32_t sum{0};
+    for (auto addend :
+         std::span{reinterpret_cast<std::uint16_t const *>(this), this->size() / sizeof(std::uint16_t)} |
+             std::views::transform([](auto const word) { return static_cast<std::uint32_t>(ntohs(word)); })) {
+      sum += addend;
+    }
+    // add carries into high word back into low word
+    while (sum >> 16) {
+      sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+    return static_cast<std::uint16_t>(~sum);
+  }
+  bool checksum_check() const { return 0 == this->checksum_compute(); }
+  bool padding_check() const { return this->padding_ == PADDING; }
+
+ public:
+  Packet(std::uint16_t const id, std::uint16_t &sequence, asio::steady_timer::time_point const &timepoint)
+      : type_{8},  // echo request
+        code_{0},
+        checksum_{0},
+        id_{htons(id)},
+        sequence_{htons(sequence++)},
+        timestamp_{timepoint},
+        padding_{PADDING} {
+    this->checksum_ = htons(checksum_compute());
+  }
+
+  std::byte type() const { return this->type_; }
+  std::byte code() const { return this->code_; }
+  std::uint16_t checksum() const { return ntohs(this->checksum_); }
+  std::uint16_t id() const { return ntohs(this->id_); }
+  std::uint16_t sequence() const { return ntohs(this->sequence_); }
+  asio::steady_timer::time_point timepoint() const { return {this->timestamp_}; }
+
+  void const *data() const { return reinterpret_cast<void const *>(this); }
+  std::size_t size() const { return sizeof(*this); }
+
+  static bool fits(std::span<std::byte const> const from) { return sizeof(Packet) == from.size(); }
+  Packet(std::span<std::byte const> const from) {
+    std::copy_n(from.begin(), sizeof(*this), reinterpret_cast<std::byte *>(this));  // echo reply?
+  }
+  bool is_reply() const { return this->checksum_check() && this->padding_check() && std::byte{0} == this->type_; }
+};
+static_assert(PACKET_SIZE == sizeof(Packet), "Packet not packed properly");
+
+#pragma pack(pop)
 
 }  // namespace
 
@@ -32,8 +134,9 @@ void Target::set_ping(Ping *const ping) {
 }
 
 void Target::set_address(esphome::network::IPAddress const address) {
-  this->address_ = address;
-  this->tag_ = std::string(this->get_name()) + ' ' + this->address_.str();
+  // asio::ip::address_v4 takes address in host byte order!?
+  this->endpoint_.address(asio::ip::address_v4(ntohl(static_cast<ip_addr_t>(address).u_addr.ip4.addr)));
+  this->tag_ = std::string(this->get_name()) + ' ' + this->endpoint_.address().to_string();
 }
 
 void Target::set_able(binary_sensor::BinarySensor *const able) {
@@ -46,7 +149,7 @@ void Target::set_since(since_::Since *const since) {
   this->since_->update();
 }
 
-void Target::publish(bool const success) {
+void Target::publish(bool const success, asio::steady_timer::time_point const &timepoint) {
   this->unpublished_ = false;
   if (success) {
     ESP_LOGD(TAG, "%s ping success", this->tag_.c_str());
@@ -56,81 +159,99 @@ void Target::publish(bool const success) {
   if (this->success_ != success) {
     ESP_LOGI(TAG, "%s ping %s", this->tag_.c_str(), success ? "failure→success" : "success→failure");
     this->success_ = success;
-    this->when_ = esp_timer_get_time();
+    this->change_timepoint_ = timepoint;
     if (this->able_)
       this->able_->publish_state(this->success_);
     if (this->since_)
-      this->since_->set_when(this->when_);
+      this->since_->set_when(timepoint);
     this->ping_->publish();
   }
 }
 
-void Target::setup() {
-  esp_ping_config_t config ESP_PING_DEFAULT_CONFIG();
-  config.count = ESP_PING_COUNT_INFINITE;
-  config.interval_ms = this->interval_;
-  config.timeout_ms = this->timeout_;
-  config.target_addr = this->address_;
-  // all callbacks occur in the context of the ping session task/thread.
-  // esphome responses should be done in the esphome task/thread.
-  // all callbacks simply io_.post these responses
-  // so there is no need to enlarge the ping task's stack
-  // and the responses are done in thread safe manner.
-  esp_ping_callbacks_t callbacks{
-      .cb_args = this,
-      .on_ping_success =
-          [](esp_ping_handle_t, void *cb_args) {
-            auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->io_.post([&self] { self.publish(true); });
-          },
-      .on_ping_timeout =
-          [](esp_ping_handle_t, void *cb_args) {
-            auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->io_.post([&self] { self.publish(false); });
-          },
-      .on_ping_end =
-          [](esp_ping_handle_t, void *cb_args) {
-            auto &self{*reinterpret_cast<Target *>(cb_args)};
-            self.ping_->io_.post([&self] {
-              self.publish_state(false);
-              self.ping_->publish();
-            });
-          },
-  };
-  ESP_LOGD(TAG,
-           "%s ping session {count=%d interval=%d timeout=%d size=%d tos=%d ttl=%d address=%s stack=%d "
-           "priority=%d, interface=%d}",
-           this->tag_.c_str(), config.count, config.interval_ms, config.timeout_ms, config.data_size, config.tos,
-           config.ttl, this->address_.str().c_str(), config.task_stack_size, config.task_prio, config.interface);
-  auto const result{esp_ping_new_session(&config, &callbacks, &this->session_)};
-  if (ESP_OK != result) {
-    ESP_LOGE(TAG, "%s ping session failed: %s", this->tag_.c_str(), esp_err_to_name(result));
-  } else {
-    this->write_state(true);
+void Target::setup(std::size_t const index, std::size_t const size) {
+  this->timer_ = std::make_unique<asio::steady_timer>(this->ping_->io_);
+
+  this->write_state(true);
+
+  // periodically send ICMP echo requests to this->endpoint_
+  asio::co_spawn(
+      this->ping_->io_,
+      [this, index, size]() -> asio::awaitable<void> {
+        auto const id{static_cast<std::uint16_t>(index)};
+        std::uint16_t sequence{0};
+        // stagger start in an attempt to be out of phase with other targets
+        this->timer_->expires_after(this->interval_ * index / size);
+        while (true) {
+          {
+            std::error_code ec;
+            co_await this->timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
+            if (ec == asio::error::operation_aborted) {
+              ESP_LOGD(TAG, "%s abort: timer %s", this->tag_.c_str(), ec.message().c_str());
+              co_return;
+            } else if (ec) {
+              ESP_LOGW(TAG, "%s timer error: %s", this->tag_.c_str(), ec.message().c_str());
+              continue;
+            }
+          }
+          auto request_timepoint{this->timer_->expiry()};
+          if (this->state) {
+            do {
+              Packet const packet{id, sequence, request_timepoint};
+              ESP_LOGD(TAG, "%s sending ICMP echo request", this->tag_.c_str());
+              {
+                std::error_code ec;
+                co_await this->ping_->socket_->async_send_to(asio::const_buffer(packet.data(), packet.size()),
+                                                             this->endpoint_,
+                                                             asio::redirect_error(asio::use_awaitable, ec));
+                if (ec == asio::error::operation_aborted) {
+                  ESP_LOGD(TAG, "%s abort: send_to %s", this->tag_.c_str(), ec.message().c_str());
+                  co_return;
+                } else if (ec) {
+                  ESP_LOGW(TAG, "%s send_to error: %s", this->tag_.c_str(), ec.message().c_str());
+                  break;
+                }
+              }
+              this->timer_->expires_at(request_timepoint + this->timeout_);
+              {
+                std::error_code ec;
+                co_await this->timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
+                if (ec == asio::error::operation_aborted) {
+                  ESP_LOGD(TAG, "%s abort: timer %s", this->tag_.c_str(), ec.message().c_str());
+                  co_return;
+                } else if (ec) {
+                  ESP_LOGW(TAG, "%s timer error: %s", this->tag_.c_str(), ec.message().c_str());
+                  break;
+                }
+              }
+              if (this->reply_timepoint_ != request_timepoint) {
+                this->publish(false, request_timepoint);
+              }
+            } while (false);
+          }
+          // strictly periodic from now on
+          this->timer_->expires_at(request_timepoint + this->interval_);
+        }
+      },
+      asio::detached);
+}
+
+void Target::reply(asio::ip::icmp::endpoint const &endpoint, uint16_t sequence,
+                   asio::steady_timer::time_point const &timepoint) {
+  // replies may come out of order, this->reply_timepoint_ must monotonically increase
+  if (this->reply_timepoint_ < timepoint) {
+    this->reply_timepoint_ = timepoint;
   }
+  auto const round_trip_time{
+      std::chrono::duration_cast<std::chrono::milliseconds>(asio::steady_timer::clock_type::now() - timepoint).count()};
+  ESP_LOGD(TAG, "%s reply endpoint=%s sequence=%d rtt=%llu ms", this->tag_.c_str(),
+           endpoint.address().to_string().c_str(), sequence, round_trip_time);
+  this->publish(true, timepoint);
 }
 
 void Target::write_state(bool const state_) {
-  if (this->session_) {
-    if (state_) {
-      ESP_LOGD(TAG, "%s ping start", this->tag_.c_str());
-      auto const result{esp_ping_start(this->session_)};
-      if (ESP_OK == result) {
-        this->publish_state(true);
-      } else {
-        this->publish_state(false);
-        ESP_LOGE(TAG, "%s ping start failed: %s", this->tag_.c_str(), esp_err_to_name(result));
-      }
-      this->ping_->publish();
-    } else {
-      ESP_LOGD(TAG, "%s ping stop", this->tag_.c_str());
-      auto const result{esp_ping_stop(this->session_)};
-      if (ESP_OK != result) {
-        ESP_LOGE(TAG, "%s ping stop failed: %s", this->tag_.c_str(), esp_err_to_name(result));
-      }
-      // publish on_ping_end
-    }
-  }
+  ESP_LOGD(TAG, "%s ping %s", this->tag_.c_str(), state_ ? "start" : "stop");
+  this->publish_state(state_);
+  this->ping_->publish();
 }
 
 Ping::Ping() {}
@@ -140,17 +261,107 @@ void Ping::add(Target *const target) { this->targets_.push_back(target); }
 float Ping::get_setup_priority() const { return esphome::setup_priority::AFTER_CONNECTION; }
 
 void Ping::setup() {
-  ESP_LOGCONFIG(TAG, "setup");
-  for (auto target : this->targets_) {
-    target->setup();
+  ESP_LOGD(TAG, "setup");
+
+  // we must delay socket creation until now (AFTER_CONNECTION)
+  this->socket_ = std::make_unique<asio::ip::icmp::socket>(this->io_);
+  this->socket_->open(asio::ip::icmp::v4());
+
+  // setup each target with its index into targets_ and targets_.size().
+  // it will use index to set the id in each ICMP request packet it sends,
+  // which we will use to dispatch a matching reply back to the target.
+  // it will use index / size to calculate a phase offset in its periodic requests.
+  {
+    size_t index{0};
+    for (auto &target : this->targets_) {
+      target->setup(index++, this->targets_.size());
+    }
   }
+
+  asio::co_spawn(
+      this->io_,
+      [this]() -> asio::awaitable<void> {
+        while (true) {
+          std::array<std::byte, IP_HEADER_SIZE_MAX + PACKET_SIZE> into{};  // receive into, at most, this
+          asio::ip::icmp::endpoint endpoint{};
+          std::error_code ec;
+          auto const received{co_await this->socket_->async_receive_from(
+              asio::mutable_buffer(into.data(), into.size()), endpoint, asio::redirect_error(asio::use_awaitable, ec))};
+          if (ec == asio::error::operation_aborted) {
+            ESP_LOGD(TAG, "abort: receive_from %s", ec.message().c_str());
+            co_return;
+          } else if (ec) {
+            ESP_LOGW(TAG, "receive_from error: %s", ec.message().c_str());
+            continue;
+          }
+          if (received < IP_HEADER_SIZE_MIN + PACKET_SIZE) {
+            ESP_LOGW(TAG, "received runt reply (%zu) bytes", received);
+            continue;
+          }
+          std::span<std::byte const> const onto{into.data(), received};  // received onto, exactly, this
+          size_t const ip_header_size{sizeof(std::uint32_t) * (static_cast<std::uint8_t>(onto[0]) & 0x0F)};
+          if (ip_header_size < IP_HEADER_SIZE_MIN || ip_header_size > IP_HEADER_SIZE_MAX) {
+            ESP_LOGW(TAG, "received invalid IP header size (%zu bytes)", ip_header_size);
+            continue;
+          }
+          std::span<std::byte const> const packet_span{onto.subspan(ip_header_size)};  // packet follows IP header
+          if (!Packet::fits(packet_span)) {
+            ESP_LOGW(TAG, "received invalid packet size (%zu bytes)", packet_span.size());
+            continue;
+          }
+          Packet const packet{packet_span};
+          if (!packet.is_reply()) {
+            ESP_LOGW(TAG, "received packet is not a valid reply");
+            continue;
+          }
+          std::size_t const index{packet.id()};
+          if (index >= this->targets_.size()) {
+            ESP_LOGW(TAG, "received packet with invalid id %zu", index);
+            continue;
+          }
+          auto const timepoint{packet.timepoint()};
+          this->targets_[index]->reply(endpoint, packet.sequence(), timepoint);
+        }
+      },
+      asio::detached);
 }
 
-void Ping::loop() {
-  // all esphome code should run in its (this) thread.
-  // run such deferred code now.
-  this->io_.poll();
+bool Ping::teardown() {
+  // undo setup
+  for (auto &target : this->targets_) {
+    if (target->timer_) {
+      auto const count{target->timer_->cancel()};
+      ESP_LOGD(TAG, "teardown: %s timer cancelled %zu operations", target->tag_.c_str(), count);
+    }
+  }
+  if (this->socket_ && this->socket_->is_open()) {
+    std::error_code ec;
+    this->socket_->close(ec);
+    if (ec) {
+      ESP_LOGD(TAG, "teardown: socket close error: %s", ec.message().c_str());
+    } else {
+      ESP_LOGD(TAG, "teardown: socket closed");
+    }
+  }
+  size_t sum{0};
+  while (auto const addend{this->io_.poll()}) {
+    sum += addend;
+  }
+  ESP_LOGD(TAG, "teardown: poll completed %zu operations", sum);
+  for (auto &target : this->targets_) {
+    if (target->timer_) {
+      target->timer_.reset();
+      ESP_LOGD(TAG, "teardown: %s timer reset", target->tag_.c_str());
+    }
+  }
+  if (this->socket_) {
+    this->socket_.reset();
+    ESP_LOGD(TAG, "teardown: socket reset");
+  }
+  return true;
 }
+
+void Ping::loop() { this->io_.poll(); }
 
 void Ping::dump_config() {
   ESP_LOGCONFIG(TAG, "ping:");
@@ -158,7 +369,7 @@ void Ping::dump_config() {
   LOG_BINARY_SENSOR(TAG, "none", this->none_);
   for (auto const *const target : this->targets_) {
     ESP_LOGCONFIG(TAG, "target '%s':", target->get_name());
-    ESP_LOGCONFIG(TAG, "address: %s", target->address_.str().c_str());
+    ESP_LOGCONFIG(TAG, "address: %s", target->endpoint_.address().to_string().c_str());
     ESP_LOGCONFIG(TAG, "timeout: %d ms", target->timeout_);
     ESP_LOGCONFIG(TAG, "interval: %d ms", target->interval_);
     if (target->able_)
@@ -194,7 +405,7 @@ void Ping::publish() {
   auto none{true};          // until an enabled target is successful
   auto all{true};           // until an enabled target is not successful
   size_t count{0};          // count of enabled successful targets
-  int64_t latest{-1};       // latest on target
+  asio::steady_timer::time_point latest{std::chrono::steady_clock::time_point::min()};  // latest on target
   for (auto const *const target : this->targets_) {
     if (target->state) {  // on
       if (target->unpublished_) {
@@ -206,8 +417,8 @@ void Ping::publish() {
       } else {
         all = false;
       }
-      if (latest < target->when_) {
-        latest = target->when_;
+      if (latest < target->change_timepoint_) {
+        latest = target->change_timepoint_;
       }
     }
   }
