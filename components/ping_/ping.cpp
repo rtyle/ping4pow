@@ -265,7 +265,16 @@ void Ping::setup() {
 
   // we must delay socket creation until now (AFTER_CONNECTION)
   this->socket_ = std::make_unique<asio::ip::icmp::socket>(this->io_);
-  this->socket_->open(asio::ip::icmp::v4());
+
+  {
+    std::error_code ec;
+    this->socket_->open(asio::ip::icmp::v4(), ec);
+    if (ec) {
+      ESP_LOGE(TAG, "socket open error: %s", ec.message().c_str());
+      this->mark_failed();
+      return;
+    }
+  }
 
   // setup each target with its index into targets_ and targets_.size().
   // it will use index to set the id in each ICMP request packet it sends,
