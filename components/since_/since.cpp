@@ -32,10 +32,9 @@ void Since::update() {
   // publish state in units of seconds (default std::chrono::duration)
   // in a 32 bit float (with a 24 bit mantissa)
   // we will not lose precision until 2**24 seconds (over 194 days).
-  float const state_{
-      0 > this->when_.time_since_epoch().count()
-          ? std::numeric_limits<float>::quiet_NaN()
-          : std::chrono::duration<float>{std::chrono::steady_clock::now() - this->when_}.count()};
+  float const state_{0 > this->when_.time_since_epoch().count()
+                         ? std::numeric_limits<float>::quiet_NaN()
+                         : std::chrono::duration<float>{std::chrono::steady_clock::now() - this->when_}.count()};
   this->publish_state(state_);
 
   // if there is a text or label associated with us ...
