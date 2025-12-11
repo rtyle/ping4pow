@@ -258,6 +258,22 @@ Ping::Ping() {}
 
 void Ping::add(Target *const target) { this->targets_.push_back(target); }
 
+void Ping::dump_config() {
+  ESP_LOGCONFIG(TAG, "ping:");
+  LOG_BINARY_SENSOR(TAG, "all", this->all_);
+  LOG_BINARY_SENSOR(TAG, "none", this->none_);
+  for (auto const *const target : this->targets_) {
+    ESP_LOGCONFIG(TAG, "target '%s':", target->get_name());
+    ESP_LOGCONFIG(TAG, "address: %s", target->endpoint_.address().to_string().c_str());
+    ESP_LOGCONFIG(TAG, "timeout: %d ms", target->timeout_);
+    ESP_LOGCONFIG(TAG, "interval: %d ms", target->interval_);
+    if (target->able_)
+      LOG_BINARY_SENSOR(TAG, "able", target->able_);
+    if (target->since_)
+      LOG_SENSOR(TAG, "since", target->since_);
+  }
+}
+
 float Ping::get_setup_priority() const { return esphome::setup_priority::AFTER_CONNECTION; }
 
 void Ping::setup() {
@@ -371,22 +387,6 @@ bool Ping::teardown() {
 }
 
 void Ping::loop() { this->io_.poll(); }
-
-void Ping::dump_config() {
-  ESP_LOGCONFIG(TAG, "ping:");
-  LOG_BINARY_SENSOR(TAG, "all", this->all_);
-  LOG_BINARY_SENSOR(TAG, "none", this->none_);
-  for (auto const *const target : this->targets_) {
-    ESP_LOGCONFIG(TAG, "target '%s':", target->get_name());
-    ESP_LOGCONFIG(TAG, "address: %s", target->endpoint_.address().to_string().c_str());
-    ESP_LOGCONFIG(TAG, "timeout: %d ms", target->timeout_);
-    ESP_LOGCONFIG(TAG, "interval: %d ms", target->interval_);
-    if (target->able_)
-      LOG_BINARY_SENSOR(TAG, "able", target->able_);
-    if (target->since_)
-      LOG_SENSOR(TAG, "since", target->since_);
-  }
-}
 
 void Ping::set_none(binary_sensor::BinarySensor *const none) {
   this->none_ = none;

@@ -84,20 +84,22 @@ class Ping : public Component {
  public:
   Ping();
 
+  void add(Target *target);
+  
+  void dump_config() override;
+
+  // lifecycle
+  float get_setup_priority() const override;
+  void setup() override;
+  bool teardown() override;
+  void loop() override;
+
+  // configuration setters
   void set_none(binary_sensor::BinarySensor *none);
   void set_some(binary_sensor::BinarySensor *some);
   void set_all(binary_sensor::BinarySensor *all);
   void set_count(sensor::Sensor *count);
   void set_since(since_::Since *since);
-
-  void add(Target *target);
-  
-  void dump_config() override;
-
-  float get_setup_priority() const override;
-  void setup() override;
-  bool teardown() override;
-  void loop() override;
 
   void publish();
 
