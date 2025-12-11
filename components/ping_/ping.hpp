@@ -85,7 +85,7 @@ class Ping : public Component {
   Ping();
 
   void add(Target *target);
-  
+
   void dump_config() override;
 
   // lifecycle
