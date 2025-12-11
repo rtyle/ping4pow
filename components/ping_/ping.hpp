@@ -91,12 +91,13 @@ class Ping : public Component {
   void set_since(since_::Since *since);
 
   void add(Target *target);
+  
+  void dump_config() override;
 
   float get_setup_priority() const override;
   void setup() override;
   bool teardown() override;
   void loop() override;
-  void dump_config() override;
 
   void publish();
 
