@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef ASIO_DETAIL_THROW_EXCEPTION__HPP
+#define ASIO_DETAIL_THROW_EXCEPTION__HPP
+
 #if defined(ASIO_NO_EXCEPTIONS)
 
 #include <asio/detail/config.hpp>           // ASIO_NO_EXCEPTIONS
@@ -22,3 +25,5 @@ template<typename Exception> [[noreturn]] inline void throw_exception(const Exce
 }  // namespace asio
 
 #endif  // ASIO_NO_EXCEPTIONS
+
+#endif  // ASIO_DETAIL_THROW_EXCEPTION__HPP
