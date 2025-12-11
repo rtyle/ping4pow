@@ -354,8 +354,28 @@ SmtpReply greeting_and_ehlo(Transport &transport) {
 
 }  // namespace
 
+Component::Component()
+    : server_{},
+      port_{587},
+      username_{},
+      password_{},
+      from_{},
+      to_{},
+      starttls_{true},
+      cas_{},
+      task_name_{"smtp"},
+      task_priority_{5},
+      queue_{x_queue_create(8, sizeof(Message *))},
+      task_handle_{nullptr} {}
+
 void Component::setup() {
   ESP_LOGD(TAG, "setup");
+
+  if (!this->queue_) {
+    ESP_LOGW(TAG, "xQueueCreate failed");
+    this->mark_failed();
+    return;
+  }
 
   {
     ESP_LOGD(TAG, "seed random number generator");
@@ -394,14 +414,6 @@ void Component::setup() {
     }
     mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_REQUIRED);
     mbedtls_ssl_conf_ca_chain(&this->ssl_config_, &this->x509_crt_, nullptr);
-  }
-
-  ESP_LOGD(TAG, "create queue");
-  this->queue_ = x_queue_create(8, sizeof(Message *));
-  if (!this->queue_) {
-    ESP_LOGW(TAG, "xQueueCreate failed");
-    this->mark_failed();
-    return;
   }
 
   ESP_LOGD(TAG, "create task");

@@ -34,6 +34,8 @@ namespace smtp_ {
 
 class Component : public esphome::Component {
  public:
+  explicit Component();
+
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::ETHERNET; }
@@ -65,23 +67,23 @@ class Component : public esphome::Component {
   raii::Resource<mbedtls_x509_crt> x509_crt_{raii::make(mbedtls_x509_crt_init, mbedtls_x509_crt_free)};
   raii::Resource<mbedtls_ssl_config> ssl_config_{raii::make(mbedtls_ssl_config_init, mbedtls_ssl_config_free)};
 
-  void run_();
-  std::optional<std::string> send_(std::function<std::unique_ptr<Message>()>);
-
-  TaskHandle_t task_handle_{nullptr};
-  QueueHandle_t queue_{nullptr};
-
   // configuration
   std::string server_;
-  uint16_t port_{587};
+  uint16_t port_;
   std::string username_;
   std::string password_;
   std::string from_;
   std::string to_;
-  bool starttls_{true};
+  bool starttls_;
   std::string cas_;
-  std::string task_name_{"smtp"};
-  unsigned task_priority_{5};
+  std::string task_name_;
+  unsigned task_priority_;
+
+  QueueHandle_t queue_;
+  TaskHandle_t task_handle_;
+
+  void run_();
+  std::optional<std::string> send_(std::function<std::unique_ptr<Message>()>);
 };
 
 // Action for sending emails
