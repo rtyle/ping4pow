@@ -19,7 +19,7 @@
 // provide code generated from asio includes that follow below
 // visibility to our ASIO_NO_EXCEPTIONS asio::detail::throw_exception definition,
 // if called for, so that they can implicitly instantiate what they need.
-#include "asio_detail_throw_exception_.hpp"
+#include "esphome/components/asio_/asio_detail_throw_exception_.cpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"

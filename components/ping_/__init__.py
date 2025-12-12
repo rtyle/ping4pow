@@ -7,7 +7,7 @@ from esphome.components.esp32 import add_idf_component
 from esphome.const import CONF_ADDRESS, CONF_ID, CONF_INTERVAL, CONF_NAME, CONF_TIMEOUT
 from esphome.core import CORE
 
-DEPENDENCIES = ["sensor", "binary_sensor"]
+DEPENDENCIES = ["asio_", "sensor", "binary_sensor"]
 
 ping_ns = cg.esphome_ns.namespace("ping_")
 Ping = ping_ns.class_("Ping", cg.Component)
@@ -23,12 +23,6 @@ CONF_ABLE = "able"
 CONF_SINCE = "since"
 
 
-def requires_esp_idf(value):
-    if not CORE.using_esp_idf:
-        raise cv.Invalid("requires esp32.framework.type: esp-idf)")
-    return value
-
-
 def resolvable(address: str) -> str:
     try:
         return str(cv.ipv4address(address))
@@ -42,7 +36,6 @@ def resolvable(address: str) -> str:
 MULTI_CONF = True
 
 CONFIG_SCHEMA = cv.All(
-    requires_esp_idf,
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(Ping),
@@ -74,8 +67,6 @@ CONFIG_SCHEMA = cv.All(
 
 
 async def to_code(config):
-    add_idf_component(name="espressif/asio", ref=">=1.32.0", submodules=["asio/asio"])
-
     ping = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(ping, config)
     if CONF_NONE in config:

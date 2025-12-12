@@ -46,7 +46,7 @@ external_components:
       type: local
       path: ../components
     components: [
-      format_, m5cores3_touchscreen_, ping_, rotation_, since_, smtp_]
+      asio_, format_, m5cores3_touchscreen_, ping_, rotation_, since_, smtp_]
 
 esphome:
   <<: *m5stack_cores3_esphome
@@ -58,10 +58,12 @@ esp32:
   framework:
     type: esp-idf
     sdkconfig_options:
-      CONFIG_LWIP_IPV6: y
-      CONFIG_ASIO_IS_ENABLED: y
+      CONFIG_LWIP_MAX_SOCKETS: "18"
+      CONFIG_LWIP_MAX_RAW_PCBS: "16"
 
 board_m5cores3: *m5stack_cores3_board_m5cores3
+
+asio_:
 
 logger:
   level: LOGGER_LEVEL

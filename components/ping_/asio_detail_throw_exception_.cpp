@@ -19,7 +19,7 @@
 #include <asio/ip/bad_address_cast.hpp>
 #pragma GCC diagnostic pop
 
-#include "asio_throw_exception.hpp"
+#include "esphome/components/asio_/asio_detail_throw_exception_.cpp"
 
 namespace asio {
 namespace detail {
