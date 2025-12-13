@@ -187,7 +187,7 @@ void Target::setup(std::size_t const index, std::size_t const size) {
             co_await this->timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
             if (ec == asio::error::operation_aborted) {
               ESP_LOGD(TAG, "%s abort: timer %s", this->tag_.c_str(), ec.message().c_str());
-              co_return;
+              break;
             } else if (ec) {
               ESP_LOGW(TAG, "%s timer error: %s", this->tag_.c_str(), ec.message().c_str());
               continue;
@@ -195,6 +195,7 @@ void Target::setup(std::size_t const index, std::size_t const size) {
           }
           auto request_timepoint{this->timer_->expiry()};
           if (this->state) {
+            bool teardown{false};
             do {
               Packet const packet{id, sequence, request_timepoint};
               ESP_LOGD(TAG, "%s sending ICMP echo request", this->tag_.c_str());
@@ -205,7 +206,8 @@ void Target::setup(std::size_t const index, std::size_t const size) {
                                                              asio::redirect_error(asio::use_awaitable, ec));
                 if (ec == asio::error::operation_aborted) {
                   ESP_LOGD(TAG, "%s abort: send_to %s", this->tag_.c_str(), ec.message().c_str());
-                  co_return;
+                  teardown = true;
+                  break;
                 } else if (ec) {
                   ESP_LOGW(TAG, "%s send_to error: %s", this->tag_.c_str(), ec.message().c_str());
                   break;
@@ -217,7 +219,8 @@ void Target::setup(std::size_t const index, std::size_t const size) {
                 co_await this->timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
                 if (ec == asio::error::operation_aborted) {
                   ESP_LOGD(TAG, "%s abort: timer %s", this->tag_.c_str(), ec.message().c_str());
-                  co_return;
+                  teardown = true;  // teardown
+                  break;
                 } else if (ec) {
                   ESP_LOGW(TAG, "%s timer error: %s", this->tag_.c_str(), ec.message().c_str());
                   break;
@@ -227,10 +230,15 @@ void Target::setup(std::size_t const index, std::size_t const size) {
                 this->publish(false, request_timepoint);
               }
             } while (false);
+            if (teardown)
+              break;
           }
           // strictly periodic from now on
           this->timer_->expires_at(request_timepoint + this->interval_);
         }
+        ESP_LOGD(TAG, "%s abort: timer reset", this->tag_.c_str());
+        this->timer_.reset();
+        co_return;
       },
       asio::detached);
 }
@@ -306,15 +314,15 @@ void Ping::setup() {
   asio::co_spawn(
       this->io_,
       [this]() -> asio::awaitable<void> {
+        std::error_code ec;
         while (true) {
           std::array<std::byte, IP_HEADER_SIZE_MAX + PACKET_SIZE> into{};  // receive into, at most, this
           asio::ip::icmp::endpoint endpoint{};
-          std::error_code ec;
           auto const received{co_await this->socket_->async_receive_from(
               asio::mutable_buffer(into.data(), into.size()), endpoint, asio::redirect_error(asio::use_awaitable, ec))};
           if (ec == asio::error::operation_aborted) {
             ESP_LOGD(TAG, "abort: receive_from %s", ec.message().c_str());
-            co_return;
+            break;  // teardown
           } else if (ec) {
             ESP_LOGW(TAG, "receive_from error: %s", ec.message().c_str());
             continue;
@@ -347,6 +355,13 @@ void Ping::setup() {
           auto const timepoint{packet.timepoint()};
           this->targets_[index]->reply(endpoint, packet.sequence(), timepoint);
         }
+        this->socket_->close(ec);
+        if (ec) {
+          ESP_LOGW(TAG, "abort: socket close error: %s", ec.message().c_str());
+        } else {
+          ESP_LOGD(TAG, "abort: socket closed");
+        }
+        co_return;
       },
       asio::detached);
 }
@@ -361,11 +376,11 @@ bool Ping::teardown() {
   }
   if (this->socket_ && this->socket_->is_open()) {
     std::error_code ec;
-    this->socket_->close(ec);
+    this->socket_->cancel(ec);
     if (ec) {
-      ESP_LOGD(TAG, "teardown: socket close error: %s", ec.message().c_str());
+      ESP_LOGW(TAG, "teardown: socket cancel error: %s", ec.message().c_str());
     } else {
-      ESP_LOGD(TAG, "teardown: socket closed");
+      ESP_LOGD(TAG, "teardown: socket cancelled");
     }
   }
   size_t sum{0};
@@ -373,12 +388,6 @@ bool Ping::teardown() {
     sum += addend;
   }
   ESP_LOGD(TAG, "teardown: poll completed %zu operations", sum);
-  for (auto &target : this->targets_) {
-    if (target->timer_) {
-      target->timer_.reset();
-      ESP_LOGD(TAG, "teardown: %s timer reset", target->tag_.c_str());
-    }
-  }
   if (this->socket_) {
     this->socket_.reset();
     ESP_LOGD(TAG, "teardown: socket reset");
