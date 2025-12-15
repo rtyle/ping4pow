@@ -93,12 +93,12 @@ class Packet {
   bool padding_check() const { return this->padding_ == PADDING; }
 
  public:
-  Packet(std::uint16_t const id, std::uint16_t &sequence, asio::steady_timer::time_point const &timepoint)
+  Packet(std::uint16_t const id, std::uint16_t sequence, asio::steady_timer::time_point const &timepoint)
       : type_{8},  // echo request
         code_{0},
         checksum_{0},
         id_{htons(id)},
-        sequence_{htons(sequence++)},
+        sequence_{htons(sequence)},
         timestamp_{timepoint},
         padding_{PADDING} {
     this->checksum_ = htons(checksum_compute());
@@ -193,11 +193,11 @@ void Target::setup(std::size_t const index, std::size_t const size) {
               continue;
             }
           }
-          auto request_timepoint{this->timer_->expiry()};
+          auto const request_timepoint{this->timer_->expiry()};
           if (this->state) {
             bool teardown{false};
             do {
-              Packet const packet{id, sequence, request_timepoint};
+              Packet const packet{id, sequence++, request_timepoint};
               ESP_LOGD(TAG, "%s sending ICMP echo request", this->tag_.c_str());
               {
                 std::error_code ec;
@@ -395,7 +395,7 @@ bool Ping::teardown() {
   return true;
 }
 
-void Ping::loop() { this->io_.poll(); }
+void Ping::loop() { this->io_.poll_one(); }
 
 void Ping::set_none(binary_sensor::BinarySensor *const none) {
   this->none_ = none;
