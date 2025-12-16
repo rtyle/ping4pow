@@ -115,7 +115,7 @@ class Reply {
 
  public:
   explicit Reply(std::error_code const ec) : ec_{ec}, code_{}, text_{} {}
-  Reply(int const code, std::string_view const text) : ec_{}, code_{code}, text_{text} {}
+  explicit Reply(int const code, std::string_view const text = "") : ec_{}, code_{code}, text_{text} {}
 
   bool is_positive_completion() const { return !this->ec_ && 200 <= this->code_ && this->code_ < 300; }
   bool is_positive_intermediate() const { return !this->ec_ && 300 <= this->code_ && this->code_ < 400; }
@@ -241,7 +241,7 @@ asio::awaitable<Reply> send(AsyncStream &stream, DynamicBuffer &buffer, std::str
                                                  asio::redirect_error(asio::use_awaitable, ec))};
     if (ec) {
       ESP_LOGW(TAG, "command DATA From, To, Subject: %s", ec.message().c_str());
-      co_return Reply{-1, ""};
+      co_return Reply{-1};
     }
     ESP_LOGI(TAG, "> %s", request.c_str());
   }
@@ -251,7 +251,7 @@ asio::awaitable<Reply> send(AsyncStream &stream, DynamicBuffer &buffer, std::str
                                                  asio::redirect_error(asio::use_awaitable, ec))};
     if (ec) {
       ESP_LOGW(TAG, "command DATA body: %s", ec.message().c_str());
-      co_return Reply{-1, ""};
+      co_return Reply{-1};
     }
     ESP_LOGI(TAG, "> %.*s", body.size(), body.data());
   }
@@ -355,7 +355,7 @@ void Component::setup() {
               if (ec == asio::error::operation_aborted) {
                 // cancelled by enqueue (!queue_.empty) or teardown (queue_.empty)
                 if (this->queue_.empty()) {
-                  ESP_LOGE(TAG, "abort: queue timer %s", ec.message().c_str());
+                  ESP_LOGD(TAG, "abort: queue timer %s", ec.message().c_str());
                   break;  // teardown
                 }
               } else {
@@ -538,7 +538,7 @@ void Component::setup() {
           this->interval_timer_->expires_after(std::chrono::minutes(1));
           co_await this->interval_timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
           if (ec == asio::error::operation_aborted) {
-            ESP_LOGE(TAG, "abort: interval timer %s", ec.message().c_str());
+            ESP_LOGD(TAG, "abort: interval timer %s", ec.message().c_str());
             break;  // teardown
           } else if (ec) {
             ESP_LOGW(TAG, "interval timer error: %s", ec.message().c_str());
@@ -557,26 +557,26 @@ bool Component::teardown() {
   // undo setup
   if (this->queue_timer_) {
     auto const count{this->queue_timer_->cancel()};
-    ESP_LOGE(TAG, "teardown: queue timer cancelled %zu operations", count);
+    ESP_LOGD(TAG, "teardown: queue timer cancelled %zu operations", count);
   }
   if (this->interval_timer_) {
     auto const count{this->interval_timer_->cancel()};
-    ESP_LOGE(TAG, "teardown: interval timer cancelled %zu operations", count);
+    ESP_LOGD(TAG, "teardown: interval timer cancelled %zu operations", count);
   }
   if (this->stream_ && this->stream_->lowest_layer().is_open()) {
     this->stream_->lowest_layer().cancel();
-    ESP_LOGE(TAG, "teardown: stream cancel");
+    ESP_LOGD(TAG, "teardown: stream cancel");
   }
   size_t sum{0};
   while (auto const addend{this->io_.poll()}) {
     sum += addend;
   }
-  ESP_LOGE(TAG, "teardown: poll completed %zu operations", sum);
+  ESP_LOGD(TAG, "teardown: poll completed %zu operations", sum);
   return true;
 }
 
 void Component::enqueue(std::string const &subject, std::string const &body, std::string const &to) {
-  ESP_LOGE(TAG, "enqueue %s", subject.c_str());
+  ESP_LOGD(TAG, "enqueue %s", subject.c_str());
   this->queue_.emplace_back(subject, body, to);
   this->queue_timer_->cancel();
 }
