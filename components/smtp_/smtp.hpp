@@ -1,10 +1,22 @@
 #pragma once
 
-#include <functional>
+#include <deque>
 #include <optional>
 #include <string>
 
-#include "freertos/FreeRTOS.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wc++11-compat"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#include <asio/io_context.hpp>
+#include <asio/ip/tcp.hpp>
+#include <asio/ssl/stream.hpp>
+#include <asio/steady_timer.hpp>
+#pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -12,33 +24,20 @@
 #include "esphome/core/automation.h"
 #pragma GCC diagnostic pop
 
-#pragma GCC diagnostic push
-// #pragma GCC diagnostic ignored -Wpedantic
-// should squelch impending
-//  warning: #include_next is a GCC extension
-// messages, but does not.
-// these are squelched if -Wpedantic was never turned on.
-// this is a bug!
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-#include "mbedtls/ssl.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/x509_crt.h"
-#pragma GCC diagnostic pop
-
 namespace esphome {
 namespace smtp_ {
-
-#include "raii.hpp"
 
 class Component : public esphome::Component {
  public:
   explicit Component();
 
-  void setup() override;
   void dump_config() override;
-  float get_setup_priority() const override { return setup_priority::ETHERNET; }
+
+  // lifecycle
+  float get_setup_priority() const override;
+  void setup() override;
+  bool teardown() override;
+  void loop() override;
 
   // configuration setters
   void set_server(std::string const &value) { this->server_ = value; }
@@ -49,8 +48,6 @@ class Component : public esphome::Component {
   void set_to(std::string const &value) { this->to_ = value; }
   void set_starttls(bool const value) { this->starttls_ = value; }
   void set_cas(std::string const &value) { this->cas_ = value; }
-  void set_task_name(std::string const &value) { this->task_name_ = value; }
-  void set_task_priority(unsigned const value) { this->task_priority_ = value; }
 
   void enqueue(std::string const &subject, std::string const &body, std::string const &to = "");
 
@@ -61,12 +58,6 @@ class Component : public esphome::Component {
     std::string to;
   };
 
-  // use RAII to manage mbedtls resources for our lifetime
-  raii::Resource<mbedtls_entropy_context> entropy_{raii::make(mbedtls_entropy_init, mbedtls_entropy_free)};
-  raii::Resource<mbedtls_ctr_drbg_context> ctr_drbg_{raii::make(mbedtls_ctr_drbg_init, mbedtls_ctr_drbg_free)};
-  raii::Resource<mbedtls_x509_crt> x509_crt_{raii::make(mbedtls_x509_crt_init, mbedtls_x509_crt_free)};
-  raii::Resource<mbedtls_ssl_config> ssl_config_{raii::make(mbedtls_ssl_config_init, mbedtls_ssl_config_free)};
-
   // configuration
   std::string server_;
   uint16_t port_;
@@ -76,14 +67,14 @@ class Component : public esphome::Component {
   std::string to_;
   bool starttls_;
   std::string cas_;
-  std::string task_name_;
-  unsigned task_priority_;
 
-  QueueHandle_t queue_;
-  TaskHandle_t task_handle_;
+  asio::io_context io_;
+  std::deque<Message> queue_;
 
-  void run_();
-  std::optional<std::string> send_(std::function<std::unique_ptr<Message>()>);
+  std::optional<asio::steady_timer> queue_timer_;
+  std::optional<asio::steady_timer> interval_timer_;
+  asio::ssl::context ssl_;
+  std::optional<asio::ssl::stream<asio::ip::tcp::socket>> stream_;
 };
 
 // Action for sending emails

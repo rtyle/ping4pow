@@ -2,11 +2,19 @@ import pathlib
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
+import esphome.final_validate as fv
+from esphome.components.esp32 import CONF_SDKCONFIG_OPTIONS
 from esphome import automation
-from esphome.const import CONF_ID, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
-from esphome.core import CORE
+from esphome.const import (
+    CONF_ID,
+    CONF_PASSWORD,
+    CONF_PORT,
+    CONF_USERNAME,
+    CONF_FRAMEWORK,
+    Platform,
+)
 
-DEPENDENCIES = ["network"]
+DEPENDENCIES = ["asio_", "network"]
 CODEOWNERS = ["@rtyle"]
 
 CONF_SERVER = "server"
@@ -19,15 +27,11 @@ CONF_BODY = "body"
 CONF_TASK_NAME = "task_name"
 CONF_TASK_PRIORITY = "task_priority"
 
+CONFIG_ASIO_SSL_SUPPORT = "CONFIG_ASIO_SSL_SUPPORT"
+
 smtp_ns = cg.esphome_ns.namespace("smtp_")
 Component = smtp_ns.class_("Component", cg.Component)
 Action = smtp_ns.class_("Action", automation.Action)
-
-
-def requires_esp_idf(value):
-    if not CORE.using_esp_idf:
-        raise cv.Invalid("requires esp32.framework.type: esp-idf)")
-    return value
 
 
 def string_from_file_or_value(value: object) -> str:
@@ -46,7 +50,6 @@ def string_from_file_or_value(value: object) -> str:
 MULTI_CONF = True
 
 CONFIG_SCHEMA = cv.All(
-    requires_esp_idf,
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(Component),
@@ -58,11 +61,32 @@ CONFIG_SCHEMA = cv.All(
             cv.Required(CONF_TO): cv.string,
             cv.Optional(CONF_STARTTLS, default=True): cv.boolean,
             cv.Optional(CONF_CAS): string_from_file_or_value,
-            cv.Optional(CONF_TASK_NAME, default="smtp"): cv.string,
-            cv.Optional(CONF_TASK_PRIORITY, default=5): cv.int_range(min=0),
         }
     ).extend(cv.COMPONENT_SCHEMA),
 )
+
+
+def _blaze(parent: dict, path: list, default=None):
+    for child in path:
+        if isinstance(parent, dict):
+            if child in parent:
+                parent = parent[child]
+            else:
+                parent = parent[child] = {}
+        else:
+            return default
+    return parent
+
+
+def _final_validate(config):
+    sdkconfig_options = _blaze(
+        fv.full_config.get(), [Platform.ESP32, CONF_FRAMEWORK, CONF_SDKCONFIG_OPTIONS]
+    )
+    if sdkconfig_options is not None:
+        sdkconfig_options[CONFIG_ASIO_SSL_SUPPORT] = "y"
+
+
+FINAL_VALIDATE_SCHEMA = _final_validate
 
 
 async def to_code(config):
@@ -76,8 +100,6 @@ async def to_code(config):
     cg.add(var.set_from(config[CONF_FROM]))
     cg.add(var.set_to(config[CONF_TO]))
     cg.add(var.set_starttls(config[CONF_STARTTLS]))
-    cg.add(var.set_task_name(config[CONF_TASK_NAME]))
-    cg.add(var.set_task_priority(config[CONF_TASK_PRIORITY]))
 
     if CONF_CAS in config:
         cg.add(var.set_cas(config[CONF_CAS]))

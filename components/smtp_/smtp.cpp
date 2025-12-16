@@ -19,11 +19,36 @@
 #include <ranges>
 #include <thread>
 
+// provide code generated from asio includes that follow below
+// visibility to our ASIO_NO_EXCEPTIONS asio::detail::throw_exception definition,
+// if called for, so that they can implicitly instantiate what they need.
+#include "esphome/components/asio_/asio_detail_throw_exception_.cpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wc++11-compat"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#include <asio/buffer.hpp>
+#include <asio/co_spawn.hpp>
+#include <asio/connect.hpp>
+#include <asio/detached.hpp>
+#include <asio/read_until.hpp>
+#include <asio/redirect_error.hpp>
+#include <asio/ssl.hpp>
+#include <asio/streambuf.hpp>
+#pragma GCC diagnostic pop
+
 #include "esphome/core/log.h"
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/error.h"
 #include "mbedtls/base64.h"
+#pragma GCC diagnostic pop
 
 namespace esphome {
 namespace smtp_ {
@@ -32,20 +57,9 @@ namespace {
 
 #include "concat.hpp"
 
-constexpr auto TAG{"_smtp"};
+constexpr auto TAG{"smtp_"};
 
 constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-inline constexpr auto PD_PASS{pdPASS};
-inline constexpr auto PD_TRUE{pdTRUE};
-inline constexpr auto PORT_MAX_DELAY{portMAX_DELAY};
-inline auto x_queue_create(UBaseType_t length, UBaseType_t item_size) { return xQueueCreate(length, item_size); }
-inline auto x_queue_send(QueueHandle_t queue, const void *item, TickType_t wait) {
-  return xQueueSend(queue, item, wait);
-}
-#pragma GCC diagnostic pop
 
 // wrap mbedtls function result value with methods to interpret success or error
 class MbedTlsResult {
@@ -71,182 +85,15 @@ class MbedTlsResult {
   }
 };
 
-// send an encrypted request
-MbedTlsResult ssl_send(mbedtls_ssl_context &ssl, std::string_view const request, std::string_view log = {}) {
-  if (!request.empty()) {
-    if (!log.data())
-      log = request;
-    ESP_LOGI(TAG, "> %.*s", log.size(), log.data());
-    auto *next{reinterpret_cast<unsigned char const *>(request.data())};
-    auto left{request.size()};
-    while (0 < left) {
-      MbedTlsResult const result{mbedtls_ssl_write(&ssl, next, left)};
-      if (result.is_error()) {
-        if (result.is_ssl_want())
-          continue;
-        ESP_LOGW(TAG, "mbedtls_ssl_write: %s", result.to_string().c_str());
-        return result;
-      }
-      left -= static_cast<size_t>(result);
-      next += static_cast<size_t>(result);
-    }
-  }
-  return {static_cast<int>(request.size())};
-}
-
-// signature of a Recv function needed to construct a StreamBuffer
-using Recv = std::function<MbedTlsResult(char *, size_t)>;
-
-// StreamBuffer buffers Recv'd data for line-oriented input
-template<size_t N> class StreamBuffer : public std::basic_streambuf<char> {
- private:
-  using int_type = typename std::char_traits<char>::int_type;
-  Recv const recv_;
-  std::array<char, N> buffer_;
-
- public:
-  StreamBuffer(Recv recv) : recv_{std::move(recv)} {
-    // set get buffer base, gptr, egptr for empty buffer
-    this->setg(this->buffer_.data(), this->buffer_.data(), this->buffer_.data());
-  }
-
- protected:
-  int_type underflow() override {
-    if (!(this->gptr() < this->egptr())) {
-      auto const result{this->recv_(this->buffer_.data(), this->buffer_.size())};
-      if (result.is_error() || 0 == result)
-        return std::char_traits<char>::eof();
-      this->setg(this->buffer_.data(), this->buffer_.data(), this->buffer_.data() + static_cast<int>(result));
-    }
-    return std::char_traits<char>::to_int_type(*this->gptr());
-  }
-};
-
-// InputStream uses StreamBuffer for Recv'd line-oriented input
-template<size_t N> class InputStream : public std::basic_istream<char> {
- private:
-  StreamBuffer<N> stream_buffer_;
-
- public:
-  InputStream(Recv const recv) : std::basic_istream<char>{&stream_buffer_}, stream_buffer_{std::move(recv)} {}
-  // non-copyable
-  InputStream(InputStream const &) = delete;
-  InputStream &operator=(InputStream const &) = delete;
-  // moveable
-  InputStream(InputStream &&) = default;
-  InputStream &operator=(InputStream &&) = default;
-};
-
-// Transport is an abstract base class
-// whose derivations need to support send and recv
-class Transport {
- public:
-  virtual ~Transport() = default;
-  virtual MbedTlsResult send(std::string_view, std::string_view) = 0;
-  virtual MbedTlsResult recv(char *, size_t) = 0;
-  InputStream<128> stream{[this](char *const buffer, size_t const length) { return recv(buffer, length); }};
-};
-
-// NetTransport provides an un-encrypted network transport
-class NetTransport : public Transport {
- private:
-  mbedtls_net_context &context_;
-
- public:
-  NetTransport(mbedtls_net_context &context) : context_{context} {}
-  MbedTlsResult send(std::string_view const request, std::string_view log) override {
-    if (!request.empty()) {
-      if (!log.data())
-        log = request;
-      ESP_LOGI(TAG, "> %.*s", log.size(), log.data());
-      MbedTlsResult const result{
-          mbedtls_net_send(&this->context_, reinterpret_cast<unsigned char const *>(request.data()), request.size())};
-      if (result.is_error()) {
-        ESP_LOGW(TAG, "mbedtls_net_send: %s", result.to_string().c_str());
-        return result;
-      }
-    }
-    return {static_cast<int>(request.size())};
-  }
-  MbedTlsResult recv(char *const buffer, size_t const length) override {
-    MbedTlsResult const result{mbedtls_net_recv(&this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
-    if (result.is_error()) {
-      ESP_LOGW(TAG, "mbedtls_net_recv: %s", result.to_string().c_str());
-    }
-    return result;
-  }
-};
-
-// SslTransport provides an encrypted network transport
-class SslTransport : public Transport {
- private:
-  mbedtls_ssl_context &context_;
-
- public:
-  SslTransport(mbedtls_ssl_context &context) : context_{context} {}
-  MbedTlsResult send(std::string_view const request, std::string_view const log) override {
-    return ssl_send(this->context_, request, log);
-  }
-  MbedTlsResult recv(char *const buffer, size_t const length) override {
-    while (true) {
-      MbedTlsResult const result{mbedtls_ssl_read(&this->context_, reinterpret_cast<unsigned char *>(buffer), length)};
-      if (result.is_error()) {
-        if (result.is_ssl_want())
-          continue;
-        ESP_LOGW(TAG, "mbedtls_ssl_read: %s", result.to_string().c_str());
-        return result;
-      }
-      return result;
-    }
-  }
-};
-
-// perform an ssl handshake with certificate validation
-MbedTlsResult ssl_handshake(mbedtls_ssl_context &ssl) {
-  MbedTlsResult result;
-  {
-    ESP_LOGD(TAG, "ssl handshake");
-    while (true) {
-      result = MbedTlsResult{mbedtls_ssl_handshake(&ssl)};
-      if (result.is_success())
-        break;
-      if (!result.is_ssl_want()) {
-        ESP_LOGW(TAG, "mbedtls_ssl_handshake: %s", result.to_string().c_str());
-        break;
-      }
-    }
-  }
-  {
-    auto const verified{(mbedtls_ssl_get_verify_result(&ssl))};
-    switch (static_cast<int>(verified)) {
-      case 0:
-        ESP_LOGD(TAG, "ssl certificate verified");
-        break;
-      case -1:
-        ESP_LOGW(TAG, "ssl certificate verify info not available");
-        break;
-      default: {
-        char info[64];
-        info[mbedtls_x509_crt_verify_info(info, sizeof info - 1, "", verified)] = 0;
-        ESP_LOGD(TAG, "ssl cerfificate verify info: %s", info);
-      }
-    }
-  }
-  if (auto const ciphersuite{mbedtls_ssl_get_ciphersuite(&ssl)}) {
-    ESP_LOGD(TAG, "ssl cipher suite: %s", ciphersuite);
-  }
-  return result;
-}
-
 // return size needed to base64_encode a value
-constexpr size_t base64_encoded_size(size_t decoded_size) {
+constexpr size_t base64_encoded_size(size_t const decoded_size) {
   constexpr size_t decoded{3};
   constexpr size_t encoded{4};
   return ((decoded_size + (decoded - 1)) / decoded) * encoded;
 }
 
 // base64_encode in to out with SMTP line terminator appended
-MbedTlsResult base64_encode(std::string_view in, std::string &out) {
+MbedTlsResult base64_encode(std::string_view const in, std::string &out) {
   auto const encoded_size_in{base64_encoded_size(in.size()) + 1};
   auto encoded{std::make_unique<char[]>(encoded_size_in)};
   size_t encoded_size_out;
@@ -259,54 +106,47 @@ MbedTlsResult base64_encode(std::string_view in, std::string &out) {
   return result;
 }
 
-// wrap SMTP reply code and text with methods to interpret success or error
-class SmtpReply {
+// wrap smtp Reply code and text with methods to interpret success or error
+class Reply {
  private:
+  std::error_code const ec_;
   int const code_;
   std::string const text_;
 
  public:
-  SmtpReply(int const code, std::string_view const text) : code_{code}, text_{text} {}
-  SmtpReply(MbedTlsResult const result) : code_{result}, text_{result.to_string()} {}
+  explicit Reply(std::error_code const ec) : ec_{ec}, code_{}, text_{} {}
+  Reply(int const code, std::string_view const text) : ec_{}, code_{code}, text_{text} {}
 
-  std::string_view text() const { return this->text_; }
+  bool is_positive_completion() const { return !this->ec_ && 200 <= this->code_ && this->code_ < 300; }
+  bool is_positive_intermediate() const { return !this->ec_ && 300 <= this->code_ && this->code_ < 400; }
+  bool is_negative_transient_completion() const { return !this->ec_ && 400 <= this->code_ && this->code_ < 500; }
+  bool is_negative_permanent_completion() const { return !this->ec_ && 500 <= this->code_ && this->code_ < 600; }
 
-  bool is_positive_completion() const { return 200 <= this->code_ && this->code_ < 300; }
-  bool is_positive_intermediate() const { return 300 <= this->code_ && this->code_ < 400; }
-  bool is_negative_transient_completion() const { return 400 <= this->code_ && this->code_ < 500; }
-  bool is_negative_permanent_completion() const { return 500 <= this->code_ && this->code_ < 600; }
+  char const *text() const { return this->ec_ ? this->ec_.message().c_str() : this->text_.c_str(); }
 };
 
-// like std::getline but with an SMTP line terminator
-std::istream &getline(std::istream &istream, std::string &line) {
-  constexpr auto cr = CRLF[0];
-  constexpr auto lf = CRLF[1];
-  line.clear();
-  std::string segment;
-  for (;;) {
-    if (!std::getline(istream, segment, lf))
-      return istream;
-    if (!segment.empty() && cr == segment.back()) {
-      segment.pop_back();
-      line += segment;
-      return istream;
+template<typename AsyncReadStream, typename DynamicBuffer>
+asio::awaitable<Reply> receive_reply(AsyncReadStream &stream, DynamicBuffer &buffer) {
+  std::string text{};
+  while (true) {
+    // return the length of the sequence ending with the first CRLF
+    // when the buffer sequence's get area contains CRLF (immediately, if already)
+    std::error_code ec;
+    auto const length{
+        co_await asio::async_read_until(stream, buffer, CRLF, asio::redirect_error(asio::use_awaitable, ec))};
+    if (ec) {
+      ESP_LOGW(TAG, "read until error: %s", ec.message().c_str());
+      co_return Reply{ec};
     }
-    line += segment;
-    line.push_back(lf);
-  }
-}
 
-// perform an SMTP command by sending the request and compiling the reply over a transport
-SmtpReply command(Transport &transport, std::string_view const request, std::string_view const log = {}) {
-  MbedTlsResult const result{transport.send(request, log)};
-  if (result.is_error())
-    return {result};
-
-  std::string line;
-  std::string text;
-  while (getline(transport.stream, line)) {
+    // consume the line after extracting it
+    auto const begin{asio::buffers_begin(buffer.data())};
+    auto const end{begin + static_cast<std::ptrdiff_t>(length - (sizeof(CRLF) - 1))};
+    std::string const line{begin, end};
+    buffer.consume(length);
     ESP_LOGI(TAG, "< %s", line.c_str());
-    // parse line with a 3 digit code, character separator and text
+
+    // split the line into code and text, return when complete
     constexpr size_t size{3};
     constexpr auto isdigit{[](char const c) { return std::isdigit(static_cast<unsigned char>(c)); }};
     if (size < line.size() && std::ranges::all_of(line | std::views::take(size), isdigit)) {
@@ -316,40 +156,134 @@ SmtpReply command(Transport &transport, std::string_view const request, std::str
       text += line.substr(size + 1);
       switch (line[size]) {
         case ' ':
-          return {code, text};  // last line
+          co_return Reply{code, text};  // last line
         case '-':
           continue;  // another line
         default:
-          transport.stream.setstate(std::ios_base::failbit);
-          return {MBEDTLS_ERR_ERROR_GENERIC_ERROR, std::format("bad code termination in reply line: {}", line)};
+          co_return Reply{-1, std::format("bad code termination in reply line: {}", line)};
       }
     } else {
-      transport.stream.setstate(std::ios_base::failbit);
-      return {MBEDTLS_ERR_ERROR_GENERIC_ERROR, std::format("no code in reply line: {}", line)};
+      co_return Reply{-1, std::format("no code in reply line: {}", line)};
     }
   }
-  transport.stream.setstate(std::ios_base::failbit);
-  return {MBEDTLS_ERR_ERROR_GENERIC_ERROR, std::format("incomplete reply: {}", text)};
+}
+
+template<typename AsyncStream, typename DynamicBuffer>
+asio::awaitable<Reply> command(AsyncStream &stream, DynamicBuffer &buffer, std::string_view const request,
+                               std::string_view log = {}) {
+  if (!log.data())
+    log = request;
+  ESP_LOGI(TAG, "> %.*s", log.size(), log.data());
+  std::error_code ec;
+  auto const length{co_await asio::async_write(stream, asio::const_buffer{request.data(), request.size()},
+                                               asio::redirect_error(asio::use_awaitable, ec))};
+  if (ec) {
+    ESP_LOGW(TAG, "write error: %s", ec.message().c_str());
+    co_return Reply{ec};
+  }
+  co_return co_await receive_reply(stream, buffer);
 }
 
 // ^ delegate command from null terminated std::array<char, size>
-template<std::size_t size> SmtpReply command(Transport &transport, std::array<char, size> const &request) {
-  return command(transport, std::string_view{request.data(), size - 1});
+template<typename AsyncStream, typename DynamicBuffer, std::size_t size>
+asio::awaitable<Reply> command(AsyncStream &stream, DynamicBuffer &buffer, std::array<char, size> const &request,
+                               std::string_view log = {}) {
+  co_return co_await command(stream, buffer, std::string_view{request.data(), size - 1}, log);
 }
 
-// gather/evaluate the SMTP server greeting and initiate a session (EHLO)
-SmtpReply greeting_and_ehlo(Transport &transport) {
+template<typename AsyncStream, typename DynamicBuffer>
+asio::awaitable<Reply> greeting_and_ehlo(AsyncStream &stream, DynamicBuffer &buffer) {
   {
     ESP_LOGD(TAG, "server greeting");
-    auto const reply{command(transport, {nullptr, 0})};
+    auto const reply{co_await receive_reply(stream, buffer)};
     if (!reply.is_positive_completion())
-      return reply;
+      co_return reply;
   }
   {
     static constexpr auto request{concat::array("EHLO esphome", CRLF)};
-    auto const reply{command(transport, request)};
-    return reply;
+    auto const reply{co_await command(stream, buffer, request)};
+    co_return reply;
   }
+}
+
+template<typename AsyncStream, typename DynamicBuffer>
+asio::awaitable<Reply> send(AsyncStream &stream, DynamicBuffer &buffer, std::string_view from, std::string_view subject,
+                            std::string_view body, std::string_view to) {
+  {
+    std::string const request{std::format("MAIL FROM:<{}>{}", from, CRLF)};
+    auto const reply{co_await command(stream, buffer, request)};
+    if (!reply.is_positive_completion()) {
+      ESP_LOGW(TAG, "command MAIL FROM: %s", reply.text());
+      co_return reply;
+    }
+  }
+  {
+    std::string const request{std::format("RCPT TO:<{}>{}", to, CRLF)};
+    auto const reply{co_await command(stream, buffer, request)};
+    if (!reply.is_positive_completion()) {
+      ESP_LOGW(TAG, "command RCPT TO: %s", reply.text());
+      co_return reply;
+    }
+  }
+  {
+    static constexpr auto request{concat::array("DATA", CRLF)};
+    auto const reply{co_await command(stream, buffer, request)};
+    if (!reply.is_positive_intermediate()) {
+      ESP_LOGW(TAG, "command DATA: %s", reply.text());
+      co_return reply;
+    }
+  }
+  {
+    static constexpr auto format{concat::array("From: {}", CRLF, "To: {}", CRLF, "Subject: {}", CRLF, CRLF)};
+    std::string const request{std::format(format.data(), from, to, subject)};
+    std::error_code ec;
+    auto const length{co_await asio::async_write(stream, asio::const_buffer{request.data(), request.size()},
+                                                 asio::redirect_error(asio::use_awaitable, ec))};
+    if (ec) {
+      ESP_LOGW(TAG, "command DATA From, To, Subject: %s", ec.message().c_str());
+      co_return Reply{-1, ""};
+    }
+    ESP_LOGI(TAG, "> %s", request.c_str());
+  }
+  if (!body.empty()) {
+    std::error_code ec;
+    auto const length{co_await asio::async_write(stream, asio::const_buffer{body.data(), body.size()},
+                                                 asio::redirect_error(asio::use_awaitable, ec))};
+    if (ec) {
+      ESP_LOGW(TAG, "command DATA body: %s", ec.message().c_str());
+      co_return Reply{-1, ""};
+    }
+    ESP_LOGI(TAG, "> %.*s", body.size(), body.data());
+  }
+  {
+    static constexpr auto request{concat::array(CRLF, ".", CRLF)};
+    auto const reply{co_await command(stream, buffer, request)};
+    if (!reply.is_positive_completion()) {
+      ESP_LOGW(TAG, "command DATA end: %s", reply.text());
+    }
+    co_return reply;
+  }
+}
+
+template<typename Function, typename Result = std::invoke_result_t<Function>>
+  requires std::is_trivially_copyable_v<Result> // std::atomic<Result> will work
+asio::awaitable<Result> async_on_thread(Function &&function) {
+  auto executor = co_await asio::this_coro::executor;
+
+  std::atomic<Result> result{};
+  std::atomic<bool> done{false};
+
+  std::thread([&result, &done, executor, function = std::forward<Function>(function)]() mutable {
+    result = function();
+    done = true;
+    asio::post(executor, []() {});  // post noop to wake the executor
+  }).detach();
+
+  while (!done) {
+    co_await asio::post(executor, asio::use_awaitable);  // suspend until executor wakes
+  }
+
+  co_return result;
 }
 
 }  // namespace
@@ -363,80 +297,21 @@ Component::Component()
       to_{},
       starttls_{true},
       cas_{},
-      task_name_{"smtp"},
-      task_priority_{5},
-      queue_{x_queue_create(8, sizeof(Message *))},
-      task_handle_{nullptr} {}
-
-void Component::setup() {
-  ESP_LOGD(TAG, "setup");
-
-  if (!this->queue_) {
-    ESP_LOGW(TAG, "xQueueCreate failed");
-    this->mark_failed();
-    return;
-  }
-
-  {
-    ESP_LOGD(TAG, "seed random number generator");
-    MbedTlsResult const result{
-        mbedtls_ctr_drbg_seed(&this->ctr_drbg_, mbedtls_entropy_func, &this->entropy_, nullptr, 0)};
-    if (result.is_error()) {
-      ESP_LOGW(TAG, "mbedtls_ctr_drbg_seed: %s", result.to_string().c_str());
-      this->mark_failed();
-      return;
-    }
-  }
-
-  {
-    ESP_LOGD(TAG, "ssl config defaults");
-    MbedTlsResult const result{mbedtls_ssl_config_defaults(&this->ssl_config_, MBEDTLS_SSL_IS_CLIENT,
-                                                           MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT)};
-    if (result.is_error()) {
-      ESP_LOGW(TAG, "mbedtls_ssl_config_defaults: %s", result.to_string().c_str());
-      this->mark_failed();
-      return;
-    }
-  }
-
-  mbedtls_ssl_conf_rng(&this->ssl_config_, mbedtls_ctr_drbg_random, &this->ctr_drbg_);
-
-  if (this->cas_.empty()) {
-    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_NONE);
-  } else {
-    ESP_LOGD(TAG, "parse CA certificates");
-    MbedTlsResult const result{mbedtls_x509_crt_parse(
-        &this->x509_crt_, reinterpret_cast<unsigned char const *>(this->cas_.c_str()), this->cas_.size() + 1)};
-    if (result.is_error()) {
-      ESP_LOGW(TAG, "mbedtls_x509_crt_parse: %s", result.to_string().c_str());
-      this->mark_failed();
-      return;
-    }
-    mbedtls_ssl_conf_authmode(&this->ssl_config_, MBEDTLS_SSL_VERIFY_REQUIRED);
-    mbedtls_ssl_conf_ca_chain(&this->ssl_config_, &this->x509_crt_, nullptr);
-  }
-
-  ESP_LOGD(TAG, "create task");
-  auto const task_priority{std::min(this->task_priority_, static_cast<unsigned>(configMAX_PRIORITIES) - 1)};
-  if (this->task_priority_ != task_priority) {
-    ESP_LOGW(TAG, "task_priority %u capped to maxiumum %u", this->task_priority_, task_priority);
-  }
-  BaseType_t const result{xTaskCreate([](void *that) { static_cast<Component *>(that)->run_(); },
-                                      this->task_name_.c_str(),
-                                      8192,  // stack size tuned from logged headroom reports during run_
-                                      this, task_priority, &this->task_handle_)};
-
-  if (result != PD_PASS || this->task_handle_ == nullptr) {
-    ESP_LOGW(TAG, "xTaskCreate: %d", result);
-    this->mark_failed();
-    return;
-  }
-}
+      io_{},
+      queue_{},
+      queue_timer_{},
+      interval_timer_{},
+      ssl_{asio::ssl::context::tlsv12_client},
+      stream_{} {}
 
 void Component::dump_config() {
   ESP_LOGCONFIG(TAG, "SMTP Client:");
   ESP_LOGCONFIG(TAG, "  server: %s", this->server_.c_str());
   ESP_LOGCONFIG(TAG, "  port: %d", this->port_);
+#if 0
+  ESP_LOGCONFIG(TAG, "  username: %s", this->username_.c_str());
+  ESP_LOGCONFIG(TAG, "  password: %s", this->password_.c_str());
+#endif
   ESP_LOGCONFIG(TAG, "  from: %s", this->from_.c_str());
   ESP_LOGCONFIG(TAG, "  to: %s", this->to_.c_str());
   ESP_LOGCONFIG(TAG, "  starttls: %s", this->starttls_ ? "true" : "false");
@@ -444,198 +319,269 @@ void Component::dump_config() {
   ESP_LOGCONFIG(TAG, "  task_priority: %s", this->task_priority_);
 }
 
-void Component::enqueue(std::string const &subject, std::string const &body, std::string const &to) {
-  ESP_LOGD(TAG, "enqueue %s", subject.c_str());
-  auto resource{std::make_unique<Message>(subject, body, to.empty() ? this->to_ : to)};
-  auto message{resource.get()};
-  if (PD_PASS == x_queue_send(this->queue_, &message, 0)) {
-    resource.release();  // ownership to be acquired by dequeue
-  } else {
-    ESP_LOGW(TAG, "enqueue %s: queue full, message dropped", subject.c_str());
+float Component::get_setup_priority() const { return esphome::setup_priority::AFTER_CONNECTION; }
+
+void Component::setup() {
+  ESP_LOGD(TAG, "setup");
+
+  if (!this->cas_.empty()) {
+    ESP_LOGD(TAG, "parse CA certificates");
+    std::error_code ec;
+    // must include the null terminator
+    this->ssl_.add_certificate_authority(asio::const_buffer{this->cas_.c_str(), this->cas_.size() + 1}, ec);
+    if (ec) {
+      ESP_LOGW(TAG, "parse CA certificates failed: %s", ec.message().c_str());
+      this->mark_failed();
+      return;
+    }
   }
-}
 
-void Component::run_() {
-  ESP_LOGD(TAG, "run");
-  while (true) {
-    Message *peek;
-    // block until there is a message to send
-    if (PD_TRUE == xQueuePeek(this->queue_, &peek, PORT_MAX_DELAY)) {
-      ESP_LOGD(TAG, "send message: %s", message->subject.c_str());
+  // we must wait until AFTER_CONNECTION for timer construction
+  this->queue_timer_.emplace(this->io_);
+  this->interval_timer_.emplace(this->io_);
 
-      // call send_ with a lambda
-      // that it will use to dequeue and send each immediately available message
-      // once a session context is established.
-      // send_ will abort and return an error if there was a problem
-      // establishing a session or sending a message.
-      // as long as a message was not dequeued, we will try again.
-      std::string context{"session"};
-      auto const error{this->send_([this, &context]() -> std::unique_ptr<Message> {
-        // dequeue the next message without blocking
-        // and transfer ownwership to caller
-        Message *message;
-        if (PD_TRUE == xQueueReceive(this->queue_, &message, 0)) {
-          ESP_LOGD(TAG, "dequeue %s", message->subject.c_str());
-          context = std::string("message: ") + message->subject;
-          return std::unique_ptr<Message>{message};
+  asio::co_spawn(
+      this->io_,
+      [this]() -> asio::awaitable<void> {
+        while (true) {
+          std::error_code ec;
+
+          // message(s) may have queued before our AFTER_CONNECTION setup priority time
+          // or may have queued during the last interval_timer_ pause.
+          if (this->queue_.empty()) {
+            this->queue_timer_->expires_at(asio::steady_timer::time_point::max());
+            co_await this->queue_timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
+            if (ec) {
+              if (ec == asio::error::operation_aborted) {
+                // cancelled by enqueue (!queue_.empty) or teardown (queue_.empty)
+                if (this->queue_.empty()) {
+                  ESP_LOGE(TAG, "abort: queue timer %s", ec.message().c_str());
+                  break;  // teardown
+                }
+              } else {
+                ESP_LOGW(TAG, "queue timer error: %s", ec.message().c_str());
+              }
+              ec.clear();
+            }
+          }
+
+          // session
+          auto shutdown{false};
+          do {
+            this->stream_.emplace(co_await asio::this_coro::executor, this->ssl_);
+
+            this->stream_->set_verify_mode(this->cas_.empty() ? asio::ssl::verify_none : asio::ssl::verify_peer, ec);
+            if (ec) {
+              ESP_LOGW(TAG, "ssl stream set verify mode error: %s", ec.message().c_str());
+              break;
+            }
+            {
+              MbedTlsResult const result{mbedtls_ssl_set_hostname(
+                  reinterpret_cast<mbedtls_ssl_context *>(this->stream_->native_handle()), this->server_.c_str())};
+              if (result.is_error()) {
+                ESP_LOGW(TAG, "ssl set hostname error: %s:", result.to_string().c_str());
+                break;
+              }
+            }
+
+            asio::ip::tcp::resolver resolver{co_await asio::this_coro::executor};
+            {
+              auto const endpoints{co_await resolver.async_resolve(this->server_, std::to_string(this->port_),
+                                                                   asio::redirect_error(asio::use_awaitable, ec))};
+              if (ec) {
+                ESP_LOGW(TAG, "resolve %s, port %u error: %s", this->server_.c_str(), this->port_,
+                         ec.message().c_str());
+                break;
+              }
+              co_await asio::async_connect(this->stream_->lowest_layer(), endpoints,
+                                           asio::redirect_error(asio::use_awaitable, ec));
+              if (ec) {
+                ESP_LOGW(TAG, "connect server %s, port %u error: %s", this->server_.c_str(), this->port_,
+                         ec.message().c_str());
+                break;
+              }
+            }
+
+            this->stream_->lowest_layer().non_blocking(true, ec);
+            if (ec) {
+              ESP_LOGW(TAG, "set non blocking error: %s", ec.message().c_str());
+              break;
+            }
+
+            // greeting_and_ehlo and ssl handshake ordered per this->starttls_
+            asio::streambuf buffer;
+            if (this->starttls_) {
+              {
+                auto const reply{co_await greeting_and_ehlo(this->stream_->next_layer(), buffer)};
+                if (!reply.is_positive_completion()) {
+                  ESP_LOGW(TAG, "greeting and ehlo: %s", reply.text());
+                  break;
+                }
+              }
+              {
+                static constexpr auto request{concat::array("STARTTLS", CRLF)};
+                auto const reply{co_await command(this->stream_->next_layer(), buffer, request)};
+                if (!reply.is_positive_completion()) {
+                  ESP_LOGW(TAG, "request STARTTLS: %s", reply.text());
+                  break;
+                }
+              }
+            }
+            {
+#if 0
+              // this will block on espressif/asio port
+              // esphome will complain it takes too long (~500 > 30ms)
+              co_await this->stream_->async_handshake(asio::ssl::stream_base::client, asio::redirect_error(asio::use_awaitable, ec));
+#else
+              // co_await the equivalent performed on another thread
+              ec = co_await async_on_thread([this]() {
+                std::error_code ec_;
+                this->stream_->lowest_layer().non_blocking(false, ec_);
+                if (!ec_) {
+                  this->stream_->handshake(asio::ssl::stream_base::client, ec_);
+                  this->stream_->lowest_layer().non_blocking(true);
+                }
+                return ec_;
+              });
+#endif
+              if (ec) {
+                ESP_LOGW(TAG, "handshake error: %s", ec.message().c_str());
+                break;
+              }
+            }
+            shutdown = true;
+            if (!this->starttls_) {
+              auto const reply{co_await greeting_and_ehlo(*this->stream_, buffer)};
+              if (!reply.is_positive_completion()) {
+                ESP_LOGW(TAG, "greeting and ehlo: %s", reply.text());
+                break;
+              }
+            }
+
+            // login
+            {
+              static constexpr auto request{concat::array("AUTH LOGIN", CRLF)};
+              auto const reply{co_await command(*this->stream_, buffer, request)};
+              if (!reply.is_positive_intermediate()) {
+                ESP_LOGW(TAG, "command AUTH LOGIN %s", reply.text());
+                break;
+              }
+            }
+            {
+              std::string request;
+              auto const result{base64_encode(this->username_, request)};
+              if (result.is_error()) {
+                ESP_LOGW(TAG, "base64_encode: %s", result.to_string().c_str());
+                break;
+              }
+              auto const reply{co_await command(*this->stream_, buffer, request)};
+              if (!reply.is_positive_intermediate()) {
+                ESP_LOGW(TAG, "command AUTH LOGIN username: %s", reply.text());
+                break;
+              }
+            }
+            {
+              std::string request;
+              auto const result{base64_encode(this->password_, request)};
+              if (result.is_error()) {
+                ESP_LOGW(TAG, "base64_encode: %s", result.to_string().c_str());
+                break;
+              }
+              static constexpr auto log{"<redacted>"};
+              auto const reply{co_await command(*this->stream_, buffer, request, log)};
+              if (!reply.is_positive_completion()) {
+                ESP_LOGW(TAG, "command AUTH LOGIN password: %s", reply.text());
+                break;
+              }
+            }
+
+            // send each message in the queue until it is empty
+            while (!this->queue_.empty()) {
+              const auto &message{this->queue_.front()};
+              auto const reply{co_await send(*this->stream_, buffer, this->from_, message.subject, message.body,
+                                             message.to.empty() ? this->to_ : message.to)};
+              if (!reply.is_positive_completion()) {
+                break;  // try again next session
+              }
+              this->queue_.pop_front();
+            }
+
+            // quit session
+            {
+              static constexpr auto request{concat::array("QUIT", CRLF)};
+              auto const reply{co_await command(*this->stream_, buffer, request)};
+              if (!reply.is_positive_completion()) {
+                ESP_LOGW(TAG, "command QUIT: %s", reply.text());
+                break;
+              }
+            }
+          } while (false);
+
+          // session/stream cleanup
+          if (this->stream_) {
+            if (shutdown) {
+              co_await this->stream_->async_shutdown(asio::redirect_error(asio::use_awaitable, ec));
+              if (ec) {
+                ESP_LOGW(TAG, "shutdown ssl stream error: %s", ec.message().c_str());
+              }
+            }
+            if (this->stream_->lowest_layer().is_open()) {
+              this->stream_->lowest_layer().close(ec);
+              if (ec) {
+                ESP_LOGW(TAG, "close socket error: %s", ec.message().c_str());
+              }
+            }
+            this->stream_.reset();
+          }
+
+          // pause for a minute
+          this->interval_timer_->expires_after(std::chrono::minutes(1));
+          co_await this->interval_timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
+          if (ec == asio::error::operation_aborted) {
+            ESP_LOGE(TAG, "abort: interval timer %s", ec.message().c_str());
+            break;  // teardown
+          } else if (ec) {
+            ESP_LOGW(TAG, "interval timer error: %s", ec.message().c_str());
+          }
         }
-        // queue is empty
-        return nullptr;
-      })};
 
-      if (error.has_value()) {
-        // send_ aborted with an error message. log it in context
-        ESP_LOGW(TAG, "send %s: %s", context.c_str(), error->c_str());
-      }
-
-      {
-        // used for tuning our task's stack size
-        auto const headroom{uxTaskGetStackHighWaterMark(nullptr)};
-        ESP_LOGD(TAG, "stack headroom %u", static_cast<unsigned>(headroom));
-      }
-
-      // pause before trying again
-      std::this_thread::sleep_for(std::chrono::minutes(1));
-    }
-  }
+        // teardown cleanup
+        this->queue_timer_.reset();
+        this->interval_timer_.reset();
+        co_return;
+      },
+      asio::detached);
 }
 
-std::optional<std::string> Component::send_(std::function<std::unique_ptr<Message>()> const dequeue) {
-  // connect
-  auto net{raii::make(mbedtls_net_init, mbedtls_net_free)};
-  {
-    ESP_LOGD(TAG, "net connect to %s:%d", this->server_.c_str(), this->port_);
-    std::string const port{std::format("{}", this->port_)};
-    MbedTlsResult const result{mbedtls_net_connect(&net, this->server_.c_str(), port.c_str(), MBEDTLS_NET_PROTO_TCP)};
-    if (result.is_error())
-      return std::format("mbedtls_net_connect: {}", result.to_string());
+bool Component::teardown() {
+  // undo setup
+  if (this->queue_timer_) {
+    auto const count{this->queue_timer_->cancel()};
+    ESP_LOGE(TAG, "teardown: queue timer cancelled %zu operations", count);
   }
-
-  // ssl configuration
-  auto ssl{raii::make(mbedtls_ssl_init, [](mbedtls_ssl_context *ssl_) {
-    mbedtls_ssl_close_notify(ssl_);
-    mbedtls_ssl_free(ssl_);
-  })};
-  {
-    ESP_LOGD(TAG, "set hostname: %s", this->server_.c_str());
-    MbedTlsResult const result{mbedtls_ssl_set_hostname(&ssl, this->server_.c_str())};
-    if (result.is_error())
-      return std::format("mbedtls_ssl_set_hostname: {}", result.to_string());
+  if (this->interval_timer_) {
+    auto const count{this->interval_timer_->cancel()};
+    ESP_LOGE(TAG, "teardown: interval timer cancelled %zu operations", count);
   }
-  {
-    ESP_LOGD(TAG, "ssl setup");
-    MbedTlsResult const result{mbedtls_ssl_setup(&ssl, &this->ssl_config_)};
-    if (result.is_error())
-      return std::format("mbedtls_ssl_setup: {}", result.to_string());
+  if (this->stream_ && this->stream_->lowest_layer().is_open()) {
+    this->stream_->lowest_layer().cancel();
+    ESP_LOGE(TAG, "teardown: stream cancel");
   }
-  mbedtls_ssl_set_bio(&ssl, &net, mbedtls_net_send, mbedtls_net_recv, nullptr /* non-blocking I/O */);
-
-  SslTransport transport{ssl};
-
-  // negotiate an encrypted session
-  if (this->starttls_) {
-    NetTransport net_transport{net};
-    {
-      auto const reply{greeting_and_ehlo(net_transport)};
-      if (!reply.is_positive_completion())
-        return std::format("greeting and ehlo: {}", reply.text());
-    }
-    {
-      static constexpr auto request{concat::array("STARTTLS", CRLF)};
-      auto const reply{command(net_transport, request)};
-      if (!reply.is_positive_completion())
-        return std::format("command STARTTLS: {}", reply.text());
-    }
+  size_t sum{0};
+  while (auto const addend{this->io_.poll()}) {
+    sum += addend;
   }
-  {
-    MbedTlsResult const result{ssl_handshake(ssl)};
-    if (result.is_error())
-      return std::format("ssl handshake: {}", result.to_string());
-  }
-  if (!this->starttls_) {
-    auto const reply{greeting_and_ehlo(transport)};
-    if (!reply.is_positive_completion())
-      return std::format("greeting and ehlo: {}", reply.text());
-  }
-
-  // login
-  {
-    static constexpr auto request{concat::array("AUTH LOGIN", CRLF)};
-    auto const reply{command(transport, request)};
-    if (!reply.is_positive_intermediate())
-      return std::format("command AUTH LOGIN: {}", reply.text());
-  }
-  {
-    std::string request;
-    MbedTlsResult const result{base64_encode(this->username_, request)};
-    if (result.is_error())
-      return std::format("base64_encode: {}", result.to_string());
-    auto const reply{command(transport, request)};
-    if (!reply.is_positive_intermediate())
-      return std::format("command AUTH LOGIN username: {}", reply.text());
-  }
-  {
-    std::string request;
-    MbedTlsResult const result{base64_encode(this->password_, request)};
-    if (result.is_error())
-      return std::format("base64_encode: {}", result.to_string());
-    static constexpr auto log{"<redacted>"};
-    auto const reply{command(transport, request, log)};
-    if (!reply.is_positive_completion())
-      return std::format("command AUTH LOGIN password: {}", reply.text());
-  }
-
-  // send each message in the queue
-  while (auto message{dequeue()}) {
-    {
-      std::string const request{std::format("MAIL FROM:<{}>{}", this->from_, CRLF)};
-      auto const reply{command(transport, request)};
-      if (!reply.is_positive_completion())
-        return std::format("command MAIL FROM: {}", reply.text());
-    }
-    {
-      std::string const request{std::format("RCPT TO:<{}>{}", message->to, CRLF)};
-      auto const reply{command(transport, request)};
-      if (!reply.is_positive_completion())
-        return std::format("command RCPT TO: {}", reply.text());
-    }
-    {
-      static constexpr auto request{concat::array("DATA", CRLF)};
-      auto const reply{command(transport, request)};
-      if (!reply.is_positive_intermediate())
-        return std::format("command DATA: {}", reply.text());
-    }
-    {
-      static constexpr auto format{concat::array("From: {}", CRLF, "To: {}", CRLF, "Subject: {}", CRLF, CRLF)};
-      std::string const request{std::format(format.data(), this->from_, message->to, message->subject)};
-      MbedTlsResult const result{ssl_send(ssl, request)};
-      if (result.is_error())
-        return std::format("command DATA From, To, Subject: {}", result.to_string());
-    }
-    {
-      MbedTlsResult const result{ssl_send(ssl, message->body)};
-      if (result.is_error())
-        return std::format("command DATA body: {}", result.to_string());
-    }
-    {
-      static constexpr auto request{concat::array(CRLF, ".", CRLF)};
-      auto const reply{command(transport, request)};
-      if (!reply.is_positive_completion())
-        return std::format("command DATA end: {}", reply.text());
-    }
-  }
-
-  // end session
-  {
-    static constexpr auto request{concat::array("QUIT", CRLF)};
-    auto const reply{command(transport, request)};
-    if (!reply.is_positive_completion())
-      return std::format("command QUIT: {}", reply.text());
-  }
-
-  // success
-  return {};
+  ESP_LOGE(TAG, "teardown: poll completed %zu operations", sum);
+  return true;
 }
+
+void Component::enqueue(std::string const &subject, std::string const &body, std::string const &to) {
+  ESP_LOGE(TAG, "enqueue %s", subject.c_str());
+  this->queue_.emplace_back(subject, body, to);
+  this->queue_timer_->cancel();
+}
+
+void Component::loop() { this->io_.poll_one(); }
 
 }  // namespace smtp_
 }  // namespace esphome
