@@ -46,7 +46,7 @@ std::string duration(float const seconds) {
     *it++ = remainder;
 
     return result;
-  }(static_cast<uint32_t>(seconds));
+  }(static_cast<uint32_t>(std::round(seconds)));
 
   return std::format("{} {:02d}:{:02d}:{:02d}", d, h, m, s);
 }
