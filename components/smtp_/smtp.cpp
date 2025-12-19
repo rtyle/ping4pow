@@ -42,7 +42,6 @@
 
 #include "esphome/core/log.h"
 
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "mbedtls/net_sockets.h"
@@ -266,7 +265,7 @@ asio::awaitable<Reply> send(AsyncStream &stream, DynamicBuffer &buffer, std::str
 }
 
 template<typename Function, typename Result = std::invoke_result_t<Function>>
-  requires std::is_trivially_copyable_v<Result> // std::atomic<Result> will work
+  requires std::is_trivially_copyable_v<Result>  // implies std::atomic<Result> will work
 asio::awaitable<Result> async_on_thread(Function &&function) {
   auto executor = co_await asio::this_coro::executor;
 
@@ -346,8 +345,10 @@ void Component::setup() {
         while (true) {
           std::error_code ec;
 
-          // message(s) may have queued before our AFTER_CONNECTION setup priority time
-          // or may have queued during the last interval_timer_ pause.
+          // a message might already be in the queue because
+          //  * it was queued before our AFTER_CONNECTION setup priority time
+          //  * it was queued during our interval timer pause
+          //  * it was left on the queue because of a session failure
           if (this->queue_.empty()) {
             this->queue_timer_->expires_at(asio::steady_timer::time_point::max());
             co_await this->queue_timer_->async_wait(asio::redirect_error(asio::use_awaitable, ec));
@@ -384,8 +385,8 @@ void Component::setup() {
               }
             }
 
-            asio::ip::tcp::resolver resolver{co_await asio::this_coro::executor};
             {
+              asio::ip::tcp::resolver resolver{co_await asio::this_coro::executor};
               auto const endpoints{co_await resolver.async_resolve(this->server_, std::to_string(this->port_),
                                                                    asio::redirect_error(asio::use_awaitable, ec))};
               if (ec) {
