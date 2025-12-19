@@ -55,4 +55,9 @@ FINAL_VALIDATE_SCHEMA = _final_validate
 
 
 async def to_code(config):
-    add_idf_component(name="espressif/asio", ref=">=1.32.0", submodules=["asio/asio"])
+    add_idf_component(
+        name="espressif/asio",
+        repo="https://github.com/rtyle/esp-protocols.git",
+        path="components/asio",
+        ref="fix/asio/memory-leaks-over-ssl-stream-lifetime"
+    )
