@@ -15,7 +15,6 @@
 
 #include <chrono>
 #include <format>
-#include <iostream>
 #include <ranges>
 #include <thread>
 
@@ -64,16 +63,12 @@ constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
 class MbedTlsResult {
  private:
   int value_;
-
  public:
   MbedTlsResult() : value_{0} {};
   MbedTlsResult(int const value) : value_{value} {}
   operator int() const { return this->value_; }
   bool is_success() const { return 0 == this->value_; }
   bool is_error() const { return 0 > this->value_; }
-  bool is_ssl_want_read() const { return MBEDTLS_ERR_SSL_WANT_READ == this->value_; }
-  bool is_ssl_want_write() const { return MBEDTLS_ERR_SSL_WANT_WRITE == this->value_; }
-  bool is_ssl_want() const { return is_ssl_want_read() || is_ssl_want_write(); }
   std::string to_string() const {
     if (0 > this->value_) {
       char strerror[128];
@@ -111,16 +106,13 @@ class Reply {
   std::error_code const ec_;
   int const code_;
   std::string const text_;
-
  public:
   explicit Reply(std::error_code const ec) : ec_{ec}, code_{}, text_{} {}
   explicit Reply(int const code, std::string_view const text = "") : ec_{}, code_{code}, text_{text} {}
-
   bool is_positive_completion() const { return !this->ec_ && 200 <= this->code_ && this->code_ < 300; }
   bool is_positive_intermediate() const { return !this->ec_ && 300 <= this->code_ && this->code_ < 400; }
   bool is_negative_transient_completion() const { return !this->ec_ && 400 <= this->code_ && this->code_ < 500; }
   bool is_negative_permanent_completion() const { return !this->ec_ && 500 <= this->code_ && this->code_ < 600; }
-
   char const *text() const { return this->ec_ ? this->ec_.message().c_str() : this->text_.c_str(); }
 };
 
@@ -149,7 +141,7 @@ asio::awaitable<Reply> receive_reply(AsyncReadStream &stream, DynamicBuffer &buf
     constexpr size_t size{3};
     constexpr auto isdigit{[](char const c) { return std::isdigit(static_cast<unsigned char>(c)); }};
     if (size < line.size() && std::ranges::all_of(line | std::views::take(size), isdigit)) {
-      int const code{std::stoi(line.substr(0, size))};
+      auto const code{std::stoi(line.substr(0, size))};
       if (!text.empty())
         text += '\n';
       text += line.substr(size + 1);
