@@ -422,7 +422,7 @@ void Component::setup() {
             }
             {
 #if 0
-              // this will block on espressif/asio port
+              // the espressif/asio port of async_handshake is not asynchronous
               // esphome will complain it takes too long (~500 > 30ms)
               co_await this->stream_->async_handshake(asio::ssl::stream_base::client, asio::redirect_error(asio::use_awaitable, ec));
 #else
