@@ -945,7 +945,7 @@ include(HOSTS)dnl
 undefine(`host')dnl
                           - id: ping4pow_tile_widget_
                             row: 0
-                            column: eval(__count + 2)
+                            column: eval(__count + 3)
                             dir: HOR
                             widgets:
                               - image:
