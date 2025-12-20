@@ -626,6 +626,11 @@ include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
 
+image:
+  - id: ping4pow_
+    file: ping4pow.png
+    type: rgb565
+
 define(_bg_on, 0x7D70F2)dnl
 define(_fg_on, 0x1A0D4D)dnl
 define(_bg_off, 0x3D2F80)dnl
@@ -938,7 +943,13 @@ define(host, `__increment(`__count')dnl
                                   text: "$2"')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
-undefine(`__count')dnl
+                          - id: ping4pow_tile_widget_
+                            row: 0
+                            column: eval(__count + 2)
+                            dir: HOR
+                            widgets:
+                              - image:
+                                  src: ping4pow_
                     - button:
                         id: unlock_overlay_widget_
                         width: 100%
@@ -1015,6 +1026,7 @@ define(host, `__increment(`__count')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
+      - ping4pow_tile_widget_
     iterators:
       - id: tile_iterator_
 
