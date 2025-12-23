@@ -172,16 +172,37 @@ Optionally, configure (smtp) email notification.
 
     cp config/smtp{.example,}.m4; vi config/smtp.m4
 
+Configure secrets.yaml.
+
+    cp config/secrets{.example,}.yaml; vi config/secrets.yaml
+
+These secrets will be protected by flash encryption on/by the device.
+
 Choose an ESPHome configuration for
 M5Stack Module13.2 4Relay hardware (default) or a GPIO relay.
 
-    m4 config/ping4pow.m4 > config/ping4pow.yaml
-    m4 -Dgpio_relay config/ping4pow.m4 > config/ping4pow.yaml
+    (cd config; m4 ping4pow.m4 > ping4pow.yaml)
+    (cd config; m4 -DGPIO_RELAY ping4pow.m4 > ping4pow.yaml)
 
-Connect a USB cable between your computer and the M5Stack CoreS3
-and flash its firmware with this ESPHome configuration. 
+The first firmware flash of this ESPHome configuration
+must be done with a USB cable between your computer and the M5Stack CoreS3.
+**Do not interrupt this first boot!**
 
     esphome run config/ping4pow.yaml
+
+Upon the first boot after the first flash,
+the secondary boot loader will encrypt the content of the flash in place.
+Subsequently, only use ESPHome to flash Over The Air (OTA)
+as ESPHome flashing by USB will cause the firmware to be unencrypted
+which will upset the first stage bootloader to no end:
+
+    [11:31:08.073]invalid header: 0x487325b7
+    ...
+
+To recover from this problem, the device must be flashed properly:
+
+    bin=.esphome/build/ping4pow/.pioenvs/ping4pow
+    python -m esptool --chip esp32s3 --port /dev/ttyACM0 write-flash --encrypt 0x0 $bin/firmware.factory.bin
 
 Connect by ethernet to a power-over-ethernet capable port and unplug the USB cable.
 Connect the switched load to the relay.
