@@ -34,7 +34,7 @@ https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/security/flash-enc
 	rm -r .esphome/build/<project>	# rebuild everything
 	esphome compile <project>.yaml
 
-	~/.platformio/packages/framework-espidf/components/partition_table/gen_esp32part.py .esphome/build/ping4pow-denon/.pioenvs/ping4pow-denon/partitions.bin
+	~/.platformio/packages/framework-espidf/components/partition_table/gen_esp32part.py .esphome/build/ping4pow/.pioenvs/ping4pow/partitions.bin
 
 		Parsing binary partition input...
 		Verifying table...
@@ -48,7 +48,7 @@ https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/security/flash-enc
 
 	esphome upload <project>.yaml
 
-ae256 encrypt everything but NVS
+encrypt
 
 	CONFIG_SECURE_FLASH_ENC_ENABLED: "y"
 	CONFIG_SECURE_FLASH_ENCRYPTION_AES256: "y"
@@ -68,9 +68,7 @@ ae256 encrypt everything but NVS
 
 			[11:31:08.073]invalid header: 0x487325b7
 
-	suffix=-smartthings
-	suffix=-denon
-	bin=.esphome/build/ping4pow-denon/.pioenvs/ping4pow$suffix
+	bin=.esphome/build/ping4pow/.pioenvs/ping4pow
 
 	# factory reset (necessary when esphome upload over usb corrupts things)
 	python -m esptool --chip esp32s3 --port /dev/ttyACM0 write-flash --encrypt 0x0 $bin/firmware.factory.bin
