@@ -40,14 +40,14 @@ class Component : public esphome::Component {
   void loop() override;
 
   // configuration setters
-  void set_server(std::string const &value) { this->server_ = value; }
-  void set_port(uint16_t const value) { this->port_ = value; }
-  void set_username(std::string const &value) { this->username_ = value; }
-  void set_password(std::string const &value) { this->password_ = value; }
-  void set_from(std::string const &value) { this->from_ = value; }
-  void set_to(std::string const &value) { this->to_ = value; }
-  void set_starttls(bool const value) { this->starttls_ = value; }
-  void set_cas(std::string const &value) { this->cas_ = value; }
+  void set_server(std::string const &value);
+  void set_port(uint16_t value);
+  void set_username(std::string const &value);
+  void set_password(std::string const &value);
+  void set_from(std::string const &value);
+  void set_to(std::string const &value);
+  void set_starttls(bool value);
+  void set_cas(std::string const &value);
 
   void enqueue(std::string const &subject, std::string const &body, std::string const &to = "");
 

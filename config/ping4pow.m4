@@ -60,6 +60,13 @@ esp32:
     sdkconfig_options:
       CONFIG_LWIP_MAX_SOCKETS: "18"
       CONFIG_LWIP_MAX_RAW_PCBS: "16"
+      CONFIG_PARTITION_TABLE_OFFSET: "0xf000"
+      CONFIG_SECURE_FLASH_ENC_ENABLED: "y"
+      CONFIG_SECURE_FLASH_ENCRYPTION_AES256: "y"
+      CONFIG_NVS_ENCRYPTION: "n"
+      CONFIG_NVS_SEC_KEY_PROTECT_USING_FLASH_ENC: "n"
+  partitions: partitions.csv
+  flash_size: 16MB
 
 board_m5cores3: *m5stack_cores3_board_m5cores3
 

@@ -42,6 +42,12 @@
 #include "esphome/core/log.h"
 
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#include "esp_flash_encrypt.h"
+#pragma GCC diagnostic pop
+
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/error.h"
@@ -63,6 +69,7 @@ constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
 class MbedTlsResult {
  private:
   int value_;
+
  public:
   MbedTlsResult() : value_{0} {};
   MbedTlsResult(int const value) : value_{value} {}
@@ -106,6 +113,7 @@ class Reply {
   std::error_code const ec_;
   int const code_;
   std::string const text_;
+
  public:
   explicit Reply(std::error_code const ec) : ec_{ec}, code_{}, text_{} {}
   explicit Reply(int const code, std::string_view const text = "") : ec_{}, code_{code}, text_{text} {}
@@ -575,6 +583,20 @@ void Component::enqueue(std::string const &subject, std::string const &body, std
 }
 
 void Component::loop() { this->io_.poll_one(); }
+
+void Component::set_server(std::string const &value) { this->server_ = value; }
+void Component::set_port(uint16_t const value) { this->port_ = value; }
+void Component::set_username(std::string const &value) { this->username_ = value; }
+void Component::set_password(std::string const &value) {
+  this->password_ = value;
+  if (!esp_flash_encryption_enabled()) {
+    ESP_LOGW(TAG, "flash encryption disabled");
+  }
+}
+void Component::set_from(std::string const &value) { this->from_ = value; }
+void Component::set_to(std::string const &value) { this->to_ = value; }
+void Component::set_starttls(bool const value) { this->starttls_ = value; }
+void Component::set_cas(std::string const &value) { this->cas_ = value; }
 
 }  // namespace smtp_
 }  // namespace esphome
