@@ -68,8 +68,7 @@ constexpr char const CRLF[]{"\r\n"};  // SMTP protocol line terminator
 // wrap mbedtls function result value with methods to interpret success or error
 class MbedTlsResult {
  private:
-  int value_;
-
+  int const value_;
  public:
   MbedTlsResult() : value_{0} {};
   MbedTlsResult(int const value) : value_{value} {}
