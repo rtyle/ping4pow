@@ -299,9 +299,14 @@ The rest of the display is used for the current tile.
 Using the next and previous tile controls, one can rotate through them.
 The tiles are:
 
+* Splash tile
 * State tile
 * Since tile
 * Target tile (one for each)
+
+### Splash Tile
+
+A ping4pow image is displayed briefly on boot before advancing to the next tile.
 
 ### State Tile
 
