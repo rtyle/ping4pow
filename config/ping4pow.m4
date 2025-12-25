@@ -697,9 +697,24 @@ lvgl:
                         height: 100%
                         bg_color: _bg_off
                         tiles:
-                          - id: state_tile_widget_
+                          - id: ping4pow_tile_widget_
                             row: 0
                             column: 0
+                            dir: HOR
+                            widgets:
+                              - image:
+                                  src: ping4pow_
+                            on_boot:
+                              - delay: 4s
+                              - lambda: |-
+                                  auto const tileview{id(tileview_)};
+                                  auto const tile{id(state_tile_widget_)};
+                                  lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
+                                  lv_event_send(
+                                    tileview, LV_EVENT_VALUE_CHANGED, nullptr);
+                          - id: state_tile_widget_
+                            row: 0
+                            column: 1
                             dir: HOR
                             layout:
                               type: GRID
@@ -833,7 +848,7 @@ lvgl:
                                         text: "mdi_network"
                           - id: since_tile_widget_
                             row: 0
-                            column: 1
+                            column: 2
                             dir: HOR
                             layout:
                               type: GRID
@@ -877,7 +892,7 @@ define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
                           - id: ping_`'__count`'_tile_widget_
                             row: 0
-                            column: eval(__count + 2)
+                            column: eval(__count + 3)
                             dir: HOR
                             layout:
                               type: GRID
@@ -950,13 +965,7 @@ define(host, `__increment(`__count')dnl
                                   text: "$2"')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
-                          - id: ping4pow_tile_widget_
-                            row: 0
-                            column: eval(__count + 3)
-                            dir: HOR
-                            widgets:
-                              - image:
-                                  src: ping4pow_
+undefine(`__count')dnl
                     - button:
                         id: unlock_overlay_widget_
                         width: 100%
@@ -1025,6 +1034,7 @@ undefine(`host')dnl
 rotation_:
   - id: tile_rotation_
     items:
+      - ping4pow_tile_widget_
       - state_tile_widget_
       - since_tile_widget_
 define(`__count', `-1')dnl
@@ -1033,7 +1043,6 @@ define(host, `__increment(`__count')dnl
 include(HOSTS)dnl
 undefine(`host')dnl
 undefine(`__count')dnl
-      - ping4pow_tile_widget_
     iterators:
       - id: tile_iterator_
 
