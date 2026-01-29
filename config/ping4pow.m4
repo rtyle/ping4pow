@@ -722,44 +722,56 @@ lvgl:
                                 FR(1), FR(1), FR(1), FR(1), FR(1), FR(1)]
                               grid_rows: [FR(1), FR(1), FR(1)]
                             widgets:
-                              - button:
-                                  id: state_1_widget_
+                              - obj:
                                   grid_cell_column_pos: 0
                                   grid_cell_column_span: 3
                                   grid_cell_row_pos: 0
-                                  checkable: true
+                                  grid_cell_x_align: STRETCH
+                                  grid_cell_y_align: STRETCH
+                                  align: center
                                   widgets:
-                                    - label:
-                                        text: "mdi_cog_pause`'mdi_network_off"
-                              - button:
-                                  id: state_2_widget_
-                                  grid_cell_column_pos: 0
-                                  grid_cell_column_span: 3
-                                  grid_cell_row_pos: 0
-                                  checkable: true
-                                  hidden: true
-                                  widgets:
-                                    - label:
-                                        text: "mdi_cog_pause`'mdi_network_off`'mdi_dots_horizontal"
-                              - button:
-                                  id: state_3_widget_
+                                    - button:
+                                        id: state_1_widget_
+                                        width: 100%
+                                        height: 100%
+                                        checkable: true
+                                        widgets:
+                                          - label:
+                                              text: "mdi_cog_pause`'mdi_network_off"
+                                    - button:
+                                        id: state_2_widget_
+                                        width: 100%
+                                        height: 100%
+                                        checkable: true
+                                        hidden: true
+                                        widgets:
+                                          - label:
+                                              text: "mdi_cog_pause`'mdi_network_off`'mdi_dots_horizontal"
+                              - obj:
                                   grid_cell_column_pos: 3
                                   grid_cell_column_span: 3
                                   grid_cell_row_pos: 0
-                                  checkable: true
+                                  grid_cell_x_align: STRETCH
+                                  grid_cell_y_align: STRETCH
+                                  align: center
                                   widgets:
-                                    - label:
-                                        text: "mdi_cog_pause`'mdi_network"
-                              - button:
-                                  id: state_4_widget_
-                                  grid_cell_column_pos: 3
-                                  grid_cell_column_span: 3
-                                  grid_cell_row_pos: 0
-                                  checkable: true
-                                  hidden: true
-                                  widgets:
-                                    - label:
-                                        text: "mdi_cog_pause`'mdi_network`'mdi_dots_horizontal"
+                                    - button:
+                                        id: state_3_widget_
+                                        width: 100%
+                                        height: 100%
+                                        checkable: true
+                                        widgets:
+                                          - label:
+                                              text: "mdi_cog_pause`'mdi_network"
+                                    - button:
+                                        id: state_4_widget_
+                                        width: 100%
+                                        height: 100%
+                                        checkable: true
+                                        hidden: true
+                                        widgets:
+                                          - label:
+                                              text: "mdi_cog_pause`'mdi_network`'mdi_dots_horizontal"
                               - button:
                                   id: state_0_widget_
                                   grid_cell_column_pos: 0
