@@ -68,6 +68,8 @@ esp32:
   partitions: partitions.csv
   flash_size: 16MB
 
+psram: *m5stack_cores3_psram
+
 board_m5cores3: *m5stack_cores3_board_m5cores3
 
 asio_:

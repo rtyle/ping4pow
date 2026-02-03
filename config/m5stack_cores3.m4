@@ -68,6 +68,10 @@ define(M5STACK_CORE_M5_BUS_1_12, GPIO14)dnl
     framework:
       type: esp-idf
 
+  psram: &NAMESPACE`'_psram
+    mode: quad
+    speed: 80MHz
+
   board_m5cores3: &NAMESPACE`'_board_m5cores3 {}
 
   spi: &NAMESPACE`'_spi
