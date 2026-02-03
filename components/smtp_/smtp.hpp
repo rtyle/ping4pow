@@ -19,6 +19,7 @@
 #pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #include "esphome/core/component.h"
 #include "esphome/core/automation.h"
