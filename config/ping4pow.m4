@@ -65,6 +65,7 @@ esp32:
       CONFIG_SECURE_FLASH_ENCRYPTION_AES256: "y"
       CONFIG_NVS_ENCRYPTION: "n"
       CONFIG_NVS_SEC_KEY_PROTECT_USING_FLASH_ENC: "n"
+      CONFIG_ESP32_PTHREAD_TASK_STACK_SIZE_DEFAULT: "8192"
   partitions: partitions.csv
   flash_size: 16MB
 
@@ -165,7 +166,13 @@ globals:
   - id: state_0_off_count_
     type: int
     initial_value: "0"
-
+dnl
+define(`__increment', `define(`$1', incr($1))')dnl
+define(`__powered', `0')dnl
+define(host, `ifelse(`$3', `', `', `__increment(`__powered')')')dnl
+include(HOSTS)dnl
+undefine(`host')dnl
+dnl
 script:
   # each switch in our state machine executes enter_ for their state on_turn_on.
   # all other states are exited.
@@ -176,10 +183,13 @@ script:
       - lambda: |-
           static std::array const switch_button{
             std::make_tuple(id(state_0_), id(state_0_widget_), false),
-            std::make_tuple(id(state_1_), id(state_1_widget_), false),
+            std::make_tuple(id(state_1_), id(state_1_widget_), false),ifelse(__powered, 0, `
             std::make_tuple(id(state_2_), id(state_2_widget_), true),
             std::make_tuple(id(state_3_), id(state_3_widget_), false),
-            std::make_tuple(id(state_4_), id(state_4_widget_), true),
+            std::make_tuple(id(state_4_), id(state_4_widget_), true),', `
+            std::make_tuple(id(state_2_), id(state_2_widget_), false),
+            std::make_tuple(static_cast<lvgl::LVGLSwitch *>(nullptr), static_cast<_lv_obj_t *>(nullptr), false),
+            std::make_tuple(static_cast<lvgl::LVGLSwitch *>(nullptr), static_cast<_lv_obj_t *>(nullptr), false),')
             std::make_tuple(id(state_5_), id(state_5_widget_), false),
           };
           size_t index{0};
@@ -190,7 +200,7 @@ script:
               }
             }
             else {
-              _switch->turn_off();
+              ifelse(__powered, 0, , `if (_switch)')_switch->turn_off();
               if (hidden) {
                 lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
               }
@@ -216,11 +226,10 @@ ifdef(`GPIO_RELAY', `dnl
         id: power_widget_
         state:
           checked: !lambda return x;'
-
-)dnl
+)
   # the following switches reflect states in a state machine.
   # they cooperate so that only one switch/state is on at a time.
-  # we start at state 1, conditionally advance through 2, 3 & 4
+  # we start at state 1, conditionally advance through to 5
   # and when 5 is done we enter state 1 again.
   # for testing, these states may be entered through a UI.
   # entering state 0 will stop the machine until state 0 is exited.
@@ -286,7 +295,7 @@ ifdef(`GPIO_RELAY', `dnl
             or:
               - switch.is_off: state_2_
               - binary_sensor.is_off: ping_none_
-          timeout: 10s
+          timeout: ifelse(__powered, 0, 10s, 30s)
       - if:
           condition:
             switch.is_on: state_2_
@@ -297,7 +306,7 @@ ifdef(`GPIO_RELAY', `dnl
                 then:
                   - switch.turn_on: state_1_
                 else:
-                  - switch.turn_on: state_3_
+                  - switch.turn_on: state_`'ifelse(eval(__powered > 0), 1, 5_, `3_
   - id: state_3_
     platform: lvgl
     widget: state_3_widget_
@@ -350,7 +359,7 @@ ifdef(`GPIO_RELAY', `dnl
                 then:
                   - switch.turn_on: state_3_
                 else:
-                  - switch.turn_on: state_5_
+                  - switch.turn_on: state_5_')
   - id: state_5_
     platform: lvgl
     widget: state_5_widget_
@@ -578,7 +587,6 @@ ping_:
           sorting_group_id: ping_summary_group_
           sorting_weight: 5
     targets:
-define(`__increment', `define(`$1', incr($1))')dnl
 define(`__count', `-1')dnl
 define(host, `__increment(`__count')dnl
       - id: ping_`'__count`'_
@@ -739,7 +747,7 @@ lvgl:
                                         checkable: true
                                         widgets:
                                           - label:
-                                              text: "mdi_cog_pause`'mdi_network_off"
+                                              text: "mdi_cog_pause`'mdi_network_off"`'ifelse(__powered, 0, `
                                     - button:
                                         id: state_2_widget_
                                         width: 100%
@@ -748,7 +756,7 @@ lvgl:
                                         hidden: true
                                         widgets:
                                           - label:
-                                              text: "mdi_cog_pause`'mdi_network_off`'mdi_dots_horizontal"
+                                              text: "mdi_cog_pause`'mdi_network_off`'mdi_dots_horizontal"')
                               - obj:
                                   grid_cell_column_pos: 3
                                   grid_cell_column_span: 3
@@ -756,7 +764,15 @@ lvgl:
                                   grid_cell_x_align: STRETCH
                                   grid_cell_y_align: STRETCH
                                   align: center
-                                  widgets:
+                                  widgets:ifelse(eval(__powered > 0), 1, `
+                                    - button:
+                                        id: state_2_widget_
+                                        width: 100%
+                                        height: 100%
+                                        checkable: true
+                                        widgets:
+                                          - label:
+                                              text: "mdi_cog_pause`'mdi_network_off`'mdi_dots_horizontal"', `
                                     - button:
                                         id: state_3_widget_
                                         width: 100%
@@ -773,7 +789,7 @@ lvgl:
                                         hidden: true
                                         widgets:
                                           - label:
-                                              text: "mdi_cog_pause`'mdi_network`'mdi_dots_horizontal"
+                                              text: "mdi_cog_pause`'mdi_network`'mdi_dots_horizontal"')
                               - button:
                                   id: state_0_widget_
                                   grid_cell_column_pos: 0
