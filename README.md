@@ -4,7 +4,8 @@
 
 Upon network recovery,
 sensitive equipment may need to be rebooted after things have settled.
-For many such, power to the device can be cycled to achieve this.
+Some equipment may need to be rebooted to facilitate network recovery.
+For many such equipment, power to the device can be cycled to achieve this.
 Without automation, this must be done manually.
 It would be better with automation that could recognize such conditions and cycle power.
 
@@ -35,8 +36,8 @@ can be controlled by a GPIO pin for more demanding loads.
 * Galvanically isolated switching of equipment power
 * Network health is determined by [ping](https://en.wikipedia.org/wiki/Ping_(networking_utility))ing multiple IP addresses
 * Network failure is when all addresses can not be pinged for a while.
-* Network recovery is when all addresses can be pinged for a while.
-* Upon network recovery, power is cycled.
+* Network recovery may be facilitated by cycling power; otherwise
+* Network recovery is when all addresses can be pinged for a while and then power is cycled.
 * Email notification of power cycle.
 
 ## Architecture
@@ -165,6 +166,8 @@ With your virtual environment activated, install ESPHome using pip:
 
 Configure the order, address and name of each host to be ping-monitored.
 Each is specifed by an address, name pair in an m4 host macro invocation.
+Add a third argument for a host that must be power-cycled when all are not pingable for a while;
+otherwise, wait for all hosts to be pingable for a while before power-cycling.
 
     cp config/hosts{.example,}.m4; vi config/hosts.m4
 
@@ -230,13 +233,16 @@ Only one state/switch can be active/on at a time.
 States can be entered through a switch action in the user interface.
 These states/switches are:
 
-* `stop`. When on, the state machine is stopped. Turn off to advance to the next state.
-* wait for `ping none`, then advance to the next state.
-* wait while `ping none`, then advance to the next state; otherwise, the previous state.
-* wait for `ping all`, then advance to the next state.
-* wait while `ping all`, then advance to the next state; otherwise, the previous state.
-* `power cycle`: turn power off, pause, turn power on and then start over.
+0. `stop`. When on, the state machine is stopped. Turn off to advance to the next state.
+1. wait for `ping none`, then advance to the next state.
+2. wait while `ping none`, then advance to the next state; otherwise, the previous state.
+3. wait for `ping all`, then advance to the next state.
+4. wait while `ping all`, then advance to the next state; otherwise, the previous state.
+5. `power cycle`: turn power off, pause, turn power on and then start over.
 
+States 3 and 4 are skipped if there is a host that must be power-cycled when all are not pingable for a while.
+
+If there is 
 In addition, ping4pow exposes
 
 * A `power` switch that reflects/controls power to the connected load.
