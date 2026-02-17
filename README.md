@@ -358,7 +358,7 @@ The top row of buttons reflect states 1, 2, 3 and 4.
         <img src="README/mdi/dots-horizontal.light.svg">
     </picture> wait while <code>ping all</code>
 
-The middle row of buttons reflect state 0, `power` and state 4
+The middle row of buttons reflect state 0, `power` and state 5
 
 * <picture>
         <source media="(prefers-color-scheme: dark)" srcset="README/mdi/cog.dark.svg">
