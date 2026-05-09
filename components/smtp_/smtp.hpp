@@ -88,7 +88,7 @@ template<typename... Ts> class Action : public esphome::Action<Ts...> {
   TEMPLATABLE_VALUE(std::string, body)
   TEMPLATABLE_VALUE(std::string, to)
 
-  void play(Ts... x) override {
+  void play(const Ts & ...x) override {
     auto const subject{this->subject_.value(x...)};
     auto const body{this->body_.optional_value(x...).value_or("")};
     auto const to{this->to_.optional_value(x...).value_or("")};
