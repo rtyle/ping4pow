@@ -24,8 +24,6 @@ CONF_STARTTLS = "starttls"
 CONF_CAS = "cas"
 CONF_SUBJECT = "subject"
 CONF_BODY = "body"
-CONF_TASK_NAME = "task_name"
-CONF_TASK_PRIORITY = "task_priority"
 
 CONFIG_ASIO_SSL_SUPPORT = "CONFIG_ASIO_SSL_SUPPORT"
 

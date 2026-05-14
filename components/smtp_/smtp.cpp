@@ -313,8 +313,6 @@ void Component::dump_config() {
   ESP_LOGCONFIG(TAG, "  from: %s", this->from_.c_str());
   ESP_LOGCONFIG(TAG, "  to: %s", this->to_.c_str());
   ESP_LOGCONFIG(TAG, "  starttls: %s", this->starttls_ ? "true" : "false");
-  ESP_LOGCONFIG(TAG, "  task_name: %s", this->task_name_);
-  ESP_LOGCONFIG(TAG, "  task_priority: %s", this->task_priority_);
 }
 
 float Component::get_setup_priority() const { return esphome::setup_priority::AFTER_CONNECTION; }
