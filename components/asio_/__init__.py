@@ -3,7 +3,6 @@ import esphome.config_validation as cv
 import esphome.final_validate as fv
 from esphome.components.esp32 import CONF_SDKCONFIG_OPTIONS, add_idf_component
 from esphome.const import CONF_FRAMEWORK, Platform
-from esphome.core import CORE
 
 CONF_SSL_SUPPORT = "ssl_support"
 
@@ -12,14 +11,7 @@ CONFIG_ASIO_IS_ENABLED = "CONFIG_ASIO_IS_ENABLED"
 CONFIG_ASIO_SSL_SUPPORT = "CONFIG_ASIO_SSL_SUPPORT"
 
 
-def requires_esp_idf(value):
-    if not CORE.using_esp_idf:
-        raise cv.Invalid("requires esp32.framework.type: esp-idf)")
-    return value
-
-
 CONFIG_SCHEMA = cv.All(
-    requires_esp_idf,
     cv.Schema(
         {
             cv.Optional(CONF_SSL_SUPPORT, default="no"): cv.boolean,

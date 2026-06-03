@@ -114,6 +114,7 @@ async def to_code(config):
             cv.Optional(CONF_TO): cv.templatable(cv.string),
         }
     ),
+    synchronous=False,
 )
 async def smtp_send_to_code(config, action_id, template_arg, args):
     parent = await cg.get_variable(config[CONF_ID])
