@@ -45,6 +45,7 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #include "esp_flash_encrypt.h"
+#include "esp_pthread.h"
 #pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
@@ -271,11 +272,27 @@ asio::awaitable<Result> async_on_thread(Function &&function) {
   std::atomic<Result> result{};
   std::atomic<bool> done{false};
 
+  // modify our pthread configuration
+  // as a soon-to-be parent for our expected child
+  esp_pthread_cfg_t parent;
+  if (ESP_OK != esp_pthread_get_cfg(&parent)) parent = esp_pthread_get_default_config();
+  {
+    // platform default, e.g.
+    //  CONFIG_PTHREAD_TASK_STACK_SIZE_DEFAULT=3072
+    // is too small for mbedTLS handshake
+    esp_pthread_cfg_t child{parent};
+    child.stack_size = 8192;
+    esp_pthread_set_cfg(&child);
+  }
+
   std::thread([&result, &done, executor, function = std::forward<Function>(function)]() mutable {
     result = function();
     done = true;
     asio::post(executor, []() {});  // post noop to wake the executor
   }).detach();
+
+  // restore our pthread configuration
+  esp_pthread_set_cfg(&parent);
 
   while (!done) {
     co_await asio::post(executor, asio::use_awaitable);  // suspend until executor wakes
