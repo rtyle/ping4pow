@@ -410,7 +410,7 @@ touchscreen:
         lambda: |-
           auto const tileview{id(tileview_)};
           lv_obj_set_tile(tileview, id(state_tile_widget_), LV_ANIM_OFF);
-          lv_event_send(tileview, LV_EVENT_VALUE_CHANGED, nullptr);
+          lv_obj_send_event(tileview, LV_EVENT_VALUE_CHANGED, nullptr);
           id(tile_iterator_).reset();
     right:
       id: brightness_increment_
@@ -679,10 +679,12 @@ lvgl:
       grid_cell_x_align: STRETCH
       grid_cell_y_align: STRETCH
       align: center
+      text_font: font_
     label:
       grid_cell_x_align: center
       grid_cell_y_align: center
       align: center
+      text_font: font_
   style_definitions:
     - id: label_style_widget_
       bg_color: _bg_off
@@ -720,7 +722,7 @@ lvgl:
                                   auto const tileview{id(tileview_)};
                                   auto const tile{id(state_tile_widget_)};
                                   lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
-                                  lv_event_send(
+                                  lv_obj_send_event(
                                     tileview, LV_EVENT_VALUE_CHANGED, nullptr);
                           - id: state_tile_widget_
                             row: 0
@@ -1024,7 +1026,7 @@ undefine(`__count')dnl
                             auto const tile{
                               reinterpret_cast<lv_obj_t *>(*--(*it))};
                             lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
-                            lv_event_send(
+                            lv_obj_send_event(
                               tileview, LV_EVENT_VALUE_CHANGED, nullptr);
                     - button:
                         flex_grow: 1
@@ -1058,7 +1060,7 @@ undefine(`__count')dnl
                             auto const tile{
                               reinterpret_cast<lv_obj_t *>(*++(*it))};
                             lv_obj_set_tile(tileview, tile, LV_ANIM_OFF);
-                            lv_event_send(
+                            lv_obj_send_event(
                               tileview, LV_EVENT_VALUE_CHANGED, nullptr);
 
 rotation_:

@@ -5,6 +5,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 #pragma GCC diagnostic ignored "-Wc++11-compat"
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"

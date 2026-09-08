@@ -53,7 +53,7 @@ void Since::update() {
 #ifdef USE_LVGL
     if (this->label_) {
       lv_label_set_text(this->label_, s.c_str());
-      lv_event_send(this->label_, lvgl::lv_update_event, nullptr);
+      lv_obj_send_event(this->label_, lvgl::lv_update_event, nullptr);
     }
 #endif
   }
