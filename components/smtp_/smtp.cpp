@@ -20,7 +20,7 @@
 
 // provide code generated from asio includes that follow below
 // visibility to our ASIO_NO_EXCEPTIONS asio::detail::throw_exception definition,
-// if called for, so that they can implicitly instantiate what they need.
+// if called for, so that they can reference what they need.
 #include "esphome/components/asio_/asio_detail_throw_exception_.cpp"
 
 #pragma GCC diagnostic push
@@ -54,6 +54,9 @@
 #include "mbedtls/error.h"
 #include "mbedtls/base64.h"
 #pragma GCC diagnostic pop
+
+// define the template instantiations we referenced above
+#include "asio_detail_throw_exception_.hpp"
 
 namespace esphome {
 namespace smtp_ {
